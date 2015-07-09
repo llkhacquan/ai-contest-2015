@@ -69,15 +69,19 @@ void testIsolatedMode(int *board, const CPos&p = CPos(0, 0))
 			bOk = CMyAI::move(board, pos, i); assert(bOk);
 			pos = pos.move(i);
 		}
+#ifdef OPENCV
 		imshow("game", CMyAI::toImage(board));
 		c = waitKey(200);
+#endif // OPENCV
 	}
 }
 
 void testConnectedComponents(int *board, CPos p = CPos(0, 0))
 {
 	int board2[BOARD_SIZE];
+#ifdef OPENCV
 	imshow("test", CMyAI::toImage(board));
+#endif // OPENCV
 	cout << endl;
 	CBiconnectedComponents bc;
 	int n = bc.biconnectedComponents(board, p, board2).size();
@@ -87,10 +91,12 @@ void testConnectedComponents(int *board, CPos p = CPos(0, 0))
 
 	n = CBiconnectedComponents::getEstimatedLength(board, p);
 	printf("estimated length = %d\n", n);
-	cv::waitKey(100);
+#ifdef OPENCV
+	waitKey(100);
+#endif // OPENCV
 }
 
-int main(int argc, char* argv[]){
+int main_(int argc, char* argv[]){
 	// test fillDistance
 	pAI = new CMyAI();
 	std::srand((int)std::time(0));
@@ -137,7 +143,7 @@ int main(int argc, char* argv[]){
 //                DON'T TOUCH THIS PART                   //
 ////////////////////////////////////////////////////////////
 
-int main_(int argc, char* argv[])
+int main(int argc, char* argv[])
 {
 	srand(clock());
 

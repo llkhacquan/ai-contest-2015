@@ -1,5 +1,6 @@
 #include "MyAI.h"
 #include "mydefine.h"
+#include "BiconnectedComponents.h"
 
 int CMyAI::rateBoard(int board[121], const CPos &_p1, const CPos &_p2, const Player next)
 {
@@ -68,7 +69,7 @@ int CMyAI::rateBoard2(int board[], const CPos &_p1, const CPos &_p2, const Playe
 	assert(next == PLAYER_1 || next == PLAYER_2);
 	assert(getBlock(board, _p1) == BLOCK_PLAYER_1 && getBlock(board, _p2) == BLOCK_PLAYER_2);
 	int result = 0;
-	int n1, n2, e1, e2, k1, k2;
+	int n1 = 0, n2 = 0;
 
 	static int board1[BOARD_SIZE], board2[BOARD_SIZE];
 	static int oBoard1[BOARD_SIZE], oBoard2[BOARD_SIZE];
@@ -83,18 +84,23 @@ int CMyAI::rateBoard2(int board[], const CPos &_p1, const CPos &_p2, const Playe
 		if (board1[i] > SPECIAL_BLOCK && board2[i] > SPECIAL_BLOCK){
 			if (board1[i] > board2[i])
 			{
-				oBoard2[i] = SPECIAL_BLOCK;
+				oBoard1[i] = -1;
 			}
 			else if (board1[i] < board2[i]){
-				oBoard1[i] = SPECIAL_BLOCK;
+				oBoard2[i] = -1;
 			}
 			else if (next == PLAYER_1){
-				oBoard2[i] = SPECIAL_BLOCK;
-			} else 
-				oBoard1[i] = SPECIAL_BLOCK;
+				oBoard1[i] = -1;
+			}
+			else
+				oBoard2[i] = -1;
 		}
 	}
 
+	n1 = CBiconnectedComponents::getEstimatedLength(oBoard1, _p1);
+	n2 = CBiconnectedComponents::getEstimatedLength(oBoard2, _p2);
+
+	result = n1 *(MAX_POINTS - MIN_POINTS) / (n1 + n2) + MIN_POINTS;
 #ifdef _DEBUG
 	assert(memcmp(board, backup, BOARD_SIZE*sizeof(int)) == 0);
 #endif // _DEBUG

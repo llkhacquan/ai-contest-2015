@@ -45,18 +45,18 @@ public:
 	static int isIsolated(const int _boardData[], const CPos &pos1, const CPos &pos2);
 	bool isIsolated();
 	static int fillDistance(int board[], const CPos &pos);
-	
+
 	// longest path
 	static Direction getNextMoveOfLongestPath(const int boardData[], const CPos &pos);
 	static vector<int> getALongestPath(const int boardData[], const CPos &pos);
 	static vector<Direction> findShortestPath(const int board[], const CPos& start, CPos& end);
 	static int getLengthOfLongestPath(const int boardData[], const CPos &pos);
 	static void findLongestPath(int board[], CPos& pos, vector<Direction> &v, vector<Direction> &l);
-	
+
 	// DEBUG FUNCTIONS
 	static void printBoard(const int board[], const bool special = false);
 	static void createNewBoard(int board[], int noRandomMove = 0);
-	static cv::Mat toImage(int board[], bool special = false);
+
 	// MAIN 
 	void updateBoard(const int* newBoard, const CPos &_p1, const CPos &_p2, const Player next, const Player we);
 	Direction newTurn();
@@ -66,11 +66,14 @@ public:
 	~CMyAI();
 
 
+#ifdef OPENCV
+	static cv::Mat toImage(int board[], bool special = false);
 	static cv::Mat empty;
 	static cv::Mat obstacle;
 	static cv::Mat player_1;
 	static cv::Mat player_1_trail;
 	static cv::Mat player_2;
 	static cv::Mat player_2_trail;
+#endif // OPENCV	
 };
 

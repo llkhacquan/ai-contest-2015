@@ -16,10 +16,7 @@
 
 #include "include\ai\defines.h"
 #include "include\ai\AI.h"
-#include <opencv2\highgui\highgui.hpp>
-#include <opencv2/imgproc/imgproc.hpp>
 
-using namespace cv;
 
 
 struct Position;
@@ -37,12 +34,17 @@ using namespace std;
 #define DEFAULT_DEPTH 10
 
 /// GRAPHIC
+#ifdef OPENCV
+#include <opencv2\highgui\highgui.hpp>
+#include <opencv2/imgproc/imgproc.hpp>
+using namespace cv;
 #define PIXEL_PER_BLOCK 50
 #define HALF_PIXEL_PER_LINE	1
 #define FPS				60
+#endif // OPENCV
+
+
 #define SHOW_DEBUG_INFORMATION	1
-
-
 #ifndef _DEBUG
 #undef SHOW_DEBUG_INFORMATION
 #define  SHOW_DEBUG_INFORMATION 0

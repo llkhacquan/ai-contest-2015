@@ -57,6 +57,7 @@ void CMyAI::createNewBoard(int board[], int nObstacle)
 		}
 	}
 }
+#ifdef OPENCV
 
 cv::Mat CMyAI::toImage(int board[], bool special)
 {
@@ -99,3 +100,4 @@ cv::Mat CMyAI::toImage(int board[], bool special)
 	}
 	return result;
 }
+#endif // OPENCV

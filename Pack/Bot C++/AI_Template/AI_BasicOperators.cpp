@@ -2,12 +2,14 @@
 #include "mydefine.h"
 
 int CMyAI::DEPTH;
+#ifdef OPENCV
 Mat CMyAI::empty;
 Mat CMyAI::obstacle;
 Mat CMyAI::player_1;
 Mat CMyAI::player_1_trail;
 Mat CMyAI::player_2;
 Mat CMyAI::player_2_trail;
+#endif // OPENCV
 
 CMyAI::CMyAI()
 {
@@ -23,6 +25,7 @@ CMyAI::CMyAI()
 	DEPTH = d;
 	p_ai = AI::GetInstance();
 
+#ifdef OPENCV
 	empty = Mat(PIXEL_PER_BLOCK - HALF_PIXEL_PER_LINE * 2, PIXEL_PER_BLOCK - HALF_PIXEL_PER_LINE * 2,
 		CV_8UC3, Scalar(50, 50, 50));
 	obstacle = Mat(PIXEL_PER_BLOCK - HALF_PIXEL_PER_LINE * 2, PIXEL_PER_BLOCK - HALF_PIXEL_PER_LINE * 2,
@@ -48,6 +51,7 @@ CMyAI::CMyAI()
 		HALF_PIXEL_PER_LINE, HALF_PIXEL_PER_LINE, BORDER_CONSTANT, Scalar(0, 0, 0));
 	copyMakeBorder(player_2_trail, player_2_trail, HALF_PIXEL_PER_LINE, HALF_PIXEL_PER_LINE,
 		HALF_PIXEL_PER_LINE, HALF_PIXEL_PER_LINE, BORDER_CONSTANT, Scalar(0, 0, 0));
+#endif // OPENCV
 }
 
 CMyAI::~CMyAI()
