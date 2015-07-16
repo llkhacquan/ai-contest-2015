@@ -17,8 +17,10 @@ void CMyAI::printBoard(const int board[], const bool special)
 			if (special)
 				if (block >= SPECIAL_BLOCK)
 					cout << setfill(' ') << setw(5) << block - SPECIAL_BLOCK << "|";
-				else
+				else if (block >= 0)
 					cout << setfill(' ') << setw(5) << "-----" << "|";
+				else
+					cout << setfill(' ') << setw(5) << block << "|";
 			else
 				cout << setfill(' ') << setw(5) << block << "|";
 		}

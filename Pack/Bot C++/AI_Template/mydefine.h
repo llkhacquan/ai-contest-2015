@@ -32,6 +32,7 @@ using namespace std;
 #define MAX_POINTS	1000
 #define MIN_POINTS	0
 #define DEFAULT_DEPTH 8
+#define BLOCK_ENEMY_AREA -2
 
 /// GRAPHIC
 #ifdef OPENCV
@@ -44,19 +45,20 @@ using namespace cv;
 #endif // OPENCV
 
 
+// SHOW DEBUG INFORMATION
 #define SHOW_DEBUG_INFORMATION	0
 #ifndef _DEBUG
 #undef SHOW_DEBUG_INFORMATION
 #define  SHOW_DEBUG_INFORMATION 0
 #endif // _DEBUG
 
-
-
 #if SHOW_DEBUG_INFORMATION 
 #define DEBUG(x);	x;
 #else
 #define DEBUG(x);	
 #endif
+
+
 
 static const int SPECIAL_BIT = 30;
 #define SPECIAL_BLOCK (1 << SPECIAL_BIT)

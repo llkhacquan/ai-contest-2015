@@ -84,23 +84,28 @@ int CMyAI::rateBoard2(int board[], const CPos &_p1, const CPos &_p2, const Playe
 		if (board1[i] > SPECIAL_BLOCK && board2[i] > SPECIAL_BLOCK){
 			if (board1[i] > board2[i])
 			{
-				oBoard1[i] = -1;
+				oBoard1[i] = BLOCK_ENEMY_AREA;
 			}
 			else if (board1[i] < board2[i]){
-				oBoard2[i] = -1;
+				oBoard2[i] = BLOCK_ENEMY_AREA;
 			}
 			else if (next == PLAYER_1){
-				oBoard1[i] = -1;
+				oBoard1[i] = BLOCK_ENEMY_AREA;
 			}
 			else
-				oBoard2[i] = -1;
+				oBoard2[i] = BLOCK_ENEMY_AREA;
 		}
 	}
 
-	n1 = CBiconnectedComponents::getEstimatedLength(oBoard1, _p1);
-	n2 = CBiconnectedComponents::getEstimatedLength(oBoard2, _p2);
+ 	n1 = CBiconnectedComponents::getEstimatedLength(oBoard1, _p1);
+ 	n2 = CBiconnectedComponents::getEstimatedLength(oBoard2, _p2);
+ 	result = n1 *(MAX_POINTS - MIN_POINTS) / (n1 + n2) + MIN_POINTS;
+// 	CBiconnectedComponents::biconnectedComponents(oBoard1, _p1, board1);
+// 
+// 	printBoard(oBoard1);
+// 	printBoard(board1, true);
+// 	CBiconnectedComponents::biconnectedComponents(oBoard2, _p2, board2);
 
-	result = n1 *(MAX_POINTS - MIN_POINTS) / (n1 + n2) + MIN_POINTS;
 #ifdef _DEBUG
 	assert(memcmp(board, backup, BOARD_SIZE*sizeof(int)) == 0);
 #endif // _DEBUG

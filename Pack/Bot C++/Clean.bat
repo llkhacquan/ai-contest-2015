@@ -20,3 +20,5 @@ if exist *.suo del "*.suo"
 echo Cleaning *.sdf
 if exist *.sdf del "*.sdf"
 
+echo Cleaning *.vspx
+if exist *.vspx del "*.vspx"

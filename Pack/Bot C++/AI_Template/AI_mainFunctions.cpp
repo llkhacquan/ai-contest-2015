@@ -20,6 +20,7 @@ void CMyAI::updateBoard(const int* newBoard, const CPos &_p1, const CPos &_p2, c
 Direction CMyAI::newTurn()
 {
 	static int tempBoard[BOARD_SIZE];
+	clock_t startTime = clock();
 	// update board first
 	Player we, next;
 	CPos p1, p2;
@@ -42,16 +43,19 @@ Direction CMyAI::newTurn()
 	if (isIsolated()){
 		cout << "start isolated mode!" << endl;
 		CPos pos; pos = p_ai->GetMyPosition();
-		return getNextMoveOfLongestPath(boardData, pos);
+		return getNextMoveOfLongestPath(boardData, pos, 10);
 	}
 	// end ISOLATED MODE
 
 	// start NORMAL_MODE
 
+	int move;
 	if (we == PLAYER_1)
-		return optimalMove(boardData, posPlayer1, posPlayer2, PLAYER_1);
+		move = optimalMove(boardData, posPlayer1, posPlayer2, PLAYER_1);
 	else
-		return optimalMove(boardData, posPlayer1, posPlayer2, PLAYER_2);
+		move = optimalMove(boardData, posPlayer1, posPlayer2, PLAYER_2);
+	cout << double(clock() - startTime) / (double)CLOCKS_PER_SEC << " seconds." << endl;
+	return move;
 	// end NORMAL_MODE
 }
 
@@ -97,11 +101,11 @@ Direction CMyAI::optimalMove(int board[121], const CPos &_p1, const CPos &_p2, c
 		}
 		else if (points[iMax] >= points[i])
 			iMax = i;
-		}
+	}
 
 #ifdef _DEBUG
 	assert(memcmp(board, backup, BOARD_SIZE*sizeof(int)) == 0);
 #endif // _DEBUG
 	return allMoves[iMax];
-	}
+}
 

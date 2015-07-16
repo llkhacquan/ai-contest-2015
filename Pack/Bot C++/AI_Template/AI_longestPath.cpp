@@ -3,7 +3,7 @@
 #include "BiconnectedComponents.h"
 
 
-Direction CMyAI::getNextMoveOfLongestPath(const int boardData[], const CPos &pos){
+Direction CMyAI::getNextMoveOfLongestPath(const int boardData[], const CPos &pos, const int depth){
 	static int board[BOARD_SIZE];
 	memcpy(board, boardData, BOARD_SIZE*sizeof(int));
 	int maxLength = -1;

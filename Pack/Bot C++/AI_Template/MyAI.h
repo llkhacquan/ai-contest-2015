@@ -46,7 +46,7 @@ public:
 	static int fillDistance(int board[], const CPos &pos);
 
 	// longest path
-	static Direction getNextMoveOfLongestPath(const int boardData[], const CPos &pos);
+	static Direction getNextMoveOfLongestPath(const int boardData[], const CPos &pos, const int depth = 0);
 	static vector<int> getALongestPath(const int boardData[], const CPos &pos);
 	static vector<Direction> findShortestPath(const int board[], const CPos& start, CPos& end);
 	static int getLengthOfLongestPath(const int boardData[], const CPos &pos);

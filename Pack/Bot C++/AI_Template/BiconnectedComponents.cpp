@@ -43,103 +43,103 @@ int findCode(int block){
 vector<Area> CBiconnectedComponents::biconnectedComponents(int const board[], const CPos &playerPos, int outBoard[])
 {
 	// setting up
+	CBiconnectedComponents bc;
 	memcpy(outBoard, board, BOARD_SIZE*sizeof(int));
-	nComponents = 0;
-	oBoard = outBoard;
-	this->playerPos = playerPos;
-	areas.clear();
+	bc.nComponents = 0;
+	bc.oBoard = outBoard;
+	bc.playerPos = playerPos;
+	bc.areas.clear();
 
-	iCount = 0;
+	bc.iCount = 0;
 	{// clear stack
 		stack<Edge> t;
-		myStack.swap(t);
+		bc.myStack.swap(t);
 	}
 
 	for (int iArea = 0; iArea < BOARD_SIZE; iArea++){
-		visited[iArea] = false;
-		parrent[iArea] = -1;
+		bc.visited[iArea] = false;
+		bc.parrent[iArea] = -1;
 	}
 
-	dfsVisit(playerPos.to1D());
+	bc.dfsVisit(playerPos.to1D());
 
 	// take care the area contains the playerPos
-	for (int iArea = 0; iArea < (int)areas.size(); iArea++)
-		areas[iArea].erase(playerPos.to1D());
+	for (int iArea = 0; iArea < (int)bc.areas.size(); iArea++)
+		bc.areas[iArea].erase(playerPos.to1D());
 
-	areas.push_back(Area());
-	areas.back().insert(playerPos.to1D());
-	areas.back().code = areas.size() - 1;
-	outBoard[playerPos.to1D()] = SPECIAL_BLOCK | ipowBase2(areas.size() - 1);
+	bc.areas.push_back(Area());
+	bc.areas.back().insert(playerPos.to1D());
+	bc.areas.back().code = bc.areas.size() - 1;
+	outBoard[playerPos.to1D()] = SPECIAL_BLOCK | ipowBase2(bc.areas.size() - 1);
 
-	// re-build areas so the larger areas will have move and move vertices
+	// re-build areas so the larger areas will have more and more vertices
 	for (Vertex v = 0; v < BOARD_SIZE; v++){
-		if (oBoard[v] < SPECIAL_BLOCK) // if v is not special then continue
+		if (bc.oBoard[v] < SPECIAL_BLOCK) // if v is not special then continue
 			continue;
-		int block = oBoard[v];
+		int block = bc.oBoard[v];
 		int iMax = -1;
-		for (unsigned int iArea = 0; iArea < areas.size(); iArea++){
-			if ((block & ipowBase2(areas[iArea].code)) != 0){
+		for (unsigned int iArea = 0; iArea < bc.areas.size(); iArea++){
+			if ((block & ipowBase2(bc.areas[iArea].code)) != 0){
 				if (iMax == -1)
 					iMax = iArea;
-				else if (areas[iMax] > areas[iArea]){
+				else if (bc.areas[iMax] > bc.areas[iArea]){
 					// create the vertex v in the areas[iArea]
-					areas[iArea].erase(v);
-					clearBit(oBoard[v], areas[iArea].code);
+					bc.areas[iArea].erase(v);
+					clearBit(bc.oBoard[v], bc.areas[iArea].code);
 				}
 				else {
 					// create the vertex v in the areas[iMax] and set iMax to iArea
-					areas[iMax].erase(v);
-					clearBit(oBoard[v], areas[iMax].code);
+					bc.areas[iMax].erase(v);
+					clearBit(bc.oBoard[v], bc.areas[iMax].code);
 					iMax = iArea;
 				}
 			}
 		}
 	}
-
+	assert(bc.areas.size() < 31);
 	// remove area with 0 position
-	sort(areas.begin(), areas.end());
-	assert(areas.size() < 31);
-	vector<Area>::iterator it = areas.begin();
-	while (areas.size() > 0 && it->nVertices == 0)
+	sort(bc.areas.begin(), bc.areas.end());
+	vector<Area>::iterator it = bc.areas.begin();
+	while (bc.areas.size() > 0 && it->nVertices == 0)
 		it++;
-	areas.erase(areas.begin(), it);
+	bc.areas.erase(bc.areas.begin(), it);
 
 #ifdef _DEBUG	
 	// make sure 1 vertex is in only one vertex
 	for (Vertex v = 0; v < BOARD_SIZE; v++){
-		int block = oBoard[v];
+		int block = bc.oBoard[v];
 		if (block < SPECIAL_BLOCK)
 			continue;
-		for (unsigned int iArea = 0; iArea < areas.size(); iArea++){
-			if (areas[iArea].code == findCode(block))
-				assert(areas[iArea].inTheAreas[v]);
+		for (unsigned int iArea = 0; iArea < bc.areas.size(); iArea++){
+			if (bc.areas[iArea].code == findCode(block))
+				assert(bc.areas[iArea].inTheAreas[v]);
 			else
-				assert(!areas[iArea].inTheAreas[v]);
+				assert(!bc.areas[iArea].inTheAreas[v]);
 		}
 		clearBit(block, findCode(block));
 		assert(block == SPECIAL_BLOCK);
 	}
 
 	// ensure the areas[].nVertices
-	for (unsigned int iArea = 0; iArea < areas.size(); iArea++){
+	for (unsigned int iArea = 0; iArea < bc.areas.size(); iArea++){
 		int iCount = 0;
 		for (Vertex v = 0; v < BOARD_SIZE; v++){
-			if (areas[iArea].inTheAreas[v])
+			if (bc.areas[iArea].inTheAreas[v])
 				iCount++;
 		}
-		assert(iCount == areas[iArea].nVertices);
+		assert(iCount == bc.areas[iArea].nVertices);
 	}
 #endif
 
-	for (int iArea = 0; iArea < (int)areas.size(); iArea++){
-		areas[iArea].code = iArea;
+	for (unsigned int iArea = 0; iArea < bc.areas.size(); iArea++){
+		bc.areas[iArea].code = iArea;
 		for (Vertex v = 0; v < BOARD_SIZE; v++){
-			if (areas[iArea].inTheAreas[v])
+			if (bc.areas[iArea].inTheAreas[v])
 				outBoard[v] = SPECIAL_BLOCK | ipowBase2(iArea);
 		}
 	}
 
-	return areas;
+	return bc.areas;
 }
 
 void CBiconnectedComponents::dfsVisit(const Vertex &u){
@@ -149,9 +149,12 @@ void CBiconnectedComponents::dfsVisit(const Vertex &u){
 	d[u] = iCount;
 	low[u] = d[u];
 
-	vector<Vertex> adj = adjection(u);
-	for (int i = 0; i < (int)adj.size(); i++){
-		Vertex v = adj[i];
+	bool bAdj[4];
+	adjection(bAdj, u);
+	for (int i = 0; i < 4; i++){
+		if (!bAdj[i])
+			continue;
+		Vertex v = CPos(u).move(i + 1).to1D();
 		if (!visited[v]){
 			myStack.push(Edge(u, v));
 			parrent[v] = u;
@@ -186,23 +189,21 @@ void CBiconnectedComponents::createNewArea(const Vertex &u, const Vertex &v){
 	nComponents++;
 }
 
-vector<Vertex> CBiconnectedComponents::adjection(Vertex const &u){
+void CBiconnectedComponents::adjection(bool out[], Vertex const &u){
 	assert(u >= 0 && u < BOARD_SIZE);
-	vector<Vertex> result;
-	result.reserve(4);
 	CPos pos(u);
 	for (int i = 1; i <= 4; i++){
 		static int block;
 		block = CMyAI::getBlock(oBoard, pos.move(i));
 		if (block == BLOCK_EMPTY || block > SPECIAL_BLOCK)
-			result.push_back(pos.move(i).to1D());
+			out[i - 1] = true;
+		else
+			out[i - 1] = false;
 	}
-	return result;
 }
 
 int CBiconnectedComponents::getEstimatedLength(int const board[], const CPos &playerPos)
 {
-	CBiconnectedComponents bc;
 	int oldBlock = board[playerPos.to1D()];
 	assert(oldBlock == BLOCK_PLAYER_1 || oldBlock == BLOCK_PLAYER_2);
 	static int outBoard[BOARD_SIZE];
@@ -210,7 +211,7 @@ int CBiconnectedComponents::getEstimatedLength(int const board[], const CPos &pl
 	for (int i = 0; i < BOARD_SIZE; i++){
 		visited[i] = false;
 	}
-	vector<Area> areas = bc.biconnectedComponents(board, playerPos, outBoard);
+	vector<Area> areas = biconnectedComponents(board, playerPos, outBoard);
 	set<Edge> edgesOfCode;
 
 	int startArea = findCode(outBoard[playerPos.to1D()]);
@@ -267,7 +268,7 @@ int CBiconnectedComponents::getEstimatedLength(int const board[], const CPos &pl
 			}
 		}
 	}
-	CMyAI::printBoard(outBoard, true);
+
 	return findLengthOfLongestPath(outBoard, areas, edgesOfCode, startArea, playerPos.to1D());
 }
 
@@ -280,12 +281,11 @@ int CBiconnectedComponents::findLengthOfLongestPath(const int _oBoard[], const v
 	int cLength = 0;
 	vector<bool> visittedAreas(areas.size(), false);
 	visitNode(_oBoard, areas, edgesOfCode, cPath, cLength, lPath, lLength, visittedAreas, startArea, startPos);
-	CMyAI::printBoard(_oBoard, true);
 
 #if SHOW_DEBUG_INFORMATION
 	for (int i = 0; i < (int)lPath.size(); i++){
 		cout << lPath[i] << "\t";
-}
+	}
 	cout << "estimated length = " << lLength << endl;
 #endif
 	return lLength;
@@ -427,9 +427,8 @@ void CBiconnectedComponents::visitNode(const int _oBoard[], const vector<Area> &
 	for (int iCode = 0; iCode < (int)areas.size(); iCode++){
 		if (visitted[iCode])
 			continue;
-		if (!binary_search(edgesOfCode.begin(), edgesOfCode.end(), Edge(cCode, iCode)))
-			continue;
-		adj.push_back(iCode);
+		if (edgesOfCode.find(Edge(cCode, iCode))!= edgesOfCode.end())
+			adj.push_back(iCode);
 	}
 
 	if (adj.size() == 0){
@@ -445,4 +444,19 @@ void CBiconnectedComponents::visitNode(const int _oBoard[], const vector<Area> &
 	visitted[cCode] = false;
 	assert(cPath.back() == cCode);
 	cPath.pop_back();
+}
+
+int CBiconnectedComponents::rateBoardForAPlayer(int const board[], const CPos &playerPos)
+{
+	int oldBlock = board[playerPos.to1D()];
+	assert(oldBlock == BLOCK_PLAYER_1 || oldBlock == BLOCK_PLAYER_2);
+	static int outBoard[BOARD_SIZE];
+	static bool visited[BOARD_SIZE];
+	for (int i = 0; i < BOARD_SIZE; i++){
+		visited[i] = false;
+	}
+	vector<Area> areas = biconnectedComponents(board, playerPos, outBoard);
+	set<Edge> edgesOfCode;
+
+	return 0;
 }

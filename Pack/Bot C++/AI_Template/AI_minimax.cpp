@@ -11,8 +11,17 @@ int CMyAI::ab(int board[], const CPos&_p1, const CPos&_p2, Player next, int dept
 	bool bOk;
 
 	int winner = evaluateBoard(board, _p1, _p2, next);
-	if (winner != OBSERVER || depth == 0){
+	if (depth == 0){
 		return rateBoard2(board, _p1, _p2, next);
+	}
+	else if (winner == PLAYER_1){
+		return MAX_POINTS;
+	}
+	else if (winner == PLAYER_2){
+		return MIN_POINTS;
+	}
+	else { // winner == OBSERVER
+		// do nothing :v
 	}
 
 	CPos newPos;

@@ -59,6 +59,7 @@ struct AdjArea{
 		return codeOfAdjArea > e.codeOfAdjArea || (codeOfAdjArea == e.codeOfAdjArea && connections > e.connections);
 	}
 };
+
 struct Area{
 	int code;
 	bool inTheAreas[BOARD_SIZE];
@@ -109,8 +110,6 @@ struct Area{
 	}
 };
 
-
-
 class CBiconnectedComponents
 {
 public:
@@ -137,10 +136,12 @@ public:
 	static void visitNode(const int _oBoard[], const vector<Area> &areas, const set<Edge> &edgesOfCode,
 		vector<int> &cPath, int &cLength, vector<int> &lPath, int &lLength, vector<bool> &visitted, const int cCode, const int &startPos);
 
-	vector<Area> biconnectedComponents(int const board[], const CPos &playerPos, int outBoard[]);
+	static vector<Area> biconnectedComponents(int const board[], const CPos &playerPos, int outBoard[]);
 	void dfsVisit(const Vertex & u);
 	void createNewArea(const Vertex &v1, const Vertex &v2);
-	vector<Vertex> adjection(Vertex const &u);
+	void adjection(bool out[], Vertex const &u);
+
+	static int rateBoardForAPlayer(int const oBoard[], const CPos &playerPos);
 };
 
 
