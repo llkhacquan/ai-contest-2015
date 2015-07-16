@@ -125,10 +125,13 @@ int CMyAI::isIsolated(const int _boardData[121], const CPos &_p1, const CPos &_p
 			if (p.move(i) == _p2)
 				return getBlock(board, p) + 1 - SPECIAL_BLOCK;
 		}
-		vector<CPos> avalableBlocks = getNearEmptyBlock(board, p);
-		for (int i = 0; i < (int)avalableBlocks.size(); i++){
-			setBlock(board, avalableBlocks[i].x, avalableBlocks[i].y, getBlock(board, p.x, p.y) + 1);
-			q.push(avalableBlocks[i]);
+
+		for (int i = 1; i <= 4; i++){
+			CPos newP = p.move(i);
+			if (getBlock(board, newP) == BLOCK_EMPTY){
+				setBlock(board, newP, getBlock(board, p) + 1);
+				q.push(newP);
+			}
 		}
 	}
 	return -1;
@@ -153,11 +156,13 @@ int CMyAI::fillDistance(int _board[121], const CPos &pos)
 	while (q.size() > 0){
 		CPos p = q.front();
 		q.pop();
-		vector<CPos> avalableBlocks = getNearEmptyBlock(_board, p);
-		for (int i = 0; i < (int)avalableBlocks.size(); i++){
-			result += getBlock(_board, p) + 1 - SPECIAL_BLOCK;
-			setBlock(_board, avalableBlocks[i].x, avalableBlocks[i].y, getBlock(_board, p) + 1);
-			q.push(avalableBlocks[i]);
+		for (int i = 1; i <= 4; i++){
+			CPos newP = p.move(i);
+			if (getBlock(_board, newP) == BLOCK_EMPTY){
+				result += getBlock(_board, p) + 1 - SPECIAL_BLOCK;
+				setBlock(_board, newP, getBlock(_board, p) + 1);
+				q.push(newP);
+			}
 		}
 	}
 	return result;

@@ -48,7 +48,7 @@ struct AdjArea{
 	}
 
 	bool operator==(const AdjArea &e) const {
-		return codeOfAdjArea == e.codeOfAdjArea && connections==e.connections;
+		return codeOfAdjArea == e.codeOfAdjArea && connections == e.connections;
 	}
 
 	bool operator<(const AdjArea &e) const {
@@ -61,28 +61,51 @@ struct AdjArea{
 };
 struct Area{
 	int code;
-
-	set<Vertex> vertices;
+	bool inTheAreas[BOARD_SIZE];
+	int nVertices;
 	set<AdjArea> adjAreas;
 
-	Area(){}
+	Area(){
+		nVertices = 0;
+		memset(inTheAreas, 0, BOARD_SIZE);
+	}
+
+	void insert(const Vertex &u){
+		if (!inTheAreas[u]){
+			inTheAreas[u] = true;
+			nVertices++;
+		}
+	}
+
+	void erase(const Vertex &u){
+		if (inTheAreas[u]){
+			inTheAreas[u] = false;
+			nVertices--;
+		}
+	}
+
 	Area operator =(const Area &e) {
 		code = e.code;
-		vertices = set<Vertex>(e.vertices);
+		nVertices = e.nVertices;
+		memcpy(inTheAreas, e.inTheAreas, BOARD_SIZE);
 		adjAreas = set<AdjArea>(e.adjAreas);
 		return *this;
 	}
 
 	bool operator==(const Area &e) const {
-		return vertices.size() == e.vertices.size();
+		return nVertices == e.nVertices;
+	}
+
+	bool operator>(const Area &e) const {
+		return nVertices > e.nVertices;
 	}
 
 	bool operator<(const Area &e) const {
-		return vertices.size() < e.vertices.size();
+		return nVertices < e.nVertices;
 	}
 
 	bool operator!=(const Area &e) const {
-		return vertices.size() != e.vertices.size();
+		return nVertices > e.nVertices;
 	}
 };
 

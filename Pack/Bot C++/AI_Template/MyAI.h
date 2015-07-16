@@ -34,7 +34,6 @@ public:
 	void move(int direction);
 
 	static vector<Direction> getAvailableMoves(const int board[], const CPos &pos);
-	static vector<CPos> getNearEmptyBlock(const int board[], const CPos &pos);
 
 	// minimax algorithm
 	static int ab(int board[], const CPos&_p1, const CPos&_p2, Player next, int depth, int a, int b);

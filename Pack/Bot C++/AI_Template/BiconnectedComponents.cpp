@@ -6,19 +6,27 @@ CBiconnectedComponents::CBiconnectedComponents(){}
 
 CBiconnectedComponents::~CBiconnectedComponents(){}
 
-void erase_v4(std::vector<int> &vec, int value)
+void setBit(int &number, int iBit){
+	number |= 1 << iBit;
+	assert(number >= 0);
+}
+void clearBit(int &number, int iBit){
+	number &= ~(1 << iBit);
+	assert(number >= 0);
+}
+void toggleBit(int &number, int iBit){
+	number ^= 1 << iBit;
+	assert(number >= 0);
+}
+bool getBit(const int &number, int iBit){
+	return ((number >> iBit) & 1);
+}
+void changeBit(int &number, int iBit, int value){
+	number ^= (-value ^ number) & (1 << iBit);
+}
+int ipowBase2(int exp)
 {
-	// get the range in 2*log2(N), N=vec.size()
-	auto bounds = std::equal_range(vec.begin(), vec.end(), value);
-
-	// calculate the index of the first to be deleted O(1)
-	auto last = vec.end() - std::distance(bounds.first, bounds.second);
-
-	// swap the 2 ranges O(equals) , equal = std::distance(bounds.first, bounds.last)
-	std::swap_ranges(bounds.first, bounds.second, last);
-
-	// erase the victims O(equals)
-	vec.erase(last, vec.end());
+	return 1 << exp;
 }
 
 int findCode(int block){
@@ -29,20 +37,6 @@ int findCode(int block){
 		code++;
 	}
 	return code;
-}
-
-int ipowBase2(int exp)
-{
-	int base = 2;
-	int result = 1;
-	while (exp)
-	{
-		if (exp & 1)
-			result *= base;
-		exp >>= 1;
-		base *= base;
-	}
-	return result;
 }
 
 // return the number of components
@@ -70,49 +64,78 @@ vector<Area> CBiconnectedComponents::biconnectedComponents(int const board[], co
 
 	// take care the area contains the playerPos
 	for (int iArea = 0; iArea < (int)areas.size(); iArea++)
-		areas[iArea].vertices.erase(playerPos.to1D());
+		areas[iArea].erase(playerPos.to1D());
 
 	areas.push_back(Area());
-	areas.back().vertices.insert(playerPos.to1D());
+	areas.back().insert(playerPos.to1D());
 	areas.back().code = areas.size() - 1;
-	outBoard[playerPos.to1D()] = SPECIAL_BLOCK + ipowBase2(areas.size() - 1);
+	outBoard[playerPos.to1D()] = SPECIAL_BLOCK | ipowBase2(areas.size() - 1);
 
-	// re-build areas so we remove the 
-	sort(areas.begin(), areas.end());
-	bool changed = false;
-	for (int iArea = 0; iArea < (int)areas.size(); iArea++){
-		for (set<Vertex>::iterator iVertex = areas[iArea].vertices.begin(); iVertex != areas[iArea].vertices.end();){
-			Vertex v = *iVertex;
-			for (int iArea2 = areas.size() - 1; iArea2 > iArea; iArea2--){
-				if (binary_search(areas[iArea2].vertices.begin(), areas[iArea2].vertices.end(), v)){
-					// insert v to the areas[iArea2].vertices
-					areas[iArea].vertices.erase(v);
-					changed = true;
-					// skip the iArea2 for loop
-					break;
+	// re-build areas so the larger areas will have move and move vertices
+	for (Vertex v = 0; v < BOARD_SIZE; v++){
+		if (oBoard[v] < SPECIAL_BLOCK) // if v is not special then continue
+			continue;
+		int block = oBoard[v];
+		int iMax = -1;
+		for (unsigned int iArea = 0; iArea < areas.size(); iArea++){
+			if ((block & ipowBase2(areas[iArea].code)) != 0){
+				if (iMax == -1)
+					iMax = iArea;
+				else if (areas[iMax] > areas[iArea]){
+					// create the vertex v in the areas[iArea]
+					areas[iArea].erase(v);
+					clearBit(oBoard[v], areas[iArea].code);
 				}
-
+				else {
+					// create the vertex v in the areas[iMax] and set iMax to iArea
+					areas[iMax].erase(v);
+					clearBit(oBoard[v], areas[iMax].code);
+					iMax = iArea;
+				}
 			}
-			if (changed){
-				sort(areas.begin(), areas.end());
-				iArea = -1;
-				changed = false;
-				break;
-			}
-			else
-				iVertex++;
 		}
 	}
 
-	sort(areas.begin(), areas.end());
 	// remove area with 0 position
-	while (areas.size() > 0 && areas[0].vertices.size() == 0)
-		areas.erase(areas.begin());
+	sort(areas.begin(), areas.end());
+	assert(areas.size() < 31);
+	vector<Area>::iterator it = areas.begin();
+	while (areas.size() > 0 && it->nVertices == 0)
+		it++;
+	areas.erase(areas.begin(), it);
+
+#ifdef _DEBUG	
+	// make sure 1 vertex is in only one vertex
+	for (Vertex v = 0; v < BOARD_SIZE; v++){
+		int block = oBoard[v];
+		if (block < SPECIAL_BLOCK)
+			continue;
+		for (unsigned int iArea = 0; iArea < areas.size(); iArea++){
+			if (areas[iArea].code == findCode(block))
+				assert(areas[iArea].inTheAreas[v]);
+			else
+				assert(!areas[iArea].inTheAreas[v]);
+		}
+		clearBit(block, findCode(block));
+		assert(block == SPECIAL_BLOCK);
+	}
+
+	// ensure the areas[].nVertices
+	for (unsigned int iArea = 0; iArea < areas.size(); iArea++){
+		int iCount = 0;
+		for (Vertex v = 0; v < BOARD_SIZE; v++){
+			if (areas[iArea].inTheAreas[v])
+				iCount++;
+		}
+		assert(iCount == areas[iArea].nVertices);
+	}
+#endif
 
 	for (int iArea = 0; iArea < (int)areas.size(); iArea++){
 		areas[iArea].code = iArea;
-		for (set<Vertex>::iterator iVertex = areas[iArea].vertices.begin(); iVertex != areas[iArea].vertices.end(); iVertex++){
-			outBoard[*iVertex] = SPECIAL_BLOCK + ipowBase2(iArea);
+		for (Vertex v = 0; v < BOARD_SIZE; v++){
+			if (areas[iArea].inTheAreas[v])
+				outBoard[v] = SPECIAL_BLOCK | ipowBase2(iArea);
 		}
 	}
 
@@ -149,16 +172,17 @@ void CBiconnectedComponents::createNewArea(const Vertex &u, const Vertex &v){
 	assert(v >= 0 && v < BOARD_SIZE);
 	// cout << "new biconnected found" << endl;
 	Edge e;
-	areas.push_back(Area());
-	areas.back().code = nComponents;
+	Area a;
+	a.code = nComponents;
 	do {
 		e = myStack.top();
 		myStack.pop();
-		// printf("(%d %d - %d %d)\t", e.u%MAP_SIZE, e.u / MAP_SIZE, e.v%MAP_SIZE, e.v / MAP_SIZE);
-		areas.back().vertices.insert(e.u);
-		areas.back().vertices.insert(e.v);
+		oBoard[e.u] |= SPECIAL_BLOCK | ipowBase2(nComponents);
+		oBoard[e.v] |= SPECIAL_BLOCK | ipowBase2(nComponents);
+		a.insert(e.u);
+		a.insert(e.v);
 	} while (e != Edge(u, v));
-	// cout << endl;
+	areas.push_back(a);
 	nComponents++;
 }
 
@@ -243,6 +267,7 @@ int CBiconnectedComponents::getEstimatedLength(int const board[], const CPos &pl
 			}
 		}
 	}
+	CMyAI::printBoard(outBoard, true);
 	return findLengthOfLongestPath(outBoard, areas, edgesOfCode, startArea, playerPos.to1D());
 }
 
@@ -260,7 +285,7 @@ int CBiconnectedComponents::findLengthOfLongestPath(const int _oBoard[], const v
 #if SHOW_DEBUG_INFORMATION
 	for (int i = 0; i < (int)lPath.size(); i++){
 		cout << lPath[i] << "\t";
-	}
+}
 	cout << "estimated length = " << lLength << endl;
 #endif
 	return lLength;
@@ -269,18 +294,20 @@ int CBiconnectedComponents::findLengthOfLongestPath(const int _oBoard[], const v
 int CBiconnectedComponents::calculateLengthOfPath(const int _oBoard[], const vector<Area> &areas,
 	const set<Edge> &edgesOfCode, const vector<int> &path, const int &startPos)
 {
-	assert(path.size()>0);
-	assert(areas[path[0]].vertices.size() == 1);
-	assert(*areas[path[0]].vertices.begin() == startPos);
+	assert(path.size() > 0);
+	assert(areas[path[0]].nVertices == 1);
 
 	int result = 1; // for the first area (areas[path[0]])
 
 	// for the last area (areas[path.back()])
+	int pathBach = path.back();
 	if (path.size() >= 2) {
 		int delta = -1;
 		int even = 0, odd = 0;
-		for (set<Vertex>::iterator j = areas[path.back()].vertices.begin(); j != areas[path.back()].vertices.end(); j++){
-			if ((*j) % 2 == 1)
+		for (Vertex j = 0; j < BOARD_SIZE; j++){
+			if (!areas[pathBach].inTheAreas[j])
+				continue;
+			if (j % 2 == 1)
 				odd++;
 			else
 				even++;
@@ -290,7 +317,7 @@ int CBiconnectedComponents::calculateLengthOfPath(const int _oBoard[], const vec
 		else
 		{
 			bool seen = false;
-			for (set<AdjArea>::iterator it = areas[path.back()].adjAreas.begin(); it != areas[path.back()].adjAreas.end(); it++){
+			for (set<AdjArea>::iterator it = areas[pathBach].adjAreas.begin(); it != areas[pathBach].adjAreas.end(); it++){
 				if (it->codeOfAdjArea == path[path.size() - 2]){
 					seen = true;
 					int delta2;
@@ -310,16 +337,19 @@ int CBiconnectedComponents::calculateLengthOfPath(const int _oBoard[], const vec
 					break;
 			}
 		}
+		assert(delta >= 0);
 		result += delta;
 	}
 
 	// for the other areas (path[1] -> path[size - 2]
 	if (path.size() >= 3)
 		for (int i = 1; i < (int)path.size() - 1; i++){
-			Area area = areas[path[i]];
+			Area const *area = &(areas[path[i]]);
 			int even = 0, odd = 0;
-			for (set<Vertex>::iterator j = area.vertices.begin(); j != area.vertices.end(); j++){
-				if ((*j) % 2 == 1)
+			for (Vertex j = 0; j < BOARD_SIZE; j++){
+				if (!area->inTheAreas[j])
+					continue;
+				if (j % 2 == 1)
 					odd++;
 				else
 					even++;
@@ -327,10 +357,10 @@ int CBiconnectedComponents::calculateLengthOfPath(const int _oBoard[], const vec
 
 			// calculate it1, it2, it3, it4
 			set<AdjArea>::iterator i1, i2; int n1, n2;
-			i1 = i2 = area.adjAreas.end(); n1 = n2 = 0;
-			for (set<AdjArea>::iterator it = area.adjAreas.begin(); it != area.adjAreas.end(); it++){
+			i1 = i2 = area->adjAreas.end(); n1 = n2 = 0;
+			for (set<AdjArea>::iterator it = area->adjAreas.begin(); it != area->adjAreas.end(); it++){
 				if (it->codeOfAdjArea == path[i - 1]){
-					if (i1 == area.adjAreas.end()){
+					if (i1 == area->adjAreas.end()){
 						i1 = it;
 						n1 = 1;
 					}
@@ -338,7 +368,7 @@ int CBiconnectedComponents::calculateLengthOfPath(const int _oBoard[], const vec
 						n1++;
 				}
 				else if (it->codeOfAdjArea == path[i + 1]){
-					if (i2 == area.adjAreas.end()){
+					if (i2 == area->adjAreas.end()){
 						i2 = it;
 						n2 = 1;
 					}
@@ -346,8 +376,8 @@ int CBiconnectedComponents::calculateLengthOfPath(const int _oBoard[], const vec
 						n2++;
 				}
 			}
-			assert(i1 != area.adjAreas.end());
-			assert(i2 != area.adjAreas.end());
+			assert(i1 != area->adjAreas.end());
+			assert(i2 != area->adjAreas.end());
 			assert(n1 > 0 && n2 > 0);
 
 			int a = -1;

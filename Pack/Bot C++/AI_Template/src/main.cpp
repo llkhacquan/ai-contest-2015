@@ -71,7 +71,7 @@ void testIsolatedMode(int *board, const CPos&p = CPos(0, 0))
 		}
 #ifdef OPENCV
 		imshow("game", CMyAI::toImage(board));
-		c = waitKey(200);
+		c = waitKey(50);
 #endif // OPENCV
 	}
 }
@@ -118,20 +118,28 @@ int main_(int argc, char* argv[]){
 		CPos(2, 0), CPos(2, 1), CPos(2, 2), CPos(2, 3), CPos(2, 4), CPos(2, 5), CPos(2, 6), CPos(2, 7), CPos(1, 3), CPos(1, 4), CPos(1, 2) };
 	vector<CPos> p4 = { CPos(0, 2), CPos(2, 2), CPos(3, 0), CPos(3, 1), CPos(1, 2), CPos(1, 3) };
 	vector<CPos> p5 = { CPos(3, 0), CPos(3, 1), CPos(2, 2), CPos(2, 3), CPos(3, 3), CPos(4, 3), CPos(5, 3), CPos(6, 3), CPos(7, 3), CPos(8, 3),
-
 		CPos(9, 3), CPos(9, 4), CPos(9, 5), CPos(9, 6), CPos(9, 7), CPos(9, 8),
 		CPos(0, 8), CPos(1, 8), CPos(02, 8), CPos(3, 8), CPos(4, 8), CPos(5, 8), CPos(6, 8), CPos(7, 8), CPos(8, 8), CPos(10, 10), CPos(0, 9) };
+	vector<CPos> p6 = {
+		CPos(0, 2), CPos(1, 2), CPos(2, 2), CPos(3, 2), CPos(3, 3), CPos(4, 3), CPos(5, 3),
+		CPos(6, 3), CPos(7, 3), CPos(8, 3), CPos(4, 4), CPos(9, 4), CPos(10, 4),
+		CPos(0, 6), CPos(2, 7), CPos(7, 7), CPos(8, 1), CPos(4, 8), CPos(5, 10),
+	};
+
+	vector<CPos> p7 = { CPos(0, 5), CPos(1, 5), CPos(1, 6), CPos(2, 5), CPos(2, 7), CPos(2, 9), CPos(2, 10), CPos(3, 4), CPos(3, 9),
+		CPos(0, 5), CPos(4, 3), CPos(4, 6), CPos(5, 3), CPos(5, 7), CPos(6, 0), CPos(6, 1), CPos(6, 2), CPos(6, 4), CPos(6, 7), CPos(6, 9), CPos(6, 10),
+		CPos(7, 5), CPos(7, 6), CPos(8, 2), CPos(8, 3), CPos(9, 5), CPos(9, 8),
+		CPos(10, 1), CPos(10, 2), CPos(10, 3), CPos(10, 8), };
 	clock_t tStart = clock();
-	for (int i = 0; i < 1; i++){
+	for (int i = 0; i < 10; i++){
 		/*setupBoard(board, &p5, CPos(1, 9));
 		testConnectedComponents(board, CPos(1, 9));
 
 		setupBoard(board, &p5, CPos(0, 10));
 		testConnectedComponents(board, CPos(0, 10));*/
 
-		setupBoard(board, &p4, CPos(1, 3));
-		testIsolatedMode(board, CPos(1, 3));
-		system("pause");
+		setupBoard(board);
+		testIsolatedMode(board);
 	}
 
 	printf("Time taken: %.2fs\n", (double)(clock() - tStart) / CLOCKS_PER_SEC);

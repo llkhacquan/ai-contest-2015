@@ -168,7 +168,6 @@ void CMyAI::move(Direction direction)
 {
 	bool bOk = move(boardData, *myPos, direction);
 	assert(bOk);
-	// history.push_back(direction);
 	*myPos = myPos->move(direction);
 }
 
@@ -188,18 +187,5 @@ vector<int> CMyAI::getAvailableMoves(const int board[], const CPos &pos)
 		result.push_back(DIRECTION_UP);
 	if (getBlock(board, pos.x, pos.y + 1) == BLOCK_EMPTY)
 		result.push_back(DIRECTION_DOWN);
-	return result;
-}
-
-// result a vector of position that is BLOCK_EMPTY next to pos
-vector<CPos> CMyAI::getNearEmptyBlock(const int board[], const CPos &pos)
-{
-	assert(pos.x >= 0 && pos.x < MAP_SIZE && pos.y >= 0 && pos.y < MAP_SIZE);
-	vector<CPos> result;
-	result.clear();
-	for (Direction i = 1; i <= 4; i++){
-		if (getBlock(board, pos.move(i)) == BLOCK_EMPTY)
-			result.push_back(pos.move(i));
-	}
 	return result;
 }

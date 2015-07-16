@@ -31,7 +31,7 @@ using namespace std;
 #define BOARD_SIZE (MAP_SIZE*MAP_SIZE)
 #define MAX_POINTS	1000
 #define MIN_POINTS	0
-#define DEFAULT_DEPTH 10
+#define DEFAULT_DEPTH 8
 
 /// GRAPHIC
 #ifdef OPENCV
@@ -44,7 +44,7 @@ using namespace cv;
 #endif // OPENCV
 
 
-#define SHOW_DEBUG_INFORMATION	1
+#define SHOW_DEBUG_INFORMATION	0
 #ifndef _DEBUG
 #undef SHOW_DEBUG_INFORMATION
 #define  SHOW_DEBUG_INFORMATION 0
@@ -58,8 +58,8 @@ using namespace cv;
 #define DEBUG(x);	
 #endif
 
-static const int SPECIAL_BLOCK = 1073741824; // 2^30
-
+static const int SPECIAL_BIT = 30;
+#define SPECIAL_BLOCK (1 << SPECIAL_BIT)
 
 #endif
 

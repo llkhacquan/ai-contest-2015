@@ -13,7 +13,7 @@ Direction CMyAI::getNextMoveOfLongestPath(const int boardData[], const CPos &pos
 	if (avalableMoves.size() == 1)
 		return avalableMoves[0];
 
-	for (int iMove = 0; iMove < avalableMoves.size(); iMove++){
+	for (unsigned int iMove = 0; iMove < avalableMoves.size(); iMove++){
 		Direction i = avalableMoves[iMove];
 		bool bOk = move(board, pos, i); assert(bOk);
 		int length = CBiconnectedComponents::getEstimatedLength(board, pos.move(i));
