@@ -6,39 +6,6 @@ CBiconnectedComponents::CBiconnectedComponents(){}
 
 CBiconnectedComponents::~CBiconnectedComponents(){}
 
-void setBit(int &number, int iBit){
-	number |= 1 << iBit;
-	assert(number >= 0);
-}
-void clearBit(int &number, int iBit){
-	number &= ~(1 << iBit);
-	assert(number >= 0);
-}
-void toggleBit(int &number, int iBit){
-	number ^= 1 << iBit;
-	assert(number >= 0);
-}
-bool getBit(const int &number, int iBit){
-	return ((number >> iBit) & 1);
-}
-void changeBit(int &number, int iBit, int value){
-	number ^= (-value ^ number) & (1 << iBit);
-}
-int ipowBase2(int exp)
-{
-	return 1 << exp;
-}
-
-int findCode(int block){
-	int t = block - SPECIAL_BLOCK;
-	int code = 0;
-	while (((t & 1) == 0) && (t > 0)){
-		t >>= 1;
-		code++;
-	}
-	return code;
-}
-
 // return the number of components
 vector<Area> CBiconnectedComponents::biconnectedComponents(int const board[], const CPos &playerPos, int outBoard[])
 {
@@ -63,16 +30,16 @@ vector<Area> CBiconnectedComponents::biconnectedComponents(int const board[], co
 
 	bc.dfsVisit(playerPos.to1D());
 
-	// take care the area contains the playerPos
-	for (int iArea = 0; iArea < (int)bc.areas.size(); iArea++)
-		bc.areas[iArea].erase(playerPos.to1D());
+		// take care the area contains the playerPos
+		for (int iArea = 0; iArea < (int)bc.areas.size(); iArea++)
+			bc.areas[iArea].erase(playerPos.to1D());
 
-	bc.areas.push_back(Area());
-	bc.areas.back().insert(playerPos.to1D());
-	bc.areas.back().code = bc.areas.size() - 1;
-	outBoard[playerPos.to1D()] = SPECIAL_BLOCK | ipowBase2(bc.areas.size() - 1);
+		bc.areas.push_back(Area());
+		bc.areas.back().insert(playerPos.to1D());
+		bc.areas.back().code = bc.areas.size() - 1;
+		outBoard[playerPos.to1D()] = SPECIAL_BLOCK | ipowBase2(bc.areas.size() - 1);
 
-	// re-build areas so the larger areas will have more and more vertices
+	// re-build areas so the larger areas will have more and more vertice
 	for (Vertex v = 0; v < BOARD_SIZE; v++){
 		if (bc.oBoard[v] < SPECIAL_BLOCK) // if v is not special then continue
 			continue;
@@ -96,7 +63,7 @@ vector<Area> CBiconnectedComponents::biconnectedComponents(int const board[], co
 			}
 		}
 	}
-	assert(bc.areas.size() < 31);
+	assert(bc.areas.size() <= MAXIMUM_NUMBER_OF_AREAS);
 	// remove area with 0 position
 	sort(bc.areas.begin(), bc.areas.end());
 	vector<Area>::iterator it = bc.areas.begin();
@@ -207,67 +174,13 @@ int CBiconnectedComponents::getEstimatedLength(int const board[], const CPos &pl
 	int oldBlock = board[playerPos.to1D()];
 	assert(oldBlock == BLOCK_PLAYER_1 || oldBlock == BLOCK_PLAYER_2);
 	static int outBoard[BOARD_SIZE];
-	static bool visited[BOARD_SIZE];
-	for (int i = 0; i < BOARD_SIZE; i++){
-		visited[i] = false;
-	}
 	vector<Area> areas = biconnectedComponents(board, playerPos, outBoard);
 	set<Edge> edgesOfCode;
 
 	int startArea = findCode(outBoard[playerPos.to1D()]);
 
-	vector<bool> foundAreas(30, false);
-
 	// construct the new graph
-	queue<Vertex> queueOfAreas;
-	queueOfAreas.push(playerPos.to1D());
-	while (!queueOfAreas.empty()){
-		Vertex a = queueOfAreas.front();
-		queueOfAreas.pop();
-		foundAreas[findCode(outBoard[a])] = true;
-
-		queue<Vertex> queueInAArea;
-		queueInAArea.push(a);
-		while (!queueInAArea.empty()){
-			Vertex v = queueInAArea.front();
-			queueInAArea.pop();
-
-			for (Direction direction = 1; direction <= 4; direction++){
-				// check the specialty of the block
-				int block = CMyAI::getBlock(outBoard, CPos(v).move(direction));
-				if (block < SPECIAL_BLOCK || block == BLOCK_OUT_OF_BOARD)
-					continue;
-				Vertex u = CPos(v).move(direction).to1D();
-				if (visited[u])
-					continue;
-
-				if (outBoard[u] == outBoard[v]){// same area
-					queueInAArea.push(u);
-					visited[u] = true;
-				}
-				else { // maybe found a new area?
-					int code = findCode(block);
-					if (!foundAreas[code]){
-						foundAreas[code] = true;
-						queueOfAreas.push(u);
-					}
-					int block1 = outBoard[u];
-					int block2 = outBoard[v];
-					int code1 = findCode(block1);
-					int code2 = findCode(block2);
-					edgesOfCode.insert(Edge(code1, code2));
-					AdjArea adjArea;
-					adjArea.codeOfAdjArea = code2;
-					adjArea.connections = u;
-					areas[code1].adjAreas.insert(adjArea);
-
-					adjArea.codeOfAdjArea = code1;
-					adjArea.connections = v;
-					areas[code2].adjAreas.insert(adjArea);
-				}
-			}
-		}
-	}
+	constructNewGraph(playerPos, outBoard, edgesOfCode, areas);
 
 	return findLengthOfLongestPath(outBoard, areas, edgesOfCode, startArea, playerPos.to1D());
 }
@@ -427,7 +340,7 @@ void CBiconnectedComponents::visitNode(const int _oBoard[], const vector<Area> &
 	for (int iCode = 0; iCode < (int)areas.size(); iCode++){
 		if (visitted[iCode])
 			continue;
-		if (edgesOfCode.find(Edge(cCode, iCode))!= edgesOfCode.end())
+		if (edgesOfCode.find(Edge(cCode, iCode)) != edgesOfCode.end())
 			adj.push_back(iCode);
 	}
 
@@ -459,4 +372,60 @@ int CBiconnectedComponents::rateBoardForAPlayer(int const board[], const CPos &p
 	set<Edge> edgesOfCode;
 
 	return 0;
+}
+
+void CBiconnectedComponents::constructNewGraph(const CPos &playerPos, int * outBoard, set<Edge> &edgesOfCode, vector<Area> &areas)
+{
+	vector<bool> foundAreas(30, false);
+	static bool visited[BOARD_SIZE];
+	memset(visited, 0, BOARD_SIZE);
+	queue<Vertex> queueOfAreas;
+	queueOfAreas.push(playerPos.to1D());
+	while (!queueOfAreas.empty()){
+		Vertex a = queueOfAreas.front();
+		queueOfAreas.pop();
+		foundAreas[findCode(outBoard[a])] = true;
+
+		queue<Vertex> queueInAArea;
+		queueInAArea.push(a);
+		while (!queueInAArea.empty()){
+			Vertex v = queueInAArea.front();
+			queueInAArea.pop();
+
+			for (Direction direction = 1; direction <= 4; direction++){
+				// check the specialty of the block
+				int block = CMyAI::getBlock(outBoard, CPos(v).move(direction));
+				if (block < SPECIAL_BLOCK || block == BLOCK_OUT_OF_BOARD)
+					continue;
+				Vertex u = CPos(v).move(direction).to1D();
+				if (visited[u])
+					continue;
+
+				if (outBoard[u] == outBoard[v]){// same area
+					queueInAArea.push(u);
+					visited[u] = true;
+				}
+				else { // maybe found a new area?
+					int code = findCode(block);
+					if (!foundAreas[code]){
+						foundAreas[code] = true;
+						queueOfAreas.push(u);
+					}
+					int block1 = outBoard[u];
+					int block2 = outBoard[v];
+					int code1 = findCode(block1);
+					int code2 = findCode(block2);
+					edgesOfCode.insert(Edge(code1, code2));
+					AdjArea adjArea;
+					adjArea.codeOfAdjArea = code2;
+					adjArea.connections = u;
+					areas[code1].adjAreas.insert(adjArea);
+
+					adjArea.codeOfAdjArea = code1;
+					adjArea.connections = v;
+					areas[code2].adjAreas.insert(adjArea);
+				}
+			}
+		}
+	}
 }

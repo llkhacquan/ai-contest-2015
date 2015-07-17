@@ -18,9 +18,6 @@
     <ClCompile Include="src\main.cpp">
       <Filter>Source Files</Filter>
     </ClCompile>
-    <ClCompile Include="Pos.cpp">
-      <Filter>Header Files</Filter>
-    </ClCompile>
     <ClCompile Include="AI_BasicOperators.cpp">
       <Filter>Source Files</Filter>
     </ClCompile>
@@ -40,6 +37,9 @@
       <Filter>Source Files</Filter>
     </ClCompile>
     <ClCompile Include="AI_rateBoardFunctions.cpp">
+      <Filter>Source Files</Filter>
+    </ClCompile>
+    <ClCompile Include="Pos.cpp">
       <Filter>Source Files</Filter>
     </ClCompile>
   </ItemGroup>

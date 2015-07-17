@@ -42,9 +42,27 @@ void AI_Update()
 	}
 }
 
-void setupBoard(int *board, const vector<CPos> *positions = NULL, const CPos&p1 = CPos(0, 0), const CPos &p2 = CPos(10, 10)){
-	if (positions == NULL)
-		CMyAI::createNewBoard(board, rand() % 15);
+void setupBoard(int *board, const vector<CPos> *positions, CPos&p1 = CPos(0, 0), CPos &p2 = CPos(10, 10)){
+	if (positions == NULL){
+		CMyAI::createNewBoard(board, rand() % 25 + 5);
+		board[0] = board[BOARD_SIZE - 1] = BLOCK_OBSTACLE;
+		while (true) {
+			int i = rand() % 121;
+			if (board[i] == BLOCK_EMPTY){
+				board[i] = BLOCK_PLAYER_1;
+				p1 = CPos(i);
+				break;
+			}
+		}
+		while (true){
+			int i = rand() % 121;
+			if (board[i] == BLOCK_EMPTY){
+				board[i] = BLOCK_PLAYER_2;
+				p2 = CPos(i);
+				break;
+			}
+		}
+	}
 	else {
 		memset(board, 0, BOARD_SIZE*sizeof(int));
 		for (int j = 0; j < (int)positions->size(); j++){
@@ -96,14 +114,19 @@ void testConnectedComponents(int *board, CPos p = CPos(0, 0))
 }
 
 void testRateBoard(int*board, const CPos &p1 = CPos(0, 0), const CPos &p2 = CPos(10, 10)){
-#ifdef OPENCV
-	imshow("test", CMyAI::toImage(board));
-	waitKey(200);
-#endif // OPENCV
+	CMyAI::rateBoard(board, p1, p2, PLAYER_1);
 	CMyAI::rateBoard2(board, p1, p2, PLAYER_1);
+#ifdef OPENCV
+	while (true){
+		imshow("test", CMyAI::toImage(board));
+		int c = waitKey(200);
+		if (c == ' ')
+			break;
+	}
+#endif // OPENCV
 }
 
-int main_(int argc, char* argv[]){
+int main(int argc, char* argv[]){
 	// test fillDistance
 	pAI = new CMyAI();
 	std::srand((int)std::time(0));
@@ -138,29 +161,27 @@ int main_(int argc, char* argv[]){
 		CPos(7, 5), CPos(7, 6), CPos(8, 2), CPos(8, 3), CPos(9, 5), CPos(9, 8),
 		CPos(10, 1), CPos(10, 2), CPos(10, 3), CPos(10, 8), };
 	clock_t tStart = clock();
-	for (int i = 0; i < 20; i++){
+	for (int i = 0; i < 100; i++){
 		/*setupBoard(board, &p5, CPos(1, 9));
 		testConnectedComponents(board, CPos(1, 9));
 
 		setupBoard(board, &p5, CPos(0, 10));
 		testConnectedComponents(board, CPos(0, 10));*/
-
-		setupBoard(board);
+		CPos p1, p2;
+		setupBoard(board, NULL, p1, p2);
 		//testIsolatedMode(board);
-		testRateBoard(board);
-		system("pause");
+		testRateBoard(board, p1, p2);
 	}
 
 	printf("Time taken: %.2fs\n", (double)(clock() - tStart) / CLOCKS_PER_SEC);
 	return 0;
 }
 
-
 ////////////////////////////////////////////////////////////
 //                DON'T TOUCH THIS PART                   //
 ////////////////////////////////////////////////////////////
 
-int main(int argc, char* argv[])
+int main_(int argc, char* argv[])
 {
 	srand(clock());
 

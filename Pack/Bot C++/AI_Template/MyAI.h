@@ -4,6 +4,7 @@
 #include "mydefine.h"
 #include <vector>
 #include "Pos.h"
+#include "BiconnectedComponents.h"
 
 using namespace std;
 
@@ -40,6 +41,11 @@ public:
 	static int evaluateBoard(const int _board[], const CPos &_player1, const CPos &_player2, const Player nextPlayer);
 	static int rateBoard(int _board[], const CPos &_player1, const CPos &_player2, const int nextPlayer);
 	static int rateBoard2(int _board[], const CPos &_player1, const CPos &_player2, const int nextPlayer);
+
+	static int calculatePotentialPoint(const int * board, const CPos & _p, int * oBoard, int * distanceBoard);
+
+	static void constructNewGraphUsedInRateBoard(const int oBoard1[], const CPos &_p1, vector<Area> &areas, int* numberOfConnectionsToEnemyArea, set<Edge> &edgesOfCode);
+
 	static void sortMoves(vector<Direction> moves, const CPos &_player1, const CPos &_player2, const Player nextPlayer);
 	static int isIsolated(const int _boardData[], const CPos &pos1, const CPos &pos2);
 	bool isIsolated();

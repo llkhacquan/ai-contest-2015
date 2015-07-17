@@ -131,6 +131,9 @@ public:
 	stack<Edge> myStack;
 
 	static int getEstimatedLength(int const board[], const CPos &playerPos);
+
+	static void constructNewGraph(const CPos &playerPos, int * outBoard, set<Edge> &edgesOfCode, vector<Area> &areas);
+
 	static int findLengthOfLongestPath(const int _oBoard[], const vector<Area> &areas, const set<Edge> &edgesOfCode, int startArea, const int &startPos);
 	static int calculateLengthOfPath(const int _oBoard[], const vector<Area> &areas, const set<Edge> &edgesOfCode, const vector<int> &path, const int &startPos);
 	static void visitNode(const int _oBoard[], const vector<Area> &areas, const set<Edge> &edgesOfCode,

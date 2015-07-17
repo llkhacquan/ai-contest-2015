@@ -31,7 +31,7 @@ Direction CMyAI::getNextMoveOfLongestPath(const int boardData[], const CPos &pos
 		return iMax;
 }
 
-vector<int> CMyAI::getALongestPath(int const boardData[121], const CPos &pos)
+vector<int> CMyAI::getALongestPath(int const boardData[], const CPos &pos)
 {
 	assert(pos.x >= 0 && pos.x < MAP_SIZE && pos.y >= 0 && pos.y < MAP_SIZE);
 	static int board[121];
@@ -46,48 +46,54 @@ vector<int> CMyAI::getALongestPath(int const boardData[121], const CPos &pos)
 	return l;
 }
 
-vector<Direction> CMyAI::findShortestPath(const int _board[121], const CPos& start, CPos& end)
+vector<Direction> CMyAI::findShortestPath(const int _board[], const CPos& start, CPos& end)
 {
-	int board[121];
+	int board[BOARD_SIZE];
 	memcpy(board, _board, BOARD_SIZE*sizeof(int));
-	vector<Direction> result;
+	vector<Direction> path;
 
+	// we move from end point to every point
 	fillDistance(board, end);
 
+	// we scan the 4 blocks near the start point, find the block with minimum distance from end point (if there is no such point, start and end are seperated
 	CPos cPos, mPos(-1, -1);
 	for (Direction i = 1; i <= 4; i++){
 		int block = getBlock(board, cPos = start.move(i));
 		if (block >= SPECIAL_BLOCK){
 			if (mPos.x == -1){
 				mPos = cPos;
+				path.push_back(i);
 				continue;
 			}
-			if (block > getBlock(board, cPos))
+			if (block < getBlock(board, cPos)){
+				path[0] = i;
 				mPos = cPos;
+			}
 		}
 	}
 	if (mPos.x == -1){
 		// cant reach end pos from start pos
-		return result;
+		return path;
 	}
 
+	// current point = mPoint (minPoint)
 	cPos = mPos;
 	while (true){
 		int block = getBlock(board, cPos);
 		if (block == SPECIAL_BLOCK){
+			// we reach the end point
 			assert(cPos == end);
 			break;
 		}
 		for (Direction i = 1; i <= 4; i++){
 			if (getBlock(board, (mPos = cPos.move(i))) == block - 1){
-				result.push_back(i);
+				path.push_back(i);
 				cPos = mPos;
 				break;
 			}
 		}
 	}
-
-	return result;
+	return path;
 }
 
 // this method use a special method to get the length of the longest path when player move form the input position in boardData

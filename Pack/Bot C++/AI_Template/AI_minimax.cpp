@@ -12,7 +12,7 @@ int CMyAI::ab(int board[], const CPos&_p1, const CPos&_p2, Player next, int dept
 
 	int winner = evaluateBoard(board, _p1, _p2, next);
 	if (depth == 0){
-		return rateBoard2(board, _p1, _p2, next);
+		return rateBoard(board, _p1, _p2, next);
 	}
 	else if (winner == PLAYER_1){
 		return MAX_POINTS;
