@@ -120,7 +120,7 @@ void testRateBoard(int*board, const CPos &p1 = CPos(0, 0), const CPos &p2 = CPos
 	while (true){
 		imshow("test", CMyAI::toImage(board));
 		int c = waitKey(200);
-		if (c == ' ')
+		// if (c == ' ')
 			break;
 	}
 #endif // OPENCV

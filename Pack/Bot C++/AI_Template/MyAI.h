@@ -54,7 +54,7 @@ public:
 	// longest path
 	static Direction getNextMoveOfLongestPath(const int boardData[], const CPos &pos, const int depth = 0);
 	static vector<int> getALongestPath(const int boardData[], const CPos &pos);
-	static vector<Direction> findShortestPath(const int board[], const CPos& start, CPos& end);
+	static vector<Direction>& findShortestPath(const int board[], const CPos& start, const CPos& end);
 	static int getLengthOfLongestPath(const int boardData[], const CPos &pos);
 	static void findLongestPath(int board[], CPos& pos, vector<Direction> &v, vector<Direction> &l);
 

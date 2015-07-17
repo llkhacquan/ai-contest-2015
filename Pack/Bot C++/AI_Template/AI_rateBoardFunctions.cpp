@@ -167,16 +167,16 @@ void CMyAI::constructNewGraphUsedInRateBoard(const int oBoard1[], const CPos &_p
 	}
 }
 
-int CMyAI::calculatePotentialPoint(const int * board, const CPos & _p, int * oBoard, int * distanceBoard)
+int CMyAI::calculatePotentialPoint(const int * board, const CPos & playerPos, int * oBoard, int * distanceBoard)
 {
-	vector<Area> areas = CBiconnectedComponents::biconnectedComponents(board, _p, oBoard);
+	vector<Area> areas = CBiconnectedComponents::biconnectedComponents(board, playerPos, oBoard);
 	// construct areas' connections with each other and enemy area (-2 block)
 	set<Edge> edgesOfCode;
 	static int numberOfConnectionsToEnemyArea[MAXIMUM_NUMBER_OF_AREAS];
 	static vector<int> areasCode(MAXIMUM_NUMBER_OF_AREAS);
 	areasCode.clear();
 	memset(numberOfConnectionsToEnemyArea, 0, MAXIMUM_NUMBER_OF_AREAS * sizeof(int));
-	constructNewGraphUsedInRateBoard(oBoard, _p, areas, numberOfConnectionsToEnemyArea, edgesOfCode);
+	constructNewGraphUsedInRateBoard(oBoard, playerPos, areas, numberOfConnectionsToEnemyArea, edgesOfCode);
 	int max_ = *max_element(numberOfConnectionsToEnemyArea, numberOfConnectionsToEnemyArea + areas.size());
 	for (unsigned int i = 0; i < areas.size(); i++){
 		if (numberOfConnectionsToEnemyArea[i] == max_)
@@ -206,14 +206,15 @@ int CMyAI::calculatePotentialPoint(const int * board, const CPos & _p, int * oBo
 		static int board2[BOARD_SIZE];
 		memcpy(board2, board, BOARD_SIZE*sizeof(int));
 		Vertex v = *iVertex;
-		vector<Direction> path = findShortestPath(board, _p, CPos(v));
-		CPos p = _p;
+
+		CPos end(v);
+		vector<Direction> path = findShortestPath(board, playerPos, end);
+		CPos p = playerPos;
 		for (unsigned int i = 0; i < path.size(); i++){
-			bool bOk = move(board2, p, path[i]);
-			assert(bOk);
+			bool bOk = move(board2, p, path[i]); assert(bOk);
 			p = p.move(path[i]);
 		}
-		assert(p.to1D() == v);
+		assert(p == end);
 		maxLength = max(maxLength, (int)path.size() + CBiconnectedComponents::getEstimatedLength(board2, p));
 	}
 	assert(maxLength >= 0);

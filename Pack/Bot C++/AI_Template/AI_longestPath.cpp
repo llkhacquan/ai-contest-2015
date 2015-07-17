@@ -24,7 +24,7 @@ Direction CMyAI::getNextMoveOfLongestPath(const int boardData[], const CPos &pos
 		bOk = move(board, pos.move(i), getOpositeDirection(i), true);
 		assert(bOk);
 	}
-	cout << "estimated length = " << maxLength << endl;
+	DEBUG(cout << "estimated length = " << maxLength << endl);
 	if (maxLength < 15)
 		return getALongestPath(boardData, pos)[0];
 	else
@@ -46,11 +46,15 @@ vector<int> CMyAI::getALongestPath(int const boardData[], const CPos &pos)
 	return l;
 }
 
-vector<Direction> CMyAI::findShortestPath(const int _board[], const CPos& start, CPos& end)
+vector<Direction>& CMyAI::findShortestPath(const int _board[], const CPos& start, const CPos& end)
 {
+	static vector<Direction> path(BOARD_SIZE);
+	path.clear();
+	if (start == end)
+		return path;
+
 	int board[BOARD_SIZE];
 	memcpy(board, _board, BOARD_SIZE*sizeof(int));
-	vector<Direction> path;
 
 	// we move from end point to every point
 	fillDistance(board, end);
@@ -59,22 +63,38 @@ vector<Direction> CMyAI::findShortestPath(const int _board[], const CPos& start,
 	CPos cPos, mPos(-1, -1);
 	for (Direction i = 1; i <= 4; i++){
 		int block = getBlock(board, cPos = start.move(i));
-		if (block >= SPECIAL_BLOCK){
-			if (mPos.x == -1){
-				mPos = cPos;
-				path.push_back(i);
-				continue;
-			}
-			if (block < getBlock(board, cPos)){
-				path[0] = i;
-				mPos = cPos;
+		if (getBlock(_board, end) == BLOCK_EMPTY)
+		{
+			if (block >= SPECIAL_BLOCK){
+				if (mPos.x == -1){
+					mPos = cPos;
+					path.push_back(i);
+				}
+				else if (block < getBlock(board, cPos)){
+					path[0] = i;
+					mPos = cPos;
+				}
 			}
 		}
+		else
+			if (block > SPECIAL_BLOCK){
+				if (mPos.x == -1){
+					mPos = cPos;
+					path.push_back(i);
+				}
+				else if (block < getBlock(board, cPos)){
+					path[0] = i;
+					mPos = cPos;
+				}
+			}
 	}
+
 	if (mPos.x == -1){
 		// cant reach end pos from start pos
 		return path;
 	}
+
+	assert(path.size() == 1);
 
 	// current point = mPoint (minPoint)
 	cPos = mPos;
@@ -93,6 +113,16 @@ vector<Direction> CMyAI::findShortestPath(const int _board[], const CPos& start,
 			}
 		}
 	}
+
+#ifdef _DEBUG
+	memcpy(board, _board, BOARD_SIZE*sizeof(int));
+	CPos p = start;
+	for (unsigned int i = 0; i < path.size(); i++){
+		bool bOk = move(board, p, path[i]); assert(bOk);
+		p = p.move(path[i]);
+	}
+	assert(p == end);
+#endif
 	return path;
 }
 
