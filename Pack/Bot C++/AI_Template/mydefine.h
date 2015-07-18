@@ -13,25 +13,21 @@
 #include <algorithm>
 #include <set>
 
-
 #include "include\ai\defines.h"
 #include "include\ai\AI.h"
 
+#define BOT_ACTIVE		1
 
-
-struct Position;
-
-typedef int Player;
-typedef int Direction;
-typedef int Vertex;
-
+typedef int TPlayer;
+typedef int TMove;
+typedef int Pos1D;
 using namespace std;
 
 #define CC(x,y)	CONVERT_COORD(x,y)
 #define BOARD_SIZE (MAP_SIZE*MAP_SIZE)
 #define MAX_POINTS	1000
 #define MIN_POINTS	0
-#define DEFAULT_DEPTH 8
+#define DEFAULT_DEPTH 10
 #define BLOCK_ENEMY_AREA -2
 
 #define MAXIMUM_NUMBER_OF_AREAS		30
@@ -64,40 +60,6 @@ using namespace cv;
 
 static const int SPECIAL_BIT = 30;
 #define SPECIAL_BLOCK (1 << SPECIAL_BIT)
-
-
-static inline void setBit(int &number, int iBit){
-	number |= 1 << iBit;
-	assert(number >= 0);
-}
-static inline void clearBit(int &number, int iBit){
-	number &= ~(1 << iBit);
-	assert(number >= 0);
-}
-static inline void toggleBit(int &number, int iBit){
-	number ^= 1 << iBit;
-	assert(number >= 0);
-}
-static inline bool getBit(const int &number, int iBit){
-	return ((number >> iBit) & 1);
-}
-static inline void changeBit(int &number, int iBit, int value){
-	number ^= (-value ^ number) & (1 << iBit);
-}
-static inline int ipowBase2(int exp)
-{
-	return 1 << exp;
-}
-
-static inline int findCode(int block){
-	int t = block - SPECIAL_BLOCK;
-	int code = 0;
-	while (((t & 1) == 0) && (t > 0)){
-		t >>= 1;
-		code++;
-	}
-	return code;
-}
 
 #endif
 

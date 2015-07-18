@@ -110,7 +110,7 @@
     <OutDir>$(SolutionDir)$(Configuration)\</OutDir>
     <IntDir>$(Configuration)\</IntDir>
     <LinkIncremental>false</LinkIncremental>
-    <PostBuildEventUseInBuild>true</PostBuildEventUseInBuild>
+    <PostBuildEventUseInBuild>false</PostBuildEventUseInBuild>
   </PropertyGroup>
   <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='2012_Debug|Win32'">
     <OutDir>$(SolutionDir)$(Configuration)\</OutDir>
@@ -256,24 +256,20 @@
     </Link>
   </ItemDefinitionGroup>
   <ItemGroup>
-    <ClCompile Include="AI_BasicOperators.cpp" />
-    <ClCompile Include="AI_DebugFunctions.cpp" />
-    <ClCompile Include="AI_longestPath.cpp" />
-    <ClCompile Include="AI_mainFunctions.cpp" />
-    <ClCompile Include="AI_minimax.cpp" />
-    <ClCompile Include="AI_rateBoardFunctions.cpp" />
-    <ClCompile Include="BiconnectedComponents.cpp" />
-    <ClCompile Include="Pos.cpp" />
+    <ClCompile Include="MyAI.cpp" />
     <ClCompile Include="src\main.cpp" />
   </ItemGroup>
   <ItemGroup>
-    <ClInclude Include="BiconnectedComponents.h" />
     <ClInclude Include="include\ai\AI.h" />
     <ClInclude Include="include\ai\defines.h" />
     <ClInclude Include="include\ai\Game.h" />
     <ClInclude Include="MyAI.h" />
     <ClInclude Include="mydefine.h" />
-    <ClInclude Include="Pos.h" />
+  </ItemGroup>
+  <ItemGroup>
+    <ProjectReference Include="..\AIInterface\AIInterface.vcxproj">
+      <Project>{1991f5bd-b3a1-4381-a3ce-445c2596de7d}</Project>
+    </ProjectReference>
   </ItemGroup>
   <Import Project="$(VCTargetsPath)\Microsoft.Cpp.targets" />
   <ImportGroup Label="ExtensionTargets">

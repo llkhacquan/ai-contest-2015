@@ -1,16 +1,15 @@
 #pragma once
-#include "ai/defines.h"
-#include "ai/AI.h"
-#include "mydefine.h"
-#include "Pos.h"
+#include "..\AI_Template\include/ai/defines.h"
+#include "..\AI_Template\include/ai/AI.h"
+#include "..\AI_Template\mydefine.h"
+#include "Pos2D.h"
 
-typedef int Vertex;
-
-struct Edge{
-	Vertex u, v;
+class Edge{
+public:
+	Pos1D u, v;
 
 	Edge() :u(0), v(0){}
-	Edge(Vertex _v1, Vertex _v2) : u(_v1), v(_v2) {	}
+	Edge(Pos1D _v1, Pos1D _v2) : u(_v1), v(_v2) {	}
 
 	Edge operator =(const Edge &e) { u = e.u; v = e.v; return *this; }
 
@@ -39,9 +38,10 @@ struct Edge{
 	}
 };
 
-struct AdjArea{
+class AdjArea{
+public:
 	int codeOfAdjArea;
-	Vertex connections;
+	Pos1D connections;
 	AdjArea operator=(const AdjArea &a){
 		codeOfAdjArea = a.codeOfAdjArea;
 		connections = a.connections;
@@ -60,7 +60,8 @@ struct AdjArea{
 	}
 };
 
-struct Area{
+class Area{
+public:
 	int code;
 	bool inTheAreas[BOARD_SIZE];
 	int nVertices;
@@ -71,14 +72,14 @@ struct Area{
 		memset(inTheAreas, 0, BOARD_SIZE);
 	}
 
-	void insert(const Vertex &u){
+	void insert(const Pos1D &u){
 		if (!inTheAreas[u]){
 			inTheAreas[u] = true;
 			nVertices++;
 		}
 	}
 
-	void erase(const Vertex &u){
+	void erase(const Pos1D &u){
 		if (inTheAreas[u]){
 			inTheAreas[u] = false;
 			nVertices--;
@@ -117,7 +118,7 @@ public:
 	~CBiconnectedComponents();
 
 	// input
-	CPos playerPos;
+	Pos2D playerPos;
 	int* oBoard;
 	vector<Area> areas;
 	// data
@@ -130,21 +131,21 @@ public:
 	int nComponents;
 	stack<Edge> myStack;
 
-	static int getEstimatedLength(int const board[], const CPos &playerPos);
+	static int getEstimatedLength(int const board[], const Pos2D &playerPos);
 
-	static void constructNewGraph(const CPos &playerPos, int * outBoard, set<Edge> &edgesOfCode, vector<Area> &areas);
+	static void constructNewGraph(const Pos2D &playerPos, int * outBoard, set<Edge> &edgesOfCode, vector<Area> &areas);
 
 	static int findLengthOfLongestPath(const int _oBoard[], const vector<Area> &areas, const set<Edge> &edgesOfCode, int startArea, const int &startPos);
 	static int calculateLengthOfPath(const int _oBoard[], const vector<Area> &areas, const set<Edge> &edgesOfCode, const vector<int> &path, const int &startPos);
 	static void visitNode(const int _oBoard[], const vector<Area> &areas, const set<Edge> &edgesOfCode,
 		vector<int> &cPath, int &cLength, vector<int> &lPath, int &lLength, vector<bool> &visitted, const int cCode, const int &startPos);
 
-	static vector<Area> biconnectedComponents(int const board[], const CPos &playerPos, int outBoard[]);
-	void dfsVisit(const Vertex & u);
-	void createNewArea(const Vertex &v1, const Vertex &v2);
-	void adjection(bool out[], Vertex const &u);
+	static vector<Area> biconnectedComponents(int const board[], const Pos2D &playerPos, int outBoard[]);
+	void dfsVisit(const Pos1D & u);
+	void createNewArea(const Pos1D &v1, const Pos1D &v2);
+	void adjection(bool out[], Pos1D const &u);
 
-	static int rateBoardForAPlayer(int const oBoard[], const CPos &playerPos);
+	static int rateBoardForAPlayer(int const oBoard[], const Pos2D &playerPos);
 };
 
 

@@ -1,13 +1,13 @@
 #include "BiconnectedComponents.h"
-#include "MyAI.h"
-#include "Pos.h"
+#include "..\AIInterface\Pos2D.h" 
+#include "../AIInterface/StaticFunctions.h"
 
 CBiconnectedComponents::CBiconnectedComponents(){}
 
 CBiconnectedComponents::~CBiconnectedComponents(){}
 
 // return the number of components
-vector<Area> CBiconnectedComponents::biconnectedComponents(int const board[], const CPos &playerPos, int outBoard[])
+vector<Area> CBiconnectedComponents::biconnectedComponents(int const board[], const Pos2D &playerPos, int outBoard[])
 {
 	// setting up
 	CBiconnectedComponents bc;
@@ -40,7 +40,7 @@ vector<Area> CBiconnectedComponents::biconnectedComponents(int const board[], co
 		outBoard[playerPos.to1D()] = SPECIAL_BLOCK | ipowBase2(bc.areas.size() - 1);
 
 	// re-build areas so the larger areas will have more and more vertice
-	for (Vertex v = 0; v < BOARD_SIZE; v++){
+	for (Pos1D v = 0; v < BOARD_SIZE; v++){
 		if (bc.oBoard[v] < SPECIAL_BLOCK) // if v is not special then continue
 			continue;
 		int block = bc.oBoard[v];
@@ -73,7 +73,7 @@ vector<Area> CBiconnectedComponents::biconnectedComponents(int const board[], co
 
 #ifdef _DEBUG	
 	// make sure 1 vertex is in only one vertex
-	for (Vertex v = 0; v < BOARD_SIZE; v++){
+	for (Pos1D v = 0; v < BOARD_SIZE; v++){
 		int block = bc.oBoard[v];
 		if (block < SPECIAL_BLOCK)
 			continue;
@@ -90,7 +90,7 @@ vector<Area> CBiconnectedComponents::biconnectedComponents(int const board[], co
 	// ensure the areas[].nVertices
 	for (unsigned int iArea = 0; iArea < bc.areas.size(); iArea++){
 		int iCount = 0;
-		for (Vertex v = 0; v < BOARD_SIZE; v++){
+		for (Pos1D v = 0; v < BOARD_SIZE; v++){
 			if (bc.areas[iArea].inTheAreas[v])
 				iCount++;
 		}
@@ -100,7 +100,7 @@ vector<Area> CBiconnectedComponents::biconnectedComponents(int const board[], co
 
 	for (unsigned int iArea = 0; iArea < bc.areas.size(); iArea++){
 		bc.areas[iArea].code = iArea;
-		for (Vertex v = 0; v < BOARD_SIZE; v++){
+		for (Pos1D v = 0; v < BOARD_SIZE; v++){
 			if (bc.areas[iArea].inTheAreas[v])
 				outBoard[v] = SPECIAL_BLOCK | ipowBase2(iArea);
 		}
@@ -109,7 +109,7 @@ vector<Area> CBiconnectedComponents::biconnectedComponents(int const board[], co
 	return bc.areas;
 }
 
-void CBiconnectedComponents::dfsVisit(const Vertex &u){
+void CBiconnectedComponents::dfsVisit(const Pos1D &u){
 	assert(u >= 0 && u < BOARD_SIZE);
 	visited[u] = true;
 	iCount++;
@@ -121,7 +121,7 @@ void CBiconnectedComponents::dfsVisit(const Vertex &u){
 	for (int i = 0; i < 4; i++){
 		if (!bAdj[i])
 			continue;
-		Vertex v = CPos(u).move(i + 1).to1D();
+		Pos1D v = Pos2D(u).move(i + 1).to1D();
 		if (!visited[v]){
 			myStack.push(Edge(u, v));
 			parrent[v] = u;
@@ -137,7 +137,7 @@ void CBiconnectedComponents::dfsVisit(const Vertex &u){
 	}
 }
 
-void CBiconnectedComponents::createNewArea(const Vertex &u, const Vertex &v){
+void CBiconnectedComponents::createNewArea(const Pos1D &u, const Pos1D &v){
 	assert(u >= 0 && u < BOARD_SIZE);
 	assert(v >= 0 && v < BOARD_SIZE);
 	// cout << "new biconnected found" << endl;
@@ -156,12 +156,12 @@ void CBiconnectedComponents::createNewArea(const Vertex &u, const Vertex &v){
 	nComponents++;
 }
 
-void CBiconnectedComponents::adjection(bool out[], Vertex const &u){
+void CBiconnectedComponents::adjection(bool out[], Pos1D const &u){
 	assert(u >= 0 && u < BOARD_SIZE);
-	CPos pos(u);
+	Pos2D pos(u);
 	for (int i = 1; i <= 4; i++){
 		static int block;
-		block = CMyAI::getBlock(oBoard, pos.move(i));
+		block = getBlock(oBoard, pos.move(i));
 		if (block == BLOCK_EMPTY || block > SPECIAL_BLOCK)
 			out[i - 1] = true;
 		else
@@ -169,7 +169,7 @@ void CBiconnectedComponents::adjection(bool out[], Vertex const &u){
 	}
 }
 
-int CBiconnectedComponents::getEstimatedLength(int const board[], const CPos &playerPos)
+int CBiconnectedComponents::getEstimatedLength(int const board[], const Pos2D &playerPos)
 {
 	int oldBlock = board[playerPos.to1D()];
 	assert(oldBlock == BLOCK_PLAYER_1 || oldBlock == BLOCK_PLAYER_2);
@@ -217,7 +217,7 @@ int CBiconnectedComponents::calculateLengthOfPath(const int _oBoard[], const vec
 	if (path.size() >= 2) {
 		int delta = -1;
 		int even = 0, odd = 0;
-		for (Vertex j = 0; j < BOARD_SIZE; j++){
+		for (Pos1D j = 0; j < BOARD_SIZE; j++){
 			if (!areas[pathBach].inTheAreas[j])
 				continue;
 			if (j % 2 == 1)
@@ -259,7 +259,7 @@ int CBiconnectedComponents::calculateLengthOfPath(const int _oBoard[], const vec
 		for (int i = 1; i < (int)path.size() - 1; i++){
 			Area const *area = &(areas[path[i]]);
 			int even = 0, odd = 0;
-			for (Vertex j = 0; j < BOARD_SIZE; j++){
+			for (Pos1D j = 0; j < BOARD_SIZE; j++){
 				if (!area->inTheAreas[j])
 					continue;
 				if (j % 2 == 1)
@@ -359,7 +359,7 @@ void CBiconnectedComponents::visitNode(const int _oBoard[], const vector<Area> &
 	cPath.pop_back();
 }
 
-int CBiconnectedComponents::rateBoardForAPlayer(int const board[], const CPos &playerPos)
+int CBiconnectedComponents::rateBoardForAPlayer(int const board[], const Pos2D &playerPos)
 {
 	int oldBlock = board[playerPos.to1D()];
 	assert(oldBlock == BLOCK_PLAYER_1 || oldBlock == BLOCK_PLAYER_2);
@@ -374,30 +374,30 @@ int CBiconnectedComponents::rateBoardForAPlayer(int const board[], const CPos &p
 	return 0;
 }
 
-void CBiconnectedComponents::constructNewGraph(const CPos &playerPos, int * outBoard, set<Edge> &edgesOfCode, vector<Area> &areas)
+void CBiconnectedComponents::constructNewGraph(const Pos2D &playerPos, int * outBoard, set<Edge> &edgesOfCode, vector<Area> &areas)
 {
 	vector<bool> foundAreas(30, false);
 	static bool visited[BOARD_SIZE];
 	memset(visited, 0, BOARD_SIZE);
-	queue<Vertex> queueOfAreas;
+	queue<Pos1D> queueOfAreas;
 	queueOfAreas.push(playerPos.to1D());
 	while (!queueOfAreas.empty()){
-		Vertex a = queueOfAreas.front();
+		Pos1D a = queueOfAreas.front();
 		queueOfAreas.pop();
 		foundAreas[findCode(outBoard[a])] = true;
 
-		queue<Vertex> queueInAArea;
+		queue<Pos1D> queueInAArea;
 		queueInAArea.push(a);
 		while (!queueInAArea.empty()){
-			Vertex v = queueInAArea.front();
+			Pos1D v = queueInAArea.front();
 			queueInAArea.pop();
 
-			for (Direction direction = 1; direction <= 4; direction++){
+			for (TMove direction = 1; direction <= 4; direction++){
 				// check the specialty of the block
-				int block = CMyAI::getBlock(outBoard, CPos(v).move(direction));
+				int block = getBlock(outBoard, Pos2D(v).move(direction));
 				if (block < SPECIAL_BLOCK || block == BLOCK_OUT_OF_BOARD)
 					continue;
-				Vertex u = CPos(v).move(direction).to1D();
+				Pos1D u = Pos2D(v).move(direction).to1D();
 				if (visited[u])
 					continue;
 

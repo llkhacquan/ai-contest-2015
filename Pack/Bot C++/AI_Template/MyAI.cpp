@@ -1,9 +1,33 @@
 #include "MyAI.h"
 #include "mydefine.h"
+#include "..\AIInterface\StaticFunctions.h"
+#include "..\AIInterface\HeuristicBase.h"
+#include "..\AIInterface\SearchAlgorithm.h"
+
+int CMyAI::DEPTH;
+
+CMyAI::CMyAI()
+{
+	ifstream f;
+	int d;
+	f.open("config.txt");
+	if (f.is_open()){
+		f >> d;
+		f.close();
+	}
+	else
+		d = DEFAULT_DEPTH;
+	DEPTH = d;
+	p_ai = AI::GetInstance();
+}
+
+CMyAI::~CMyAI()
+{
+
+}
 
 
-
-void CMyAI::updateBoard(const int* newBoard, const CPos &_p1, const CPos &_p2, const Player next, const Player we)
+void CMyAI::updateBoard(const int* newBoard, const Pos2D &_p1, const Pos2D &_p2, const TPlayer next, const TPlayer we)
 {
 	// update newBoard to boardData and players' positions
 	memcpy(boardData, newBoard, BOARD_SIZE*sizeof(int));
@@ -17,13 +41,13 @@ void CMyAI::updateBoard(const int* newBoard, const CPos &_p1, const CPos &_p2, c
 }
 
 // calculate and give an optimal move for ourselves 
-Direction CMyAI::newTurn()
+TMove CMyAI::newTurn()
 {
 	static int tempBoard[BOARD_SIZE];
 	clock_t startTime = clock();
 	// update board first
-	Player we, next;
-	CPos p1, p2;
+	TPlayer we, next;
+	Pos2D p1, p2;
 	if (p_ai->GetBlock(p_ai->GetMyPosition()) == BLOCK_PLAYER_1){
 		we = PLAYER_1;
 		p1 = p_ai->GetMyPosition();
@@ -40,10 +64,10 @@ Direction CMyAI::newTurn()
 	updateBoard(p_ai->GetBoard(), p1, p2, next, we);
 
 	// start ISOLATED MODE
-	if (isIsolated()){
+	if (isIsolated(this->boardData, this->posPlayer1, this->posPlayer1) < 0){
 		cout << "start isolated mode!" << endl;
-		CPos pos; pos = p_ai->GetMyPosition();
-		return getNextMoveOfLongestPath(boardData, pos, 10);
+		Pos2D pos; pos = p_ai->GetMyPosition();
+		return CHeuristicBase::getFirstMoveOfTheLongestPath(boardData, pos, 10);
 	}
 	// end ISOLATED MODE
 
@@ -60,7 +84,7 @@ Direction CMyAI::newTurn()
 }
 
 // this method is call to get the optimalMove for the next player
-Direction CMyAI::optimalMove(int board[121], const CPos &_p1, const CPos &_p2, const Player next)
+TMove CMyAI::optimalMove(int board[121], const Pos2D &_p1, const Pos2D &_p2, const TPlayer next)
 {
 #ifdef _DEBUG
 	int backup[121];
@@ -68,8 +92,8 @@ Direction CMyAI::optimalMove(int board[121], const CPos &_p1, const CPos &_p2, c
 #endif // _DEBUG
 
 	bool bOk;
-	CPos newPos;
-	vector<Direction> allMoves; allMoves.clear();
+	Pos2D newPos;
+	vector<TMove> allMoves; allMoves.clear();
 	allMoves = next == PLAYER_1 ? getAvailableMoves(board, _p1) : getAvailableMoves(board, _p2);
 
 	if (allMoves.size() == 0){
@@ -83,13 +107,13 @@ Direction CMyAI::optimalMove(int board[121], const CPos &_p1, const CPos &_p2, c
 		if (next == PLAYER_1){
 			newPos = _p1.move(allMoves[iMove]);
 			bOk = move(board, _p1, allMoves[iMove]); assert(bOk);
-			points[iMove] = ab(board, newPos, _p2, PLAYER_2, DEPTH, MIN_POINTS - 1, MAX_POINTS + 1);
+			points[iMove] = CSearchAlgorithm::ab(board, newPos, _p2, PLAYER_2, DEPTH, MIN_POINTS - 1, MAX_POINTS + 1);
 			bOk = move(board, newPos, getOpositeDirection(allMoves[iMove]), true); assert(bOk);
 		}
 		else {
 			newPos = _p2.move(allMoves[iMove]);
 			bOk = move(board, _p2, allMoves[iMove]); assert(bOk);
-			points[iMove] = ab(board, _p1, newPos, PLAYER_1, DEPTH, MIN_POINTS - 1, MAX_POINTS + 1);
+			points[iMove] = CSearchAlgorithm::ab(board, _p1, newPos, PLAYER_1, DEPTH, MIN_POINTS - 1, MAX_POINTS + 1);
 			bOk = move(board, newPos, getOpositeDirection(allMoves[iMove]), true); assert(bOk);
 		}
 	}

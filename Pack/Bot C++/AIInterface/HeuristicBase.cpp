@@ -1,8 +1,70 @@
-#include "MyAI.h"
-#include "mydefine.h"
+#include "HeuristicBase.h"
 #include "BiconnectedComponents.h"
 
-int CMyAI::rateBoard2(int board[], const CPos &_p1, const CPos &_p2, const Player next){
+
+CHeuristicBase::CHeuristicBase()
+{
+}
+
+
+CHeuristicBase::~CHeuristicBase()
+{
+}
+
+TMove CHeuristicBase::getFirstMoveOfTheLongestPath(const int boardData[], const Pos2D &pos, const int depth)
+{
+	static int board[BOARD_SIZE];
+	memcpy(board, boardData, BOARD_SIZE*sizeof(int));
+	int maxLength = -1;
+	int iMax = 0;
+
+	vector<TMove> avalableMoves = getAvailableMoves(boardData, pos);
+	if (avalableMoves.size() == 1)
+		return avalableMoves[0];
+
+	for (unsigned int iMove = 0; iMove < avalableMoves.size(); iMove++){
+		TMove i = avalableMoves[iMove];
+		bool bOk = move(board, pos, i); assert(bOk);
+		int length = getEstimatedLengthOfTheLongestPath(board, pos.move(i));
+		if (length > maxLength){
+			iMax = i;
+			maxLength = length;
+		}
+		bOk = move(board, pos.move(i), getOpositeDirection(i), true);
+		assert(bOk);
+	}
+	DEBUG(cout << "estimated length = " << maxLength << endl);
+	if (maxLength < 15)
+		return getALongestPath(boardData, pos)[0];
+	else
+		return iMax;
+}
+
+int CHeuristicBase::getEstimatedLengthOfTheLongestPath(int const board[], const Pos2D &playerPos)
+{
+	return CBiconnectedComponents::getEstimatedLength(board, playerPos);
+}
+
+// return the player will win : PLAYER_1 or PLAYER_2 or OBSERVER if unknown
+int CHeuristicBase::evaluateBoard(const int _board[121], const Pos2D &_player1, const Pos2D &_player2, const TPlayer next) {
+	assert(getBlock(_board, _player1) == BLOCK_PLAYER_1);
+	assert(getBlock(_board, _player2) == BLOCK_PLAYER_2);
+	if (isIsolated(_board, _player1, _player2) == -1){
+		int length1 = CHeuristicBase::getEstimatedLengthOfTheLongestPath(_board, _player1);
+		int length2 = CHeuristicBase::getEstimatedLengthOfTheLongestPath(_board, _player2);
+		if (length1 > length2)
+			return PLAYER_1;
+		else if (length1 < length2)
+			return PLAYER_2;
+		else if (next == PLAYER_1) // length1 = length2
+			return PLAYER_2;
+		else
+			return PLAYER_1;
+	}
+	return OBSERVER;
+}
+
+int CHeuristicBase::rateBoard2(int board[], const Pos2D &_p1, const Pos2D &_p2, const TPlayer next){
 #ifdef _DEBUG
 	int backup[BOARD_SIZE];
 	memcpy(backup, board, BOARD_SIZE*sizeof(int));
@@ -52,7 +114,7 @@ int CMyAI::rateBoard2(int board[], const CPos &_p1, const CPos &_p2, const Playe
 	return result;
 }
 
-int CMyAI::rateBoard(int board[], const CPos &_p1, const CPos &_p2, const Player next){
+int CHeuristicBase::rateBoard(int board[], const Pos2D &_p1, const Pos2D &_p2, const TPlayer next){
 #ifdef _DEBUG
 	int backup[BOARD_SIZE];
 	memcpy(backup, board, BOARD_SIZE*sizeof(int));
@@ -103,32 +165,32 @@ int CMyAI::rateBoard(int board[], const CPos &_p1, const CPos &_p2, const Player
 }
 
 
-void CMyAI::constructNewGraphUsedInRateBoard(const int oBoard1[], const CPos &_p1, vector<Area> &areas, int* numberOfConnectionsToEnemyArea, set<Edge> &edgesOfCode)
+void CHeuristicBase::constructNewGraphUsedInRateBoard(const int oBoard1[], const Pos2D &_p1, vector<Area> &areas, int* numberOfConnectionsToEnemyArea, set<Edge> &edgesOfCode)
 {
 	static bool visited[BOARD_SIZE];
 	memset(visited, 0, BOARD_SIZE);
 	int startArea = findCode(oBoard1[_p1.to1D()]);
 	vector<bool> foundAreas(30, false);
 
-	queue<Vertex> queueOfAreas;
+	queue<Pos1D> queueOfAreas;
 	queueOfAreas.push(_p1.to1D());
 	while (!queueOfAreas.empty()){
-		Vertex a = queueOfAreas.front();
+		Pos1D a = queueOfAreas.front();
 		queueOfAreas.pop();
 		foundAreas[findCode(oBoard1[a])] = true;
 
-		queue<Vertex> queueInAArea;
+		queue<Pos1D> queueInAArea;
 		queueInAArea.push(a);
 		while (!queueInAArea.empty()){
-			Vertex v = queueInAArea.front();
+			Pos1D v = queueInAArea.front();
 			queueInAArea.pop();
 
-			for (Direction direction = 1; direction <= 4; direction++){
+			for (TMove direction = 1; direction <= 4; direction++){
 				// check the specialty of the block
-				int block = CMyAI::getBlock(oBoard1, CPos(v).move(direction));
+				int block = getBlock(oBoard1, Pos2D(v).move(direction));
 				if ((block < SPECIAL_BLOCK || block == BLOCK_OUT_OF_BOARD) && block != BLOCK_ENEMY_AREA)
 					continue;
-				Vertex u = CPos(v).move(direction).to1D();
+				Pos1D u = Pos2D(v).move(direction).to1D();
 				if (visited[u])
 					continue;
 
@@ -167,7 +229,7 @@ void CMyAI::constructNewGraphUsedInRateBoard(const int oBoard1[], const CPos &_p
 	}
 }
 
-int CMyAI::calculatePotentialPoint(const int * board, const CPos & playerPos, int * oBoard, int * distanceBoard)
+int CHeuristicBase::calculatePotentialPoint(const int * board, const Pos2D & playerPos, int * oBoard, int * distanceBoard)
 {
 	vector<Area> areas = CBiconnectedComponents::biconnectedComponents(board, playerPos, oBoard);
 	// construct areas' connections with each other and enemy area (-2 block)
@@ -183,7 +245,7 @@ int CMyAI::calculatePotentialPoint(const int * board, const CPos & playerPos, in
 			areasCode.push_back(i);
 	}
 	assert(areasCode.size() > 0);
-	static vector<Vertex> verticesInTheAreaWithMinDistance(BOARD_SIZE);
+	static vector<Pos1D> verticesInTheAreaWithMinDistance(BOARD_SIZE);
 	verticesInTheAreaWithMinDistance.clear();
 
 	for (vector<int>::iterator iArea = areasCode.begin(); iArea != areasCode.end(); iArea++){
@@ -205,11 +267,11 @@ int CMyAI::calculatePotentialPoint(const int * board, const CPos & playerPos, in
 		iVertex != verticesInTheAreaWithMinDistance.end(); iVertex++){
 		static int board2[BOARD_SIZE];
 		memcpy(board2, board, BOARD_SIZE*sizeof(int));
-		Vertex v = *iVertex;
+		Pos1D v = *iVertex;
 
-		CPos end(v);
-		vector<Direction> path = findShortestPath(board, playerPos, end);
-		CPos p = playerPos;
+		Pos2D end(v);
+		vector<TMove> path = findShortestPath(board, playerPos, end);
+		Pos2D p = playerPos;
 		for (unsigned int i = 0; i < path.size(); i++){
 			bool bOk = move(board2, p, path[i]); assert(bOk);
 			p = p.move(path[i]);

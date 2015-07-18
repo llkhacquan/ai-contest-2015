@@ -18,28 +18,7 @@
     <ClCompile Include="src\main.cpp">
       <Filter>Source Files</Filter>
     </ClCompile>
-    <ClCompile Include="AI_BasicOperators.cpp">
-      <Filter>Source Files</Filter>
-    </ClCompile>
-    <ClCompile Include="AI_DebugFunctions.cpp">
-      <Filter>Source Files</Filter>
-    </ClCompile>
-    <ClCompile Include="AI_longestPath.cpp">
-      <Filter>Source Files</Filter>
-    </ClCompile>
-    <ClCompile Include="AI_mainFunctions.cpp">
-      <Filter>Source Files</Filter>
-    </ClCompile>
-    <ClCompile Include="AI_minimax.cpp">
-      <Filter>Source Files</Filter>
-    </ClCompile>
-    <ClCompile Include="BiconnectedComponents.cpp">
-      <Filter>Source Files</Filter>
-    </ClCompile>
-    <ClCompile Include="AI_rateBoardFunctions.cpp">
-      <Filter>Source Files</Filter>
-    </ClCompile>
-    <ClCompile Include="Pos.cpp">
+    <ClCompile Include="MyAI.cpp">
       <Filter>Source Files</Filter>
     </ClCompile>
   </ItemGroup>
@@ -57,12 +36,6 @@
       <Filter>Header Files</Filter>
     </ClInclude>
     <ClInclude Include="mydefine.h">
-      <Filter>Header Files</Filter>
-    </ClInclude>
-    <ClInclude Include="Pos.h">
-      <Filter>Header Files</Filter>
-    </ClInclude>
-    <ClInclude Include="BiconnectedComponents.h">
       <Filter>Header Files</Filter>
     </ClInclude>
   </ItemGroup>
