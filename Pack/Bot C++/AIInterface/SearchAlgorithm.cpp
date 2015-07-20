@@ -190,11 +190,6 @@ int CSearchAlgorithm::alphaBeta(TBlock board[], const Pos2D&_p1, const Pos2D&_p2
 	}
 }
 
-int CSearchAlgorithm::mtdF(TBlock board[], const Pos2D&_p1, const Pos2D&_p2, TPlayer next, int depth, int a, int b)
-{
-	return 0;
-}
-
 int CSearchAlgorithm::negaMaxWithMemory(TBlock board[], const Pos2D&_p1, const Pos2D&_p2, TPlayer next, int depth, int a, int b)
 {
 	// look in the transposition table
@@ -284,5 +279,24 @@ int CSearchAlgorithm::negaMaxWithMemory(TBlock board[], const Pos2D&_p1, const P
 	else
 		table->put(gameState);
 	return bestValue;
+}
+
+int CSearchAlgorithm::mtdF(TBlock board[], const Pos2D&_p1, const Pos2D&_p2, TPlayer next, int f, int depth)
+{
+	int beta;
+	int g = f;
+	int upperBound = MAX_POINTS + 1;
+	int lowerBound = MIN_POINTS - 1;
+	do {
+		if (g == lowerBound)
+			beta = g + 1;
+		else
+			beta = g;
+		g = alphaBetaWithMemory(board, _p1, _p2, next, depth, beta - 1, beta);
+		if (g < beta)
+			upperBound = g;
+		else lowerBound = g;
+	} while (lowerBound < upperBound);
+	return g;
 }
 

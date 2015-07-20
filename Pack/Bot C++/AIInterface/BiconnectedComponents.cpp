@@ -213,24 +213,26 @@ int CBiconnectedComponents::calculateLengthOfPath(const TBlock _oBoard[], const 
 	int result = 1; // for the first area (areas[path[0]])
 
 	// for the last area (areas[path.back()])
-	int pathBach = path.back();
+	int pathBack = path.back();
 	if (path.size() >= 2) {
 		int delta = -1;
 		int even = 0, odd = 0;
 		for (Pos1D j = 0; j < BOARD_SIZE; j++){
-			if (!areas[pathBach].inTheAreas[j])
+			if (!areas[pathBack].inTheAreas[j])
 				continue;
 			if (j % 2 == 1)
 				odd++;
 			else
 				even++;
 		}
+		assert(odd >= 0 || even >= 0);
+		assert(odd + even == areas[pathBack].nVertices);
 		if (odd == even)
 			delta = odd * 2;
 		else
 		{
 			bool seen = false;
-			for (auto it = areas[pathBach].adjAreas.begin(); it != areas[pathBach].adjAreas.end(); it++){
+			for (auto it = areas[pathBack].adjAreas.begin(); it != areas[pathBack].adjAreas.end(); it++){
 				if (it->codeOfAdjArea == path[path.size() - 2]){
 					seen = true;
 					int delta2;
@@ -289,9 +291,10 @@ int CBiconnectedComponents::calculateLengthOfPath(const TBlock _oBoard[], const 
 						n2++;
 				}
 			}
+
+			assert(n1 > 0 && n2 > 0);
 			assert(i1 != area->adjAreas.end());
 			assert(i2 != area->adjAreas.end());
-			assert(n1 > 0 && n2 > 0);
 
 			int a = -1;
 			auto i2_ = i2; // backup 

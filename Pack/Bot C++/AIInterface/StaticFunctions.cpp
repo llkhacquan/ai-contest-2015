@@ -404,7 +404,7 @@ void printBoard(const TBlock board[], const bool special)
 	for (int y = 0; y < MAP_SIZE; y++) {
 		line = "| ";
 		for (int x = 0; x < MAP_SIZE; x++){
-			int block = board[CC(x, y)];
+			TBlock block = board[CC(x, y)];
 			if (special)
 				if (block >= SPECIAL_BLOCK)
 					cout << setfill(' ') << setw(5) << block - SPECIAL_BLOCK << "|";
@@ -450,6 +450,7 @@ void setupImage()
 	copyMakeBorder(player_2_trail, player_2_trail, HALF_PIXEL_PER_LINE, HALF_PIXEL_PER_LINE,
 		HALF_PIXEL_PER_LINE, HALF_PIXEL_PER_LINE, BORDER_CONSTANT, Scalar(0, 0, 0));
 }
+#endif // OPENCV
 
 static inline bool lessThan(const Area* a1, const Area* a2)
 {
@@ -469,5 +470,3 @@ void sortAndRemoveZero(vector<Area> &areas)
 			a.push_back(*pAreas[i]);
 	swap(areas, a);
 }
-
-#endif // OPENCV

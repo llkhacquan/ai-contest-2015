@@ -152,6 +152,19 @@ void testRateBoard(TBlock*board, const Pos2D &p1 = Pos2D(0, 0), const Pos2D &p2 
 	CHeuristicBase::simpleRateBoard(board, p1, p2, PLAYER_1);
 }
 
+void testOptimalMove(TBlock*board, const Pos2D &p1 = Pos2D(0, 0), const Pos2D &p2 = Pos2D(10, 10)){
+	if (isIsolated(board, p1, p2) < 0)
+		return;
+#ifdef OPENCV
+	while (true){
+		imshow("test", toImage(board));
+		int c = waitKey(10);
+		// if (c == ' ')
+		break;
+}
+#endif // OPENCV
+	pAI->optimalMove(board, p1, p2, PLAYER_1);
+}
 #if BOT_ACTIVE
 int main_(int argc, char* argv[])
 #else
@@ -203,8 +216,9 @@ int main(int argc, char* argv[])
 		testConnectedComponents(board, Pos2D(0, 10));*/
 		Pos2D p1, p2;
 		setupBoard(board, NULL, p1, p2);
+		testConnectedComponents(board, p1);
 		// testIsolatedMode(board, p1);
-		testRateBoard(board, p1, p2);
+		// testRateBoard(board, p1, p2);
 		// testEstimateLongestLength(board, p1);
 	}
 

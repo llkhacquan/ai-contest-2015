@@ -28,9 +28,9 @@ public:
 
 	int hash() const{
 		if (v < u)
-			return (u < 10) + v;
+			return (u << 15) + v;
 		else
-			return (v < 10) + v;
+			return (v << 15) + u;
 	}
 
 	bool operator < (const Edge& e) const

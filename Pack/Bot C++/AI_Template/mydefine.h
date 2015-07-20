@@ -17,14 +17,14 @@
 #include "include\ai\defines.h"
 #include "include\ai\AI.h"
 
-#define BOT_ACTIVE		0
-#define SHOW_DEBUG_INFORMATION	0
+#define BOT_ACTIVE		1
+#define SHOW_DEBUG_INFORMATION	1
 #define ASSERT_IN_BICONNECTED_COMPONENT 1
 
 #ifdef _DEBUG
 #define DEFAULT_DEPTH 7
 #else
-#define DEFAULT_DEPTH 12
+#define DEFAULT_DEPTH 11
 #endif
 
 typedef long long TBlock;

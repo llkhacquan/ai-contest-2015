@@ -8,7 +8,7 @@ private:
 	~CTranspositionTable();
 
 public:
-	const int TABLE_SIZE = 1 << 25;
+	const int TABLE_SIZE = 1 << 20;
 	CGameState *table;
 
 	static CTranspositionTable* getInstance();
