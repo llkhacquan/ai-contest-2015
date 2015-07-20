@@ -27,9 +27,10 @@ public:
 	}
 
 	int hash() const{
-		int v1 = min(u, v);
-		int v2 = max(u, v);
-		return v2 * 10000 + v1;
+		if (v < u)
+			return (u < 10) + v;
+		else
+			return (v < 10) + v;
 	}
 
 	bool operator < (const Edge& e) const
@@ -119,7 +120,7 @@ public:
 
 	// input
 	Pos2D playerPos;
-	int* oBoard;
+	TBlock* oBoard;
 	vector<Area> areas;
 	// data
 
@@ -131,21 +132,20 @@ public:
 	int nComponents;
 	stack<Edge> myStack;
 
-	static int getEstimatedLength(int const board[], const Pos2D &playerPos);
+	static int getEstimatedLength(TBlock const board[], const Pos2D &playerPos);
 
-	static void constructNewGraph(const Pos2D &playerPos, int * outBoard, set<Edge> &edgesOfCode, vector<Area> &areas);
+	static void constructNewGraph(const Pos2D &playerPos, TBlock * outBoard, set<Edge> &edgesOfCode, vector<Area> &areas);
 
-	static int findLengthOfLongestPath(const int _oBoard[], const vector<Area> &areas, const set<Edge> &edgesOfCode, int startArea, const int &startPos);
-	static int calculateLengthOfPath(const int _oBoard[], const vector<Area> &areas, const set<Edge> &edgesOfCode, const vector<int> &path, const int &startPos);
-	static void visitNode(const int _oBoard[], const vector<Area> &areas, const set<Edge> &edgesOfCode,
+	static int findLengthOfLongestPath(const TBlock _oBoard[], const vector<Area> &areas, const set<Edge> &edgesOfCode, int startArea, const int &startPos);
+	static int calculateLengthOfPath(const TBlock _oBoard[], const vector<Area> &areas, const set<Edge> &edgesOfCode, const vector<int> &path, const int &startPos);
+	static void visitNode(const TBlock _oBoard[], const vector<Area> &areas, const set<Edge> &edgesOfCode,
 		vector<int> &cPath, int &cLength, vector<int> &lPath, int &lLength, vector<bool> &visitted, const int cCode, const int &startPos);
 
-	static vector<Area> biconnectedComponents(int const board[], const Pos2D &playerPos, int outBoard[]);
+	static vector<Area> biconnectedComponents(TBlock const board[], const Pos2D &playerPos, TBlock outBoard[]);
 	void dfsVisit(const Pos1D & u);
 	void createNewArea(const Pos1D &v1, const Pos1D &v2);
 	void adjection(bool out[], Pos1D const &u);
-
-	static int rateBoardForAPlayer(int const oBoard[], const Pos2D &playerPos);
+	static int rateBoardForAPlayer(TBlock const oBoard[], const Pos2D &playerPos);
 };
 
 

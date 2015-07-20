@@ -12,12 +12,22 @@
 #include <cassert>
 #include <algorithm>
 #include <set>
+#include <bitset>
 
 #include "include\ai\defines.h"
 #include "include\ai\AI.h"
 
-#define BOT_ACTIVE		1
+#define BOT_ACTIVE		0
+#define SHOW_DEBUG_INFORMATION	0
+#define ASSERT_IN_BICONNECTED_COMPONENT 1
 
+#ifdef _DEBUG
+#define DEFAULT_DEPTH 7
+#else
+#define DEFAULT_DEPTH 12
+#endif
+
+typedef long long TBlock;
 typedef int TPlayer;
 typedef int TMove;
 typedef int Pos1D;
@@ -25,12 +35,9 @@ using namespace std;
 
 #define CC(x,y)	CONVERT_COORD(x,y)
 #define BOARD_SIZE (MAP_SIZE*MAP_SIZE)
-#define MAX_POINTS	1000
-#define MIN_POINTS	0
-#define DEFAULT_DEPTH 10
+#define MAX_POINTS	 1000000
+#define MIN_POINTS	(-MAX_POINTS)
 #define BLOCK_ENEMY_AREA -2
-
-#define MAXIMUM_NUMBER_OF_AREAS		30
 
 /// GRAPHIC
 #ifdef OPENCV
@@ -44,7 +51,6 @@ using namespace cv;
 
 
 // SHOW DEBUG INFORMATION
-#define SHOW_DEBUG_INFORMATION	1
 #ifndef _DEBUG
 #undef SHOW_DEBUG_INFORMATION
 #define  SHOW_DEBUG_INFORMATION 0
@@ -56,10 +62,9 @@ using namespace cv;
 #define DEBUG(x);	
 #endif
 
-
-
-static const int SPECIAL_BIT = 30;
-#define SPECIAL_BLOCK (1 << SPECIAL_BIT)
+#define MAXIMUM_NUMBER_OF_AREAS		62
+static const int SPECIAL_BIT = 62;
+#define SPECIAL_BLOCK (1i64 << SPECIAL_BIT)
 
 #endif
 

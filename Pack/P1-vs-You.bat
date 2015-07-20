@@ -5,6 +5,8 @@ pushd WebClient
 start index.html
 popd
 pushd Arena
+
+ping 1.1.1.1 -n 1 -w 500 > nul
 IF EXIST AI_Template.exe (
 	start "Bot C++" cmd /c call AI_Template.exe -h 127.0.0.1 -p 3011
 ) ELSE IF EXIST P1.js (

@@ -7,17 +7,17 @@ CBiconnectedComponents::CBiconnectedComponents(){}
 CBiconnectedComponents::~CBiconnectedComponents(){}
 
 // return the number of components
-vector<Area> CBiconnectedComponents::biconnectedComponents(int const board[], const Pos2D &playerPos, int outBoard[])
+vector<Area> CBiconnectedComponents::biconnectedComponents(TBlock const board[], const Pos2D &playerPos, TBlock outBoard[])
 {
 	// setting up
 	CBiconnectedComponents bc;
-	memcpy(outBoard, board, BOARD_SIZE*sizeof(int));
+	memcpy(outBoard, board, BOARD_SIZE*sizeof(TBlock));
 	bc.nComponents = 0;
 	bc.oBoard = outBoard;
 	bc.playerPos = playerPos;
 	bc.areas.clear();
-
 	bc.iCount = 0;
+
 	{// clear stack
 		stack<Edge> t;
 		bc.myStack.swap(t);
@@ -30,20 +30,20 @@ vector<Area> CBiconnectedComponents::biconnectedComponents(int const board[], co
 
 	bc.dfsVisit(playerPos.to1D());
 
-		// take care the area contains the playerPos
-		for (int iArea = 0; iArea < (int)bc.areas.size(); iArea++)
-			bc.areas[iArea].erase(playerPos.to1D());
+	// take care the area contains the playerPos
+	for (unsigned int iArea = 0; iArea < bc.areas.size(); iArea++)
+		bc.areas[iArea].erase(playerPos.to1D());
 
-		bc.areas.push_back(Area());
-		bc.areas.back().insert(playerPos.to1D());
-		bc.areas.back().code = bc.areas.size() - 1;
-		outBoard[playerPos.to1D()] = SPECIAL_BLOCK | ipowBase2(bc.areas.size() - 1);
+	bc.areas.push_back(Area());
+	bc.areas.back().insert(playerPos.to1D());
+	bc.areas.back().code = bc.areas.size() - 1;
+	outBoard[playerPos.to1D()] = SPECIAL_BLOCK | ipowBase2(bc.areas.size() - 1);
 
-	// re-build areas so the larger areas will have more and more vertice
+	// re-build areas so the larger areas will have more and more vertices
 	for (Pos1D v = 0; v < BOARD_SIZE; v++){
 		if (bc.oBoard[v] < SPECIAL_BLOCK) // if v is not special then continue
 			continue;
-		int block = bc.oBoard[v];
+		TBlock block = bc.oBoard[v];
 		int iMax = -1;
 		for (unsigned int iArea = 0; iArea < bc.areas.size(); iArea++){
 			if ((block & ipowBase2(bc.areas[iArea].code)) != 0){
@@ -63,18 +63,17 @@ vector<Area> CBiconnectedComponents::biconnectedComponents(int const board[], co
 			}
 		}
 	}
+#if ASSERT_IN_BICONNECTED_COMPONENT
 	assert(bc.areas.size() <= MAXIMUM_NUMBER_OF_AREAS);
+#endif // SKIP_ASSERT_IN_BICONNECTED_COMPONENT
 	// remove area with 0 position
-	sort(bc.areas.begin(), bc.areas.end());
-	vector<Area>::iterator it = bc.areas.begin();
-	while (bc.areas.size() > 0 && it->nVertices == 0)
-		it++;
-	bc.areas.erase(bc.areas.begin(), it);
+	sortAndRemoveZero(bc.areas);
 
+#if ASSERT_IN_BICONNECTED_COMPONENT
 #ifdef _DEBUG	
 	// make sure 1 vertex is in only one vertex
 	for (Pos1D v = 0; v < BOARD_SIZE; v++){
-		int block = bc.oBoard[v];
+		TBlock block = bc.oBoard[v];
 		if (block < SPECIAL_BLOCK)
 			continue;
 		for (unsigned int iArea = 0; iArea < bc.areas.size(); iArea++){
@@ -97,6 +96,7 @@ vector<Area> CBiconnectedComponents::biconnectedComponents(int const board[], co
 		assert(iCount == bc.areas[iArea].nVertices);
 	}
 #endif
+#endif // SKIP_ASSERT_IN_BICONNECTED_COMPONENT
 
 	for (unsigned int iArea = 0; iArea < bc.areas.size(); iArea++){
 		bc.areas[iArea].code = iArea;
@@ -160,7 +160,7 @@ void CBiconnectedComponents::adjection(bool out[], Pos1D const &u){
 	assert(u >= 0 && u < BOARD_SIZE);
 	Pos2D pos(u);
 	for (int i = 1; i <= 4; i++){
-		static int block;
+		static TBlock block;
 		block = getBlock(oBoard, pos.move(i));
 		if (block == BLOCK_EMPTY || block > SPECIAL_BLOCK)
 			out[i - 1] = true;
@@ -169,11 +169,11 @@ void CBiconnectedComponents::adjection(bool out[], Pos1D const &u){
 	}
 }
 
-int CBiconnectedComponents::getEstimatedLength(int const board[], const Pos2D &playerPos)
+int CBiconnectedComponents::getEstimatedLength(TBlock const board[], const Pos2D &playerPos)
 {
-	int oldBlock = board[playerPos.to1D()];
+	TBlock oldBlock = board[playerPos.to1D()];
 	assert(oldBlock == BLOCK_PLAYER_1 || oldBlock == BLOCK_PLAYER_2);
-	static int outBoard[BOARD_SIZE];
+	static TBlock outBoard[BOARD_SIZE];
 	vector<Area> areas = biconnectedComponents(board, playerPos, outBoard);
 	set<Edge> edgesOfCode;
 
@@ -185,7 +185,7 @@ int CBiconnectedComponents::getEstimatedLength(int const board[], const Pos2D &p
 	return findLengthOfLongestPath(outBoard, areas, edgesOfCode, startArea, playerPos.to1D());
 }
 
-int CBiconnectedComponents::findLengthOfLongestPath(const int _oBoard[], const vector<Area> &areas,
+int CBiconnectedComponents::findLengthOfLongestPath(const TBlock _oBoard[], const vector<Area> &areas,
 	const set<Edge> &edgesOfCode, int startArea, const int &startPos)
 {
 	vector<int> lPath;
@@ -204,7 +204,7 @@ int CBiconnectedComponents::findLengthOfLongestPath(const int _oBoard[], const v
 	return lLength;
 }
 
-int CBiconnectedComponents::calculateLengthOfPath(const int _oBoard[], const vector<Area> &areas,
+int CBiconnectedComponents::calculateLengthOfPath(const TBlock _oBoard[], const vector<Area> &areas,
 	const set<Edge> &edgesOfCode, const vector<int> &path, const int &startPos)
 {
 	assert(path.size() > 0);
@@ -230,7 +230,7 @@ int CBiconnectedComponents::calculateLengthOfPath(const int _oBoard[], const vec
 		else
 		{
 			bool seen = false;
-			for (set<AdjArea>::iterator it = areas[pathBach].adjAreas.begin(); it != areas[pathBach].adjAreas.end(); it++){
+			for (auto it = areas[pathBach].adjAreas.begin(); it != areas[pathBach].adjAreas.end(); it++){
 				if (it->codeOfAdjArea == path[path.size() - 2]){
 					seen = true;
 					int delta2;
@@ -271,7 +271,7 @@ int CBiconnectedComponents::calculateLengthOfPath(const int _oBoard[], const vec
 			// calculate it1, it2, it3, it4
 			set<AdjArea>::iterator i1, i2; int n1, n2;
 			i1 = i2 = area->adjAreas.end(); n1 = n2 = 0;
-			for (set<AdjArea>::iterator it = area->adjAreas.begin(); it != area->adjAreas.end(); it++){
+			for (auto it = area->adjAreas.begin(); it != area->adjAreas.end(); it++){
 				if (it->codeOfAdjArea == path[i - 1]){
 					if (i1 == area->adjAreas.end()){
 						i1 = it;
@@ -294,7 +294,7 @@ int CBiconnectedComponents::calculateLengthOfPath(const int _oBoard[], const vec
 			assert(n1 > 0 && n2 > 0);
 
 			int a = -1;
-			set<AdjArea>::iterator i2_ = i2; // backup 
+			auto i2_ = i2; // backup 
 			for (int i = 0; i < n1; i++, i1++){
 				i2 = i2_;
 				for (int j = 0; j < n2; j++, i2++){
@@ -329,7 +329,7 @@ int CBiconnectedComponents::calculateLengthOfPath(const int _oBoard[], const vec
 	return result;
 }
 
-void CBiconnectedComponents::visitNode(const int _oBoard[], const vector<Area> &areas,
+void CBiconnectedComponents::visitNode(const TBlock _oBoard[], const vector<Area> &areas,
 	const set<Edge> &edgesOfCode,
 	vector<int> &cPath, int &cLength, vector<int> &lPath,
 	int &lLength, vector<bool> &visitted, const int cCode, const int &startPos){
@@ -359,11 +359,11 @@ void CBiconnectedComponents::visitNode(const int _oBoard[], const vector<Area> &
 	cPath.pop_back();
 }
 
-int CBiconnectedComponents::rateBoardForAPlayer(int const board[], const Pos2D &playerPos)
+int CBiconnectedComponents::rateBoardForAPlayer(TBlock const board[], const Pos2D &playerPos)
 {
-	int oldBlock = board[playerPos.to1D()];
+	TBlock oldBlock = board[playerPos.to1D()];
 	assert(oldBlock == BLOCK_PLAYER_1 || oldBlock == BLOCK_PLAYER_2);
-	static int outBoard[BOARD_SIZE];
+	static TBlock outBoard[BOARD_SIZE];
 	static bool visited[BOARD_SIZE];
 	for (int i = 0; i < BOARD_SIZE; i++){
 		visited[i] = false;
@@ -374,9 +374,9 @@ int CBiconnectedComponents::rateBoardForAPlayer(int const board[], const Pos2D &
 	return 0;
 }
 
-void CBiconnectedComponents::constructNewGraph(const Pos2D &playerPos, int * outBoard, set<Edge> &edgesOfCode, vector<Area> &areas)
+void CBiconnectedComponents::constructNewGraph(const Pos2D &playerPos, TBlock * outBoard, set<Edge> &edgesOfCode, vector<Area> &areas)
 {
-	vector<bool> foundAreas(30, false);
+	vector<bool> foundAreas(MAXIMUM_NUMBER_OF_AREAS, false);
 	static bool visited[BOARD_SIZE];
 	memset(visited, 0, BOARD_SIZE);
 	queue<Pos1D> queueOfAreas;
@@ -394,7 +394,7 @@ void CBiconnectedComponents::constructNewGraph(const Pos2D &playerPos, int * out
 
 			for (TMove direction = 1; direction <= 4; direction++){
 				// check the specialty of the block
-				int block = getBlock(outBoard, Pos2D(v).move(direction));
+				TBlock block = getBlock(outBoard, Pos2D(v).move(direction));
 				if (block < SPECIAL_BLOCK || block == BLOCK_OUT_OF_BOARD)
 					continue;
 				Pos1D u = Pos2D(v).move(direction).to1D();
@@ -411,8 +411,8 @@ void CBiconnectedComponents::constructNewGraph(const Pos2D &playerPos, int * out
 						foundAreas[code] = true;
 						queueOfAreas.push(u);
 					}
-					int block1 = outBoard[u];
-					int block2 = outBoard[v];
+					TBlock block1 = outBoard[u];
+					TBlock block2 = outBoard[v];
 					int code1 = findCode(block1);
 					int code2 = findCode(block2);
 					edgesOfCode.insert(Edge(code1, code2));

@@ -7,6 +7,7 @@
 #include "../AIInterface/BiconnectedComponents.h"
 #include "../AIInterface/StaticFunctions.h"
 #include "../AIInterface/HeuristicBase.h"
+#include "../AIInterface/TranspositionTable.h"
 
 // ==================== HOW TO RUN THIS =====================
 // Call:
@@ -44,9 +45,9 @@ void AI_Update()
 	}
 }
 
-void setupBoard(int *board, const vector<Pos2D> *positions, Pos2D&p1 = Pos2D(0, 0), Pos2D &p2 = Pos2D(10, 10)){
+void setupBoard(TBlock *board, const vector<Pos2D> *positions, Pos2D&p1 = Pos2D(0, 0), Pos2D &p2 = Pos2D(10, 10)){
 	if (positions == NULL){
-		createNewBoard(board, rand() % 25 + 5);
+		createNewBoard(board, rand() % 30 + 5);
 		board[0] = board[BOARD_SIZE - 1] = BLOCK_OBSTACLE;
 		while (true) {
 			int i = rand() % 121;
@@ -66,7 +67,7 @@ void setupBoard(int *board, const vector<Pos2D> *positions, Pos2D&p1 = Pos2D(0, 
 		}
 	}
 	else {
-		memset(board, 0, BOARD_SIZE*sizeof(int));
+		memset(board, 0, BOARD_SIZE*sizeof(TBlock));
 		for (int j = 0; j < (int)positions->size(); j++){
 			setBlock(board, positions->at(j), BLOCK_OBSTACLE);
 		}
@@ -75,7 +76,7 @@ void setupBoard(int *board, const vector<Pos2D> *positions, Pos2D&p1 = Pos2D(0, 
 	}
 }
 
-void testIsolatedMode(int *board, const Pos2D&p = Pos2D(0, 0))
+void testIsolatedMode(TBlock *board, const Pos2D&p = Pos2D(0, 0))
 {
 	Pos2D pos = p;
 	int c = 0;
@@ -97,9 +98,9 @@ void testIsolatedMode(int *board, const Pos2D&p = Pos2D(0, 0))
 	}
 }
 
-void testConnectedComponents(int *board, Pos2D p = Pos2D(0, 0))
+void testConnectedComponents(TBlock *board, Pos2D p = Pos2D(0, 0))
 {
-	int board2[BOARD_SIZE];
+	TBlock board2[BOARD_SIZE];
 #ifdef OPENCV
 	imshow("test", toImage(board));
 #endif // OPENCV
@@ -116,9 +117,7 @@ void testConnectedComponents(int *board, Pos2D p = Pos2D(0, 0))
 #endif // OPENCV
 }
 
-void testRateBoard(int*board, const Pos2D &p1 = Pos2D(0, 0), const Pos2D &p2 = Pos2D(10, 10)){
-	CHeuristicBase::rateBoard(board, p1, p2, PLAYER_1);
-	CHeuristicBase::rateBoard2(board, p1, p2, PLAYER_1);
+void testEstimateLongestLength(TBlock* board, Pos2D p = Pos2D(0, 0)){
 #ifdef OPENCV
 	while (true){
 		imshow("test", toImage(board));
@@ -127,9 +126,33 @@ void testRateBoard(int*board, const Pos2D &p1 = Pos2D(0, 0), const Pos2D &p2 = P
 		break;
 	}
 #endif // OPENCV
+	int l = CHeuristicBase::getEstimatedLengthOfTheLongestPath(board, p);
+	if (l > 50)
+		return;
+	int length = getALongestPath(board, p).size();
+	if (l == length)
+		cout << "good estimate!" << endl;
+	else
+		cout << "good estimate!" << endl;
+
 }
 
-#ifdef BOT_ACTIVE
+void testRateBoard(TBlock*board, const Pos2D &p1 = Pos2D(0, 0), const Pos2D &p2 = Pos2D(10, 10)){
+	if (isIsolated(board, p1, p2) < 0)
+		return;
+#ifdef OPENCV
+	while (true){
+		imshow("test", toImage(board));
+		int c = waitKey(10);
+		// if (c == ' ')
+		break;
+	}
+#endif // OPENCV
+	CHeuristicBase::treeOfChambersRateBoard(board, p1, p2, PLAYER_1);
+	CHeuristicBase::simpleRateBoard(board, p1, p2, PLAYER_1);
+}
+
+#if BOT_ACTIVE
 int main_(int argc, char* argv[])
 #else
 int main(int argc, char* argv[])
@@ -141,7 +164,7 @@ int main(int argc, char* argv[])
 	setupImage();
 #endif // OPENCV
 	std::srand((int)std::time(0));
-	int board[BOARD_SIZE];
+	TBlock board[BOARD_SIZE];
 
 	vector<Pos2D> p1 = {
 		Pos2D(0, 3), Pos2D(0, 7), Pos2D(1, 3), Pos2D(1, 7), Pos2D(2, 3), Pos2D(2, 6), Pos2D(3, 3), Pos2D(4, 3), Pos2D(4, 8), Pos2D(5, 8),
@@ -172,7 +195,7 @@ int main(int argc, char* argv[])
 		Pos2D(7, 5), Pos2D(7, 6), Pos2D(8, 2), Pos2D(8, 3), Pos2D(9, 5), Pos2D(9, 8),
 		Pos2D(10, 1), Pos2D(10, 2), Pos2D(10, 3), Pos2D(10, 8), };
 	clock_t tStart = clock();
-	for (int i = 0; i < 10000; i++){
+	for (int i = 0; i < 1000; i++){
 		/*setupBoard(board, &p5, Pos2D(1, 9));
 		testConnectedComponents(board, Pos2D(1, 9));
 
@@ -180,8 +203,9 @@ int main(int argc, char* argv[])
 		testConnectedComponents(board, Pos2D(0, 10));*/
 		Pos2D p1, p2;
 		setupBoard(board, NULL, p1, p2);
-		//testIsolatedMode(board);
+		// testIsolatedMode(board, p1);
 		testRateBoard(board, p1, p2);
+		// testEstimateLongestLength(board, p1);
 	}
 
 	printf("Time taken: %.2fs\n", (double)(clock() - tStart) / CLOCKS_PER_SEC);
@@ -193,13 +217,14 @@ int main(int argc, char* argv[])
 ////////////////////////////////////////////////////////////
 
 
-#ifdef BOT_ACTIVE
+#if BOT_ACTIVE
 int main(int argc, char* argv[])
 #else
 int main_(int argc, char* argv[])
 #endif // BOT_ACTIVE
 
 {
+	cout << "LouisLzcute's bot" << endl;
 	srand(clock());
 
 #ifdef _WIN32
@@ -227,6 +252,7 @@ int main_(int argc, char* argv[])
 	AI::GetInstance()->Update = &AI_Update;
 
 	pAI = new CMyAI();
+	CTranspositionTable::getInstance();
 
 	p_Game->PollingFromServer();
 
@@ -235,5 +261,6 @@ int main_(int argc, char* argv[])
 #ifdef _WIN32
 	WSACleanup();
 #endif
+
 	return 0;
 }
