@@ -11,15 +11,15 @@
       <PreprocessorDefinitions>OPENCV;_UNICODE;UNICODE;%(PreprocessorDefinitions)</PreprocessorDefinitions>
     </ClCompile>
     <Link>
-      <AdditionalLibraryDirectories>$(SolutionDir)Lib\opencv\build\x86\vs12\lib</AdditionalLibraryDirectories>
-      <AdditionalDependencies>opencv_core2411d.lib;opencv_imgproc2411d.lib;opencv_highgui2411d.lib;opencv_ml2411d.lib;opencv_video2411d.lib;opencv_features2d2411d.lib;opencv_calib3d2411d.lib;opencv_objdetect2411d.lib;opencv_contrib2411d.lib;opencv_legacy2411d.lib;opencv_flann2411d.lib;%(AdditionalDependencies)</AdditionalDependencies>
+      <AdditionalLibraryDirectories>$(SolutionDir)Lib\opencv\build\x86\vc12\lib</AdditionalLibraryDirectories>
+      <AdditionalDependencies>opencv_core2410d.lib;opencv_imgproc2410d.lib;opencv_highgui2410d.lib;%(AdditionalDependencies)</AdditionalDependencies>
       <DelayLoadDLLs>
       </DelayLoadDLLs>
     </Link>
     <PostBuildEvent>
-      <Command>if not exist "$(TargetDir)opencv_core2411d.dll" copy "$(SolutionDir)Lib\opencv\build\x86\vs12\bin\opencv_core2411d.dll" "$(TargetDir)"
-if not exist "$(TargetDir)opencv_highgui2411d.dll" copy "$(SolutionDir)Lib\opencv\build\x86\vs12\bin\opencv_highgui2411d.dll" "$(TargetDir)"
-if not exist "$(TargetDir)opencv_imgproc2411d.dll" copy "$(SolutionDir)Lib\opencv\build\x86\vs12\bin\opencv_imgproc2411d.dll" "$(TargetDir)"</Command>
+      <Command>if not exist "$(TargetDir)opencv_core2410d.dll" copy "$(SolutionDir)Lib\opencv\build\x86\vc12\bin\opencv_core2410d.dll" "$(TargetDir)"
+if not exist "$(TargetDir)opencv_highgui2410d.dll" copy "$(SolutionDir)Lib\opencv\build\x86\vc12\bin\opencv_highgui2410d.dll" "$(TargetDir)"
+if not exist "$(TargetDir)opencv_imgproc2410d.dll" copy "$(SolutionDir)Lib\opencv\build\x86\vc12\bin\opencv_imgproc2410d.dll" "$(TargetDir)"</Command>
       <Message>Coping dll files of OpenCV</Message>
     </PostBuildEvent>
   </ItemDefinitionGroup>

@@ -3,6 +3,7 @@
 #include "..\AI_Template\include/ai/AI.h"
 #include "..\AI_Template\mydefine.h"
 #include "Pos2D.h"
+#include "BiconnectedComponentsOutput.h"
 
 class Edge{
 public:
@@ -65,11 +66,17 @@ class Area{
 public:
 	int code;
 	bool inTheAreas[BOARD_SIZE];
+	int odd, even;
 	int nVertices;
 	set<AdjArea> adjAreas;
 
 	Area(){
+		clear();
+	}
+
+	void clear(){
 		nVertices = 0;
+		odd = even = 0;
 		memset(inTheAreas, 0, BOARD_SIZE);
 	}
 
@@ -77,6 +84,10 @@ public:
 		if (!inTheAreas[u]){
 			inTheAreas[u] = true;
 			nVertices++;
+			if (u % 2 == 1)
+				odd++;
+			else
+				even++;
 		}
 	}
 
@@ -84,10 +95,16 @@ public:
 		if (inTheAreas[u]){
 			inTheAreas[u] = false;
 			nVertices--;
+			if (u % 2 == 1)
+				odd--;
+			else
+				even--;
 		}
 	}
 
 	Area operator =(const Area &e) {
+		odd = e.odd;
+		even = e.even;
 		code = e.code;
 		nVertices = e.nVertices;
 		memcpy(inTheAreas, e.inTheAreas, BOARD_SIZE);
@@ -120,8 +137,8 @@ public:
 
 	// input
 	Pos2D playerPos;
-	TBlock* oBoard;
-	vector<Area> areas;
+	TBlock oBoard[BOARD_SIZE];
+	CBiconnectedComponentsOutput *output;
 	// data
 
 	bool visited[BOARD_SIZE];
@@ -129,23 +146,14 @@ public:
 	int d[BOARD_SIZE];
 	int low[BOARD_SIZE];
 	int iCount;
-	int nComponents;
 	stack<Edge> myStack;
 
 	static int getEstimatedLength(TBlock const board[], const Pos2D &playerPos);
-
-	static void constructNewGraph(const Pos2D &playerPos, TBlock * outBoard, set<Edge> &edgesOfCode, vector<Area> &areas);
-
-	static int findLengthOfLongestPath(const TBlock _oBoard[], const vector<Area> &areas, const set<Edge> &edgesOfCode, int startArea, const int &startPos);
-	static int calculateLengthOfPath(const TBlock _oBoard[], const vector<Area> &areas, const set<Edge> &edgesOfCode, const vector<int> &path, const int &startPos);
-	static void visitNode(const TBlock _oBoard[], const vector<Area> &areas, const set<Edge> &edgesOfCode,
-		vector<int> &cPath, int &cLength, vector<int> &lPath, int &lLength, vector<bool> &visitted, const int cCode, const int &startPos);
-
-	static vector<Area> biconnectedComponents(TBlock const board[], const Pos2D &playerPos, TBlock outBoard[]);
+	static void biconnectedComponents(TBlock const board[], const Pos2D &playerPos, CBiconnectedComponentsOutput *output, TBlock *oBoard = NULL);
+private:
 	void dfsVisit(const Pos1D & u);
 	void createNewArea(const Pos1D &v1, const Pos1D &v2);
 	void adjection(bool out[], Pos1D const &u);
-	static int rateBoardForAPlayer(TBlock const oBoard[], const Pos2D &playerPos);
 };
 
 

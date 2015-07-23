@@ -1,6 +1,7 @@
 #pragma once
 #include "..\AI_Template\mydefine.h"
 #include "..\AI_Template\include/ai/AI.h"
+
 class Pos2D
 {
 public:
@@ -15,5 +16,7 @@ public:
 	bool operator==(const Pos2D &pos) const;
 	const Pos2D move(const int direction) const;
 	int to1D() const;
+
+	operator int()const { return to1D(); }
 };
 

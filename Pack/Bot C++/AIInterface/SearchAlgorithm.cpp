@@ -25,9 +25,6 @@ int CSearchAlgorithm::negaMax(TBlock board[], const Pos2D&_p1, const Pos2D&_p2, 
 	bool bOk;
 	int color = next == PLAYER_1 ? 1 : -1;
 
-	if (depth == 0){
-		return heuristic.rateBoard(board, _p1, _p2, next) * color;
-	}
 	int point;
 	int winner = CHeuristicBase::evaluateBoard(board, _p1, _p2, next, point);
 	if (winner == PLAYER_1){
@@ -35,6 +32,9 @@ int CSearchAlgorithm::negaMax(TBlock board[], const Pos2D&_p1, const Pos2D&_p2, 
 	}
 	else if (winner == PLAYER_2){
 		return (MIN_POINTS / 2 - point)* color;
+	}
+	if (depth == 0){
+		return heuristic.rateBoard(board, _p1, _p2, next) * color;
 	}
 
 	int bestValue = MIN_POINTS - 1;
@@ -76,9 +76,6 @@ int CSearchAlgorithm::negaScout(TBlock board[], const Pos2D&_p1, const Pos2D&_p2
 	bool bOk;
 	int color = next == PLAYER_1 ? 1 : -1;
 
-	if (depth == 0){
-		return heuristic.rateBoard(board, _p1, _p2, next) * color;
-	}
 	int point;
 	int winner = CHeuristicBase::evaluateBoard(board, _p1, _p2, next, point);
 	if (winner == PLAYER_1){
@@ -87,7 +84,10 @@ int CSearchAlgorithm::negaScout(TBlock board[], const Pos2D&_p1, const Pos2D&_p2
 	else if (winner == PLAYER_2){
 		return (MIN_POINTS / 2 - point)* color;
 	}
-
+	if (depth == 0){
+		return heuristic.rateBoard(board, _p1, _p2, next) * color;
+	}
+	
 	int bestValue = MIN_POINTS - 1;
 	Pos2D newPos;
 	vector<TMove> moves;
@@ -145,9 +145,6 @@ int CSearchAlgorithm::alphaBeta(TBlock board[], const Pos2D&_p1, const Pos2D&_p2
 	bool bOk;
 	int bestValue = MIN_POINTS - 1;
 
-	if (depth == 0){
-		return heuristic.rateBoard(board, _p1, _p2, next);
-	}
 	int point;
 	int winner = CHeuristicBase::evaluateBoard(board, _p1, _p2, next, point);
 	if (winner == PLAYER_1){
@@ -155,6 +152,9 @@ int CSearchAlgorithm::alphaBeta(TBlock board[], const Pos2D&_p1, const Pos2D&_p2
 	}
 	else if (winner == PLAYER_2){
 		return MIN_POINTS / 2 - point;
+	}
+	if (depth == 0){
+		return heuristic.rateBoard(board, _p1, _p2, next);
 	}
 
 	Pos2D newPos;
@@ -224,9 +224,6 @@ int CSearchAlgorithm::negaMaxWithMemory(TBlock board[], const Pos2D&_p1, const P
 	bool bOk;
 	int color = next == PLAYER_1 ? 1 : -1;
 
-	if (depth == 0){
-		return heuristic.rateBoard(board, _p1, _p2, next) * color;
-	}
 	int point;
 	int winner = CHeuristicBase::evaluateBoard(board, _p1, _p2, next, point);
 	if (winner == PLAYER_1){
@@ -234,6 +231,9 @@ int CSearchAlgorithm::negaMaxWithMemory(TBlock board[], const Pos2D&_p1, const P
 	}
 	else if (winner == PLAYER_2){
 		return (MIN_POINTS / 2 - point)* color;
+	}
+	if (depth == 0){
+		return heuristic.rateBoard(board, _p1, _p2, next) * color;
 	}
 
 	int bestValue = MIN_POINTS - 1;
@@ -298,5 +298,10 @@ int CSearchAlgorithm::mtdF(TBlock board[], const Pos2D&_p1, const Pos2D&_p2, TPl
 		else lowerBound = g;
 	} while (lowerBound < upperBound);
 	return g;
+}
+
+int CSearchAlgorithm::alphaBetaWithMemory(TBlock board[], const Pos2D&_p1, const Pos2D&_p2, TPlayer next, int depth, int a, int b)
+{
+	return 0;
 }
 

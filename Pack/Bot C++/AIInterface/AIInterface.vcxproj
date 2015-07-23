@@ -81,19 +81,23 @@
     <ClInclude Include="..\AI_Template\include\ai\defines.h" />
     <ClInclude Include="..\AI_Template\mydefine.h" />
     <ClInclude Include="BiconnectedComponents.h" />
+    <ClInclude Include="BiconnectedComponentsOutput.h" />
     <ClInclude Include="GameState.h" />
     <ClInclude Include="HeuristicBase.h" />
+    <ClInclude Include="MyTimer.h" />
     <ClInclude Include="Pos2D.h" />
-    <ClInclude Include="SearchAlgorithm.h" />
+    <ClInclude Include="SearchEngine.h" />
     <ClInclude Include="StaticFunctions.h" />
     <ClInclude Include="TranspositionTable.h" />
   </ItemGroup>
   <ItemGroup>
     <ClCompile Include="BiconnectedComponents.cpp" />
+    <ClCompile Include="BiconnectedComponentsOutput.cpp" />
     <ClCompile Include="GameState.cpp" />
     <ClCompile Include="HeuristicBase.cpp" />
-    <ClCompile Include="Pos.cpp" />
-    <ClCompile Include="SearchAlgorithm.cpp" />
+    <ClCompile Include="MyTimer.cpp" />
+    <ClCompile Include="Pos2D.cpp" />
+    <ClCompile Include="SearchEngine.cpp" />
     <ClCompile Include="StaticFunctions.cpp" />
     <ClCompile Include="TranspositionTable.cpp" />
   </ItemGroup>

@@ -5,16 +5,22 @@ class CTranspositionTable
 private:
 	static CTranspositionTable* instance;
 	CTranspositionTable();
-	~CTranspositionTable();
 
 public:
-	const int TABLE_SIZE = 1 << 20;
+	static int nGetOk;
+	static int nGetMiss;
+	static int nPut;
+	static int nObjects;
+	~CTranspositionTable();
+	const int TABLE_SIZE = 1 << 24;
 	CGameState *table;
 
 	static CTranspositionTable* getInstance();
 
-	void put(const CGameState &gameState);
+	CGameState* put(const CGameState &gameState);
 
-	CGameState* get(const CGameState &gameState);
+	CGameState* get(const CGameState &gameState) const;
+
+	bool remove(const CGameState &gameState);
 };
 

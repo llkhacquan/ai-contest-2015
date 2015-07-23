@@ -23,6 +23,33 @@ void changeBit(TBlock &number, int iBit, int value)
 {
 	number ^= (-value ^ number) & (1i64 << iBit);
 }
+
+void setBit(unsigned char &number, int iBit)
+{
+	number |= 1i8 << iBit;
+	assert(number >= 0);
+}
+void clearBit(unsigned char &number, int iBit)
+{
+	number &= ~(1i8 << iBit);
+	assert(number >= 0);
+}
+void toggleBit(unsigned char &number, int iBit)
+{
+	number ^= 1i8 << iBit;
+	assert(number >= 0);
+}
+bool getBit(const unsigned char &number, int iBit)
+{
+	return ((number >> iBit) & 1i8);
+}
+
+void changeBit(unsigned char &number, int iBit, int value)
+{
+	number ^= (-value ^ number) & (1i8 << iBit);
+}
+
+
 TBlock ipowBase2(int exp)
 {
 	return 1i64 << exp;
@@ -286,43 +313,42 @@ int fillDistance(TBlock _board[121], const Pos2D &pos) {
 			}
 		}
 	}
-	return result;
+	return (int)result;
 }
 
-// check if 2 positions is isolated or not
-// 2 positions is not isolated when it does exist a path (length>0) of empty blocks that connects them
-// this method does not modify _boardData
-// return -1: if isolated
-// else return length of shortest path from _pos1 to _pos2 (thought the empty block of course)
-int isIsolated(const TBlock _board[121], const Pos2D &_p1, const Pos2D &_p2)
+bool isIsolated(const TBlock _board[121], const Pos2D &_p1, const Pos2D &_p2)
 {
-	static TBlock board[BOARD_SIZE]; // static for fast
-	// copy for safety
+	assert(_board[_p1] == BLOCK_PLAYER_1);
+	assert(_board[_p2] == BLOCK_PLAYER_2);
+	static TBlock board[BOARD_SIZE];
 	memcpy(board, _board, BOARD_SIZE*sizeof(TBlock));
 
+	bool visisted[BOARD_SIZE] = { false };
 	// search for _pos2 form _pos1
-	setBlock(board, _p1.x, _p1.y, SPECIAL_BLOCK);
-	queue<Pos2D> q;
-	q.push(_p1);
-
-	while (q.size() > 0){
-		Pos2D p = q.front();
-		q.pop();
-
-		for (TMove i = 1; i <= 4; i++){
-			if (p.move(i) == _p2)
-				return getBlock(board, p) + 1 - SPECIAL_BLOCK;
-		}
-
+	queue<Pos1D> queue;
+	queue.push(_p1);
+	visisted[_p1] = true;
+	while (!queue.empty())
+	{
+		Pos1D p = queue.front();
+		queue.pop();
+		board[p] = SPECIAL_BLOCK;
 		for (int i = 1; i <= 4; i++){
-			Pos2D newP = p.move(i);
-			if (getBlock(board, newP) == BLOCK_EMPTY){
-				setBlock(board, newP, getBlock(board, p) + 1);
-				q.push(newP);
-			}
+			Pos2D u = Pos2D(p).move(i);
+			if (getBlock(board, u) != BLOCK_EMPTY)
+				continue;
+			if (visisted[u])
+				continue;
+			queue.push(u);
+			visisted[u] = true;
 		}
 	}
-	return -1;
+
+	for (int i = 1; i <= 4; i++){
+		if (getBlock(board, _p2.move(i)) == SPECIAL_BLOCK)
+			return false;
+	}
+	return true;
 }
 
 #ifdef OPENCV
@@ -364,7 +390,7 @@ cv::Mat toImage(TBlock board[], bool special)
 		}
 		target->copyTo(result.rowRange(PIXEL_PER_BLOCK*y, PIXEL_PER_BLOCK*(y + 1)).
 			colRange(PIXEL_PER_BLOCK*x, PIXEL_PER_BLOCK*(x + 1)));
-	}
+}
 	return result;
 }
 #endif // OPENCV
@@ -455,18 +481,4 @@ void setupImage()
 static inline bool lessThan(const Area* a1, const Area* a2)
 {
 	return a1->nVertices < a2->nVertices;
-}
-
-void sortAndRemoveZero(vector<Area> &areas)
-{
-	vector<Area*> pAreas(areas.size(), NULL);
-	for (unsigned int i = 0; i < areas.size(); i++)
-		pAreas[i] = &areas[i];
-	sort(pAreas.begin(), pAreas.end(), lessThan);
-	vector<Area> a(areas.size());
-	a.clear();
-	for (unsigned int i = 0; i < areas.size(); i++)
-		if (pAreas[i]->nVertices>0)
-			a.push_back(*pAreas[i]);
-	swap(areas, a);
 }

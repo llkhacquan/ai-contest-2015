@@ -1,0 +1,32 @@
+﻿<?xml version="1.0" encoding="utf-8"?>
+<Project ToolsVersion="4.0" xmlns="http://schemas.microsoft.com/developer/msbuild/2003">
+  <ImportGroup Label="PropertySheets" />
+  <PropertyGroup Label="UserMacros" />
+  <PropertyGroup>
+    <PostBuildEventUseInBuild>true</PostBuildEventUseInBuild>
+  </PropertyGroup>
+  <ItemDefinitionGroup>
+    <ClCompile>
+      <AdditionalIncludeDirectories>$(SolutionDir)Lib\opencv\build\include</AdditionalIncludeDirectories>
+    </ClCompile>
+    <Link>
+      <AdditionalLibraryDirectories>$(SolutionDir)Lib\opencv\build\x64\vc12\lib</AdditionalLibraryDirectories>
+      <AdditionalDependencies>opencv_core2410d.lib;opencv_imgproc2410d.lib;opencv_highgui2410d.lib;opencv_ml2410d.lib;opencv_video2410d.lib;opencv_features2d2410d.lib;opencv_calib3d2410d.lib;opencv_objdetect2410d.lib;opencv_contrib2410d.lib;opencv_legacy2410d.lib;opencv_flann2410d.lib;opencv_nonfree2410d.lib;%(AdditionalDependencies)</AdditionalDependencies>
+      <DelayLoadDLLs>
+      </DelayLoadDLLs>
+    </Link>
+    <PostBuildEvent>
+      <Command>if not exist "$(TargetDir)opencv_core2410d.dll" copy "$(SolutionDir)Lib\opencv\build\x64\vc12\bin\opencv_core2410d.dll" "$(TargetDir)"
+if not exist "$(TargetDir)opencv_highgui2410d.dll" copy "$(SolutionDir)Lib\opencv\build\x64\vc12\bin\opencv_highgui2410d.dll" "$(TargetDir)"
+if not exist "$(TargetDir)opencv_imgproc2410d.dll" copy "$(SolutionDir)Lib\opencv\build\x64\vc12\bin\opencv_imgproc2410d.dll" "$(TargetDir)"
+if not exist "$(TargetDir)opencv_calib3d2410d.dll" copy "$(SolutionDir)Lib\opencv\build\x64\vc12\bin\opencv_calib3d2410d.dll" "$(TargetDir)"
+if not exist "$(TargetDir)opencv_flann2410d.dll" copy "$(SolutionDir)Lib\opencv\build\x64\vc12\bin\opencv_flann2410d.dll" "$(TargetDir)"
+if not exist "$(TargetDir)opencv_features2d2410d.dll" copy "$(SolutionDir)Lib\opencv\build\x64\vc12\bin\opencv_features2d2410d.dll" "$(TargetDir)"
+if not exist "$(TargetDir)opencv_legacy2410d.dll" copy "$(SolutionDir)Lib\opencv\build\x64\vc12\bin\opencv_legacy2410d.dll" "$(TargetDir)"
+if not exist "$(TargetDir)opencv_ml2410d.dll" copy "$(SolutionDir)Lib\opencv\build\x64\vc12\bin\opencv_ml2410d.dll" "$(TargetDir)"
+if not exist "$(TargetDir)opencv_video2410d.dll" copy "$(SolutionDir)Lib\opencv\build\x64\vc12\bin\opencv_video2410d.dll" "$(TargetDir)"</Command>
+      <Message>Coping dll files of OpenCV</Message>
+    </PostBuildEvent>
+  </ItemDefinitionGroup>
+  <ItemGroup />
+</Project>

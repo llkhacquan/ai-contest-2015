@@ -10,6 +10,13 @@ void clearBit(TBlock &number, int iBit);
 void toggleBit(TBlock &number, int iBit);
 bool getBit(const TBlock &number, int iBit);
 void changeBit(TBlock &number, int iBit, int value);
+
+void setBit(unsigned char &number, int iBit);
+void clearBit(unsigned char &number, int iBit);
+void toggleBit(unsigned char &number, int iBit);
+bool getBit(const unsigned char &number, int iBit);
+void changeBit(unsigned char &number, int iBit, int value);
+
 TBlock ipowBase2(int exp);
 int findCode(TBlock block);
 
@@ -22,8 +29,6 @@ TBlock getBlock(TBlock const board[], const Pos2D &pos);
 bool setBlock(TBlock board[], const int x, const int y, const TBlock value);
 bool setBlock(TBlock board[], const Pos1D pos, const TBlock value);
 bool setBlock(TBlock board[], const Pos2D &pos, const TBlock value);
-
-void sortAndRemoveZero(vector<Area> &areas);
 
 vector<TMove> getAvailableMoves(const TBlock board[], const Pos2D &pos, bool *output = NULL);
 
@@ -39,7 +44,7 @@ vector<TMove> &findShortestPath(const TBlock _board[], const Pos2D& start, const
 
 int fillDistance(TBlock _board[121], const Pos2D &pos);
 
-int isIsolated(const TBlock _boardData[], const Pos2D &pos1, const Pos2D &pos2);
+bool isIsolated(const TBlock _boardData[], const Pos2D &pos1, const Pos2D &pos2);
 
 void printBoard(const TBlock board[], const bool special);
 

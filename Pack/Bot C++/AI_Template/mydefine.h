@@ -17,14 +17,17 @@
 #include "include\ai\defines.h"
 #include "include\ai\AI.h"
 
-#define BOT_ACTIVE		1
-#define SHOW_DEBUG_INFORMATION	1
-#define ASSERT_IN_BICONNECTED_COMPONENT 1
+#define BOT_ACTIVE	1
+#define SHOW_DEBUG_INFORMATION	0
+// 2600 ms is danger
+#define DANGER_TIME		2700
+
+
 
 #ifdef _DEBUG
-#define DEFAULT_DEPTH 7
+#define MAX_DEPTH	 7
 #else
-#define DEFAULT_DEPTH 11
+#define MAX_DEPTH	 13
 #endif
 
 typedef long long TBlock;
@@ -33,9 +36,11 @@ typedef int TMove;
 typedef int Pos1D;
 using namespace std;
 
+#define POINTS 1000
 #define CC(x,y)	CONVERT_COORD(x,y)
 #define BOARD_SIZE (MAP_SIZE*MAP_SIZE)
-#define MAX_POINTS	 1000000
+#define MY_INFINITY	(MAX_POINTS + 10)
+#define MAX_POINTS	 POINTS
 #define MIN_POINTS	(-MAX_POINTS)
 #define BLOCK_ENEMY_AREA -2
 
@@ -62,7 +67,7 @@ using namespace cv;
 #define DEBUG(x);	
 #endif
 
-#define MAXIMUM_NUMBER_OF_AREAS		62
+#define MAX_N_AREAS		62
 static const int SPECIAL_BIT = 62;
 #define SPECIAL_BLOCK (1i64 << SPECIAL_BIT)
 

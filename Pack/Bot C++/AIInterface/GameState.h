@@ -9,32 +9,43 @@ private:
 	// the first bit indicate the next player: 0 => PLAYER_1; 1 => PLAYER_2
 	// the next 119 bit indicate the state of board[1]->board[119] (since board[0] and board[120] always be occuppied)
 	//    0 => Empty; 1 => not empty
-	bitset<120> boardData; // 15bytes
+	unsigned char data[17]; // the last 2 byte indicates player 1 and player 2 positions
 public:
-	static const char F_EXACT = 0;
-	static const char F_LOWERBOUND = -1;
-	static const char F_UPPERBOUND = 1;
 	CGameState();
 	CGameState(const TBlock _board[], const Pos2D& _pos1, const Pos2D &_pos2, const TPlayer next);
 	~CGameState();
-	signed char pos1;
-	signed char pos2;
-	int value;
 	char depth;
-	char flag;
+	int value;
+	enum Flag {
+		LOWERBOUND, UPPERBOUND, EXACT
+	} flag;
 
 	TPlayer getNextPlayer() const;
 
-	bool isEmpty(const Pos1D p) const;
+	bool isBlockEmpty(const Pos1D p) const;
 
 	void set(const TBlock _board[], const Pos2D& _pos1, const Pos2D &_pos2, const TPlayer next);
 
 	void get(TBlock board[], Pos2D& _pos1, Pos2D &_pos2, TPlayer &next) const;
 
-	unsigned long key() const;
+	inline bool get(int iBit) const;
 
-	bool isSet();
+	inline void set(int iBit, bool value = true);
+
+	unsigned long hash() const;
+
+	bool isSet() const;
 
 	void clear();
+
+	inline signed char getPos1() const;
+
+	inline signed char getPos2() const;
+
+	CGameState CGameState::operator=(const CGameState &state);
+
+	bool operator==(const CGameState &state) const;
+
+	bool operator!=(const CGameState &state) const;
 };
 
