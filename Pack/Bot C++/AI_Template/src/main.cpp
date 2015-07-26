@@ -12,9 +12,6 @@
 #include "../AIInterface/ArticulationPoints.h"
 
 CMyAI* pAI;
-// This function is called automatically each turn.
-// If it's your turn, remember to call AI_Move() with a valid move before the time is run out.
-// See <ai/Game.h> and <ai/AI.h> for supported APIs.
 void AI_Update()
 {
 	assert(pAI != NULL);
@@ -243,35 +240,30 @@ int main(int argc, char* argv[])
 	return 0;
 }
 
-////////////////////////////////////////////////////////////
-//                DON'T TOUCH THIS PART                   //
-////////////////////////////////////////////////////////////
-
 
 #if BOT_ACTIVE
 int main(int argc, char* argv[])
 #else
 int main_(int argc, char* argv[])
 #endif // BOT_ACTIVE
-
 {
 	cout << "LouisLzcute's bot" << endl;
 	srand(clock());
-
+	
 #ifdef _WIN32
-	INT rc;
-	WSADATA wsaData;
+    INT rc;
+    WSADATA wsaData;
 
-	rc = WSAStartup(MAKEWORD(2, 2), &wsaData);
-	if (rc) {
-		printf("WSAStartup Failed.\n");
-		return 1;
-	}
+    rc = WSAStartup(MAKEWORD(2, 2), &wsaData);
+    if (rc) {
+        printf("WSAStartup Failed.\n");
+        return 1;
+    }
 #endif
 
 	Game::CreateInstance();
 	Game * p_Game = Game::GetInstance();
-
+	
 	// Create connection
 	if (p_Game->Connect(argc, argv) == -1)
 	{
@@ -281,7 +273,7 @@ int main_(int argc, char* argv[])
 
 	// Set up function pointer
 	AI::GetInstance()->Update = &AI_Update;
-
+	
 	pAI = CMyAI::getInstance();
 	CTranspositionTable::getInstance();
 
@@ -290,8 +282,7 @@ int main_(int argc, char* argv[])
 	Game::DestroyInstance();
 
 #ifdef _WIN32
-	WSACleanup();
+    WSACleanup();
 #endif
-
 	return 0;
 }

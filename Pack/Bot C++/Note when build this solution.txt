@@ -1,4 +1,4 @@
 Build Louislzcute'bot
-- This solution work with Pack 1.5
+- This solution is packed with Pack 1.5b
 - You can only build this solution with configuration Debug_2013 or Release_2013
 - Debug_2013 require opencv library (included) for debugging
