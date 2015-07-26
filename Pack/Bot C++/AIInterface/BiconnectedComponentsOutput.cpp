@@ -38,7 +38,7 @@ int CBiconnectedComponentsOutput::findLengthOfLongestPath(const Pos1D &startPos)
 	int lLength = 0;
 	vector<int> cPath;
 	int cLength = 0;
-	bool visittedAreas[MAX_N_AREAS] = {false};
+	bool visittedAreas[MAX_N_AREAS] = { false };
 	int startArea = iAreaOfVertices[startPos];
 	visitNode(cPath, cLength, lPath, lLength, visittedAreas, startArea, startPos);
 
@@ -55,8 +55,8 @@ void CBiconnectedComponentsOutput::manager(const Pos1D &playerPos)
 {
 	{
 		// take care the area contains the playerPos
-		for (int iArea = 0; iArea < nAreas; iArea++)
-			mark(iArea, playerPos, false);
+		// 		for (int iArea = 0; iArea < nAreas; iArea++)
+		// 			mark(iArea, playerPos, false);
 		nAreas++;
 		mark(nAreas - 1, playerPos, true);
 	}

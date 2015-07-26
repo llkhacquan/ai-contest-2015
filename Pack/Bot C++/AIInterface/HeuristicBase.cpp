@@ -2,6 +2,8 @@
 #include "BiconnectedComponents.h"
 #include "..\AI_Template\MyAI.h"
 #include "MyTimer.h"
+#include "GameState.h"
+#include "TranspositionTable.h"
 
 
 CHeuristicBase::CHeuristicBase()
@@ -106,11 +108,11 @@ int CHeuristicBase::evaluateBoard(const TBlock _board[121], const Pos2D &_player
 		int length1 = CHeuristicBase::getEstimatedLengthOfTheLongestPath(_board, _player1);
 		int length2 = CHeuristicBase::getEstimatedLengthOfTheLongestPath(_board, _player2);
 		if (length1 > length2) {
-			point = (length1 - length2 + 1)*(MAX_POINTS - MIN_POINTS) / 4 / (max(length1, length2));
+			point = (length1 - length2)*(MAX_POINTS - MIN_POINTS) / 4 / (max(length1, length2));
 			return PLAYER_1;
 		}
 		else if (length1 < length2) {
-			point = (length2 - length1 + 1)*(MAX_POINTS - MIN_POINTS) / 4 / (max(length1, length2));
+			point = (length2 - length1)*(MAX_POINTS - MIN_POINTS) / 4 / (max(length1, length2));
 			return PLAYER_2;
 		}
 		else if (next == PLAYER_1) {
@@ -192,7 +194,7 @@ int CHeuristicBase::voronoiRateBoard(TBlock board[], const Pos2D &_p1, const Pos
 	memcpy(backup, board, BOARD_SIZE*sizeof(TBlock));
 #endif // _DEBUG
 
-	// not isolated mode, not a leaf node
+	// not a leaf node
 	assert(next == PLAYER_1 || next == PLAYER_2);
 	assert(getBlock(board, _p1) == BLOCK_PLAYER_1 && getBlock(board, _p2) == BLOCK_PLAYER_2);
 	int result = 0;
@@ -201,6 +203,45 @@ int CHeuristicBase::voronoiRateBoard(TBlock board[], const Pos2D &_p1, const Pos
 	static TBlock dBoard1[BOARD_SIZE], dBoard2[BOARD_SIZE];
 	memcpy(dBoard1, board, BOARD_SIZE*sizeof(TBlock));
 	memcpy(dBoard2, board, BOARD_SIZE*sizeof(TBlock));
+
+	bool visited[BOARD_SIZE] = { false };
+	queue<Pos1D> q1, q2, *q;
+	int *n;
+	q1.push(_p1); q2.push(_p2);
+	visited[_p1] = visited[_p2] = true;
+	TPlayer currentPlayer = next;
+
+	while (!q1.empty() && !q2.empty()){
+		if (currentPlayer == PLAYER_1){
+			q = &q1;
+			n = &n1;
+			currentPlayer = PLAYER_2;
+		}
+		else{
+			q = &q2;
+			n = &n2;
+			currentPlayer = PLAYER_1;
+		}
+		if (!q->empty()){
+			Pos2D  u(q->front());
+			q->pop();
+
+			*n = *n + 1;
+
+			for (int m = 1; m <= 4; m++){
+				Pos2D v = u.move(m);
+				int iV = v;
+				if (visited[iV])
+					continue;
+
+				if (getBlock(board, v) == BLOCK_EMPTY){
+					visited[iV] = true;
+					q->push(iV);
+				}
+			}
+		}
+	}
+
 	fillDistance(dBoard1, _p1);
 	fillDistance(dBoard2, _p2);
 
@@ -208,10 +249,10 @@ int CHeuristicBase::voronoiRateBoard(TBlock board[], const Pos2D &_p1, const Pos
 		if (getBit(dBoard1[i], SPECIAL_BIT) && getBit(dBoard2[i], SPECIAL_BIT)){
 			if (dBoard1[i] > dBoard2[i])
 			{
-				n1++;
+				n2++;
 			}
 			else if (dBoard1[i] < dBoard2[i]){
-				n2++;
+				n1++;
 			}
 			else if (next == PLAYER_1){
 				n1++;
@@ -236,215 +277,6 @@ int CHeuristicBase::voronoiRateBoard(TBlock board[], const Pos2D &_p1, const Pos
 	return result;
 }
 
-int CHeuristicBase::treeOfChambersRateBoard(TBlock board[], const Pos2D &_p1, const Pos2D &_p2, const TPlayer next){
-#ifdef _DEBUG
-	TBlock backup[BOARD_SIZE];
-	memcpy(backup, board, BOARD_SIZE*sizeof(TBlock));
-#endif // _DEBUG
-
-	// not isolated mode, not a leaf node
-	assert(!isIsolated(board, _p1, _p2));
-	assert(next == PLAYER_1 || next == PLAYER_2);
-	assert(getBlock(board, _p1) == BLOCK_PLAYER_1 && getBlock(board, _p2) == BLOCK_PLAYER_2);
-	int result = 0;
-	int n1 = 0, n2 = 0;
-
-	static TBlock dBoard1[BOARD_SIZE], dBoard2[BOARD_SIZE];
-	static TBlock board1[BOARD_SIZE], board2[BOARD_SIZE];
-	static TBlock oBoard1[BOARD_SIZE], oBoard2[BOARD_SIZE];
-	memcpy(dBoard1, board, BOARD_SIZE*sizeof(TBlock));
-	memcpy(board1, board, BOARD_SIZE*sizeof(TBlock));
-	memcpy(dBoard2, board, BOARD_SIZE*sizeof(TBlock));
-	memcpy(board2, board, BOARD_SIZE*sizeof(TBlock));
-	fillDistance(dBoard1, _p1);
-	fillDistance(dBoard2, _p2);
-
-	for (int i = 0; i < BOARD_SIZE; i++){
-		if (dBoard1[i] > SPECIAL_BLOCK && dBoard2[i] > SPECIAL_BLOCK){
-			if (dBoard1[i] > dBoard2[i])
-			{
-				board1[i] = BLOCK_ENEMY_AREA;
-			}
-			else if (dBoard1[i] < dBoard2[i]){
-				board2[i] = BLOCK_ENEMY_AREA;
-			}
-			else if (next == PLAYER_1){
-				board1[i] = BLOCK_ENEMY_AREA;
-			}
-			else
-				board2[i] = BLOCK_ENEMY_AREA;
-		}
-	}
-	board1[_p2] = BLOCK_ENEMY_AREA;
-	board2[_p1] = BLOCK_ENEMY_AREA;
-
-	if (n1 + n2 == 0){
-		if (next == PLAYER_1)
-			return (MAX_POINTS + 3 * MIN_POINTS) / 4 - 1;
-		else
-			return (MAX_POINTS * 3 + MIN_POINTS) / 4 + 1;
-	}
-
-	DEBUG(cout << "n1/n2 = " << n1 << "/" << n2 << endl);
-	result = n1 *(MAX_POINTS - MIN_POINTS) / (n1 + n2) / 2 + MIN_POINTS / 2;
-#ifdef _DEBUG
-	assert(memcmp(board, backup, BOARD_SIZE*sizeof(TBlock)) == 0);
-#endif // _DEBUG
-
-	return result;
-}
-
-
-/*
-void CHeuristicBase::constructNewGraphUsedInRateBoard(const TBlock oBoard[], const Pos2D &_p, vector<Area> &areas, int* numberOfConnectionsToEnemyArea, set<Edge> &edgesOfCode)
-{
-static bool visited[BOARD_SIZE];
-memset(visited, 0, BOARD_SIZE);
-int startArea = findCode(oBoard[_p.to1D()]);
-vector<bool> foundAreas(MAX_N_AREAS, false);
-
-queue<Pos1D> queueOfAreas;
-queueOfAreas.push(_p.to1D());
-while (!queueOfAreas.empty()){
-Pos1D a = queueOfAreas.front();
-queueOfAreas.pop();
-foundAreas[findCode(oBoard[a])] = true;
-
-queue<Pos1D> queueInAArea;
-queueInAArea.push(a);
-while (!queueInAArea.empty()){
-Pos1D v = queueInAArea.front();
-queueInAArea.pop();
-
-for (TMove direction = 1; direction <= 4; direction++){
-// check the specialty of the block
-TBlock block = getBlock(oBoard, Pos2D(v).move(direction));
-if ((block < SPECIAL_BLOCK || block == BLOCK_OUT_OF_BOARD) && block != BLOCK_ENEMY_AREA)
-continue;
-Pos1D u = Pos2D(v).move(direction).to1D();
-if (visited[u])
-continue;
-
-if (oBoard[u] == oBoard[v]){// same area
-queueInAArea.push(u);
-visited[u] = true;
-}
-else if (block != BLOCK_ENEMY_AREA){ // maybe found a new area?
-int code = findCode(block);
-if (!foundAreas[code]){
-foundAreas[code] = true;
-queueOfAreas.push(u);
-}
-int code1 = findCode(oBoard[u]);
-int code2 = findCode(oBoard[v]);
-edgesOfCode.insert(Edge(code1, code2));
-AdjArea adjArea;
-adjArea.codeOfAdjArea = code2;
-adjArea.connections = u;
-areas[code1].adjAreas.insert(adjArea);
-
-adjArea.codeOfAdjArea = code1;
-adjArea.connections = v;
-areas[code2].adjAreas.insert(adjArea);
-}
-else { // block == BLOCK_ENEMY_AREA. this is a block of enemy's area
-numberOfConnectionsToEnemyArea[findCode(oBoard[v])]++;
-edgesOfCode.insert(Edge(findCode(oBoard[v]), -1));
-AdjArea adjArea;
-adjArea.codeOfAdjArea = -1;
-adjArea.connections = v;
-areas[findCode(oBoard[v])].adjAreas.insert(adjArea);
-}
-}
-}
-}
-}
-
-int CHeuristicBase::calculatePotentialPoint(const TBlock * board, const Pos2D & playerPos, TBlock * oBoard, TBlock * distanceBoard)
-{
-CBiconnectedComponentsOutput output;
-CBiconnectedComponents::biconnectedComponents(board, playerPos, &output);
-// construct areas' connections with each other and enemy area (-2 block)
-set<Edge> edgesOfCode;
-static int numberOfConnectionsToEnemyArea[MAX_N_AREAS];
-
-// areasCode store the code of area(s) which have the largest connections with the enemy areas
-// and we consider it as the only area(s) with the "battle field"
-static vector<int> areasCode(MAX_N_AREAS);
-areasCode.clear();
-memset(numberOfConnectionsToEnemyArea, 0, MAX_N_AREAS * sizeof(int));
-
-// construct new graph
-constructNewGraphUsedInRateBoard(oBoard, playerPos, areas, numberOfConnectionsToEnemyArea, edgesOfCode);
-
-// build the areasCode
-int max_ = *max_element(numberOfConnectionsToEnemyArea, numberOfConnectionsToEnemyArea + areas.size());
-for (unsigned int i = 0; i < areas.size(); i++){
-if (numberOfConnectionsToEnemyArea[i] == max_)
-areasCode.push_back(i);
-}
-
-assert(max_ > 0);	// max_ == 0 -> the 2 players are isolated
-assert(areasCode.size() > 0); // this assert exists because player 1 and player 2 are not isolated
-
-// this vector stores the positions in each area (in areasCode) that have minimum distance to the player pos
-static vector<Pos1D> verticesInTheAreaWithMinDistance(BOARD_SIZE);
-verticesInTheAreaWithMinDistance.clear();
-
-// calculate the vector verticesInTheAreaWithMinDistance
-for (vector<int>::iterator iArea = areasCode.begin(); iArea != areasCode.end(); iArea++){
-// find the minDistance between p and each vertex in the areas[*iArea]
-TBlock minDistance = SPECIAL_BLOCK + 200i64;
-for (int iVertex = 0; iVertex < BOARD_SIZE; iVertex++)
-if (areas[*iArea].inTheAreas[iVertex] && (minDistance > distanceBoard[iVertex]))
-minDistance = distanceBoard[iVertex];
-assert(minDistance != SPECIAL_BLOCK + 200);
-// find the vertex that have distance = minDistance
-for (int iVertex = 0; iVertex < BOARD_SIZE; iVertex++)
-if (areas[*iArea].inTheAreas[iVertex] && (minDistance == distanceBoard[iVertex])){
-verticesInTheAreaWithMinDistance.push_back(iVertex);
-}
-}
-
-// for each position in verticesInTheAreaWithMinDistance; we find a shortest path to it. go to it and
-//  calculate maxLength = max(maxLength, estimated length of longest path)
-int maxLength = -1;
-for (vector<int>::iterator iVertex = verticesInTheAreaWithMinDistance.begin();
-iVertex != verticesInTheAreaWithMinDistance.end(); iVertex++){
-static TBlock board2[BOARD_SIZE];
-memcpy(board2, board, BOARD_SIZE*sizeof(TBlock));
-Pos1D v = *iVertex;
-
-Pos2D end(v);
-vector<TMove> path = findShortestPath(board, playerPos, end);
-Pos2D p = playerPos;
-for (unsigned int i = 0; i < path.size(); i++){
-bool bOk = move(board2, p, path[i]); assert(bOk);
-p = p.move(path[i]);
-}
-assert(p == end);
-maxLength = max(maxLength, (int)path.size() + CBiconnectedComponents::getEstimatedLength(board2, p));
-}
-assert(maxLength >= 0);
-
-// now we fill up the areas in areasCode with BLOCK_OBSTACLE
-TBlock tempBoard[BOARD_SIZE];
-memcpy(tempBoard, board, sizeof(TBlock)*BOARD_SIZE);
-for (unsigned int j = 0; j < areasCode.size(); j++){
-for (unsigned int i = 0; i < BOARD_SIZE; i++){
-if (areas[areasCode[j]].inTheAreas[i])
-tempBoard[i] = BLOCK_OBSTACLE;
-}
-}
-
-tempBoard[playerPos.to1D()] = board[playerPos.to1D()];
-int maxLengthWithoutBatterField = CHeuristicBase::getEstimatedLengthOfTheLongestPath(tempBoard, playerPos);
-maxLength = max(maxLength, maxLengthWithoutBatterField);
-
-return maxLength;
-}
-*/
-
 void CHeuristicBase::sortMoves(vector<TMove> &moves, TBlock* board, const Pos2D &_p1, const Pos2D &_p2, const TPlayer next)
 {
 	static CMyAI* ai = CMyAI::getInstance();
@@ -456,12 +288,12 @@ void CHeuristicBase::sortMoves(vector<TMove> &moves, TBlock* board, const Pos2D 
 	for (vector<TMove>::iterator m = moves.begin(); m != moves.end(); m++){
 		if (next == PLAYER_1){
 			bOk = move(board, _p1, *m, false); assert(bOk);
-			points[i] = ai->searcher.heuristic.rateBoard(board, _p1.move(*m), _p2, PLAYER_2);
+			points[i] = ai->searcher.heuristic.quickRateBoard(board, _p1.move(*m), _p2, PLAYER_2);
 			bOk = move(board, _p1.move(*m), getOpositeDirection(*m), true); assert(bOk);
 		}
 		else{
 			bOk = move(board, _p2, *m, false); assert(bOk);
-			points[i] = ai->searcher.heuristic.rateBoard(board, _p1, _p2.move(*m), PLAYER_1);
+			points[i] = ai->searcher.heuristic.quickRateBoard(board, _p1, _p2.move(*m), PLAYER_1);
 			bOk = move(board, _p2.move(*m), getOpositeDirection(*m), true); assert(bOk);
 		}
 
@@ -501,49 +333,85 @@ int CHeuristicBase::pureTreeOfChamber(TBlock board[], const Pos2D &_p1, const Po
 	TBlock backup[BOARD_SIZE];
 	memcpy(backup, board, BOARD_SIZE*sizeof(TBlock));
 #endif // _DEBUG
+	TBlock gatesBoard[BOARD_SIZE];
+	CBiconnectedComponents::getArticulationPoints(board, _p1, _p2, gatesBoard);
 
 	// not isolated mode, not a leaf node
-	assert(!isIsolated(board, _p1, _p2));
 	assert(next == PLAYER_1 || next == PLAYER_2);
 	assert(getBlock(board, _p1) == BLOCK_PLAYER_1 && getBlock(board, _p2) == BLOCK_PLAYER_2);
 	int result = 0;
 	int n1 = 0, n2 = 0;
 
-	static TBlock dBoard1[BOARD_SIZE], dBoard2[BOARD_SIZE];
 	static TBlock board1[BOARD_SIZE], board2[BOARD_SIZE];
-	static TBlock oBoard1[BOARD_SIZE], oBoard2[BOARD_SIZE];
-	memcpy(dBoard1, board, BOARD_SIZE*sizeof(TBlock));
 	memcpy(board1, board, BOARD_SIZE*sizeof(TBlock));
-	memcpy(dBoard2, board, BOARD_SIZE*sizeof(TBlock));
 	memcpy(board2, board, BOARD_SIZE*sizeof(TBlock));
+	vector<Pos1D> enemyOfP1, enemyOfP2;
+	enemyOfP1.reserve(BOARD_SIZE);
+	enemyOfP2.reserve(BOARD_SIZE);
+
+	static TBlock dBoard1[BOARD_SIZE], dBoard2[BOARD_SIZE];
+	memcpy(dBoard1, board, BOARD_SIZE*sizeof(TBlock));
+	memcpy(dBoard2, board, BOARD_SIZE*sizeof(TBlock));
 	fillDistance(dBoard1, _p1);
 	fillDistance(dBoard2, _p2);
-
 	for (int i = 0; i < BOARD_SIZE; i++){
 		if (dBoard1[i] > SPECIAL_BLOCK && dBoard2[i] > SPECIAL_BLOCK){
-			if (dBoard1[i] > dBoard2[i])
-			{
+			if (dBoard1[i] > dBoard2[i]) {
 				board1[i] = BLOCK_ENEMY_AREA;
+				enemyOfP1.push_back(i);
 			}
-			else if (dBoard1[i] < dBoard2[i]){
+			else if (dBoard1[i] < dBoard2[i]) {
 				board2[i] = BLOCK_ENEMY_AREA;
+				enemyOfP2.push_back(i);
 			}
-			else if (next == PLAYER_1){
+			else if (next == PLAYER_1) {
+				board2[i] = BLOCK_ENEMY_AREA;
+				enemyOfP2.push_back(i);
+			}
+			else {
 				board1[i] = BLOCK_ENEMY_AREA;
+				enemyOfP1.push_back(i);
 			}
-			else
-				board2[i] = BLOCK_ENEMY_AREA;
 		}
 	}
-	board1[_p2] = BLOCK_ENEMY_AREA;
-	board2[_p1] = BLOCK_ENEMY_AREA;
+	board1[_p2] = BLOCK_ENEMY_AREA; enemyOfP1.push_back(_p2);
+	board2[_p1] = BLOCK_ENEMY_AREA; enemyOfP2.push_back(_p1);
 
-	if (n1 + n2 == 0){
-		if (next == PLAYER_1)
-			return (MAX_POINTS + 3 * MIN_POINTS) / 4 - 1;
-		else
-			return (MAX_POINTS * 3 + MIN_POINTS) / 4 + 1;
+	static TBlock filledBoard1[BOARD_SIZE];
+	fillChamberWithBattleFields(gatesBoard, board1, enemyOfP1, filledBoard1);
+	int k1 = CBiconnectedComponents::getEstimatedLength(filledBoard1, _p1);
+
+	static TBlock filledBoard2[BOARD_SIZE];
+	fillChamberWithBattleFields(gatesBoard, board2, enemyOfP2, filledBoard2);
+	int k2 = CBiconnectedComponents::getEstimatedLength(filledBoard2, _p2);
+
+	int l1 = -1, l2 = -1;
+
+	bool p1isInChamberWithBattleField = false;
+	for (int i = 1; i <= 4; i++){
+		if (getBlock(filledBoard1, _p1.move(i)) == BLOCK_ENEMY_AREA)
+		{
+			p1isInChamberWithBattleField = true;
+			l1 = CBiconnectedComponents::getEstimatedLength(board1, _p1);
+			break;
+		}
 	}
+
+	bool p2isInChamberWithBattleField = false;
+	for (int i = 1; i <= 4; i++){
+		if (getBlock(filledBoard1, _p2.move(i)) == BLOCK_ENEMY_AREA)
+		{
+			p2isInChamberWithBattleField = true;
+			l1 = CBiconnectedComponents::getEstimatedLength(board2, _p2);
+			break;
+		}
+	}
+
+	n1 = max(k1, l1);
+	n2 = max(k2, l2);
+
+	if (n1 + n2 == 0)
+		return 0;
 
 	DEBUG(cout << "n1/n2 = " << n1 << "/" << n2 << endl);
 	result = n1 *(MAX_POINTS - MIN_POINTS) / (n1 + n2) / 2 + MIN_POINTS / 2;
@@ -554,3 +422,97 @@ int CHeuristicBase::pureTreeOfChamber(TBlock board[], const Pos2D &_p1, const Po
 	return result;
 }
 
+int CHeuristicBase::pureTreeOfChamber2(TBlock board[], const Pos2D &_p1, const Pos2D &_p2, const int next)
+{
+#ifdef _DEBUG
+	TBlock backup[BOARD_SIZE];
+	memcpy(backup, board, BOARD_SIZE*sizeof(TBlock));
+#endif // _DEBUG
+	TBlock gatesBoard[BOARD_SIZE];
+	CBiconnectedComponents::getArticulationPoints(board, _p1, _p2, gatesBoard);
+
+	// not isolated mode, not a leaf node
+	assert(next == PLAYER_1 || next == PLAYER_2);
+	assert(getBlock(board, _p1) == BLOCK_PLAYER_1 && getBlock(board, _p2) == BLOCK_PLAYER_2);
+	int result = 0;
+	int n1 = 0, n2 = 0;
+
+	static TBlock board1[BOARD_SIZE], board2[BOARD_SIZE];
+	memcpy(board1, board, BOARD_SIZE*sizeof(TBlock));
+	memcpy(board2, board, BOARD_SIZE*sizeof(TBlock));
+	vector<Pos1D> enemyOfP1, enemyOfP2;
+	enemyOfP1.reserve(BOARD_SIZE);
+	enemyOfP2.reserve(BOARD_SIZE);
+
+	static TBlock dBoard1[BOARD_SIZE], dBoard2[BOARD_SIZE];
+	memcpy(dBoard1, board, BOARD_SIZE*sizeof(TBlock));
+	memcpy(dBoard2, board, BOARD_SIZE*sizeof(TBlock));
+	fillDistance(dBoard1, _p1);
+	fillDistance(dBoard2, _p2);
+	for (int i = 0; i < BOARD_SIZE; i++){
+		if (dBoard1[i] > SPECIAL_BLOCK && dBoard2[i] > SPECIAL_BLOCK){
+			if (dBoard1[i] > dBoard2[i]) {
+				board1[i] = BLOCK_ENEMY_AREA;
+				enemyOfP1.push_back(i);
+			}
+			else if (dBoard1[i] < dBoard2[i]) {
+				board2[i] = BLOCK_ENEMY_AREA;
+				enemyOfP2.push_back(i);
+			}
+			else if (next == PLAYER_1) {
+				board2[i] = BLOCK_ENEMY_AREA;
+				enemyOfP2.push_back(i);
+			}
+			else {
+				board1[i] = BLOCK_ENEMY_AREA;
+				enemyOfP1.push_back(i);
+			}
+		}
+	}
+	board1[_p2] = BLOCK_ENEMY_AREA; enemyOfP1.push_back(_p2);
+	board2[_p1] = BLOCK_ENEMY_AREA; enemyOfP2.push_back(_p1);
+
+	static TBlock filledBoard1[BOARD_SIZE];
+	fillChamberWithBattleFields(gatesBoard, board1, enemyOfP1, filledBoard1);
+	int k1 = CBiconnectedComponents::getEstimatedLength(filledBoard1, _p1);
+
+	static TBlock filledBoard2[BOARD_SIZE];
+	fillChamberWithBattleFields(gatesBoard, board2, enemyOfP2, filledBoard2);
+	int k2 = CBiconnectedComponents::getEstimatedLength(filledBoard2, _p2);
+
+	int l1 = -1, l2 = -1;
+
+	bool p1isInChamberWithBattleField = false;
+	for (int i = 1; i <= 4; i++){
+		if (getBlock(filledBoard1, _p1.move(i)) == BLOCK_ENEMY_AREA)
+		{
+			p1isInChamberWithBattleField = true;
+			l1 = CBiconnectedComponents::getEstimatedLength(board1, _p1);
+			break;
+		}
+	}
+
+	bool p2isInChamberWithBattleField = false;
+	for (int i = 1; i <= 4; i++){
+		if (getBlock(filledBoard1, _p2.move(i)) == BLOCK_ENEMY_AREA)
+		{
+			p2isInChamberWithBattleField = true;
+			l1 = CBiconnectedComponents::getEstimatedLength(board2, _p2);
+			break;
+		}
+	}
+
+	n1 = max(k1, l1);
+	n2 = max(k2, l2);
+
+	if (n1 + n2 == 0)
+		return 0;
+
+	DEBUG(cout << "n1/n2 = " << n1 << "/" << n2 << endl);
+	result = n1 *(MAX_POINTS - MIN_POINTS) / (n1 + n2) / 2 + MIN_POINTS / 2;
+#ifdef _DEBUG
+	assert(memcmp(board, backup, BOARD_SIZE*sizeof(TBlock)) == 0);
+#endif // _DEBUG
+
+	return result;
+}

@@ -20,14 +20,17 @@
 #define BOT_ACTIVE	1
 #define SHOW_DEBUG_INFORMATION	0
 // 2600 ms is danger
-#define DANGER_TIME		2700
-
+#define DANGER_TIME		1000
 
 
 #ifdef _DEBUG
+#define MIN_DEPTH	 5
 #define MAX_DEPTH	 7
+#define ISOLATED_DEPTH 13
 #else
-#define MAX_DEPTH	 13
+#define MIN_DEPTH	 12
+#define MAX_DEPTH	 14
+#define ISOLATED_DEPTH 17
 #endif
 
 typedef long long TBlock;
@@ -42,7 +45,7 @@ using namespace std;
 #define MY_INFINITY	(MAX_POINTS + 10)
 #define MAX_POINTS	 POINTS
 #define MIN_POINTS	(-MAX_POINTS)
-#define BLOCK_ENEMY_AREA -2
+#define BLOCK_ENEMY_AREA (-2)
 
 /// GRAPHIC
 #ifdef OPENCV

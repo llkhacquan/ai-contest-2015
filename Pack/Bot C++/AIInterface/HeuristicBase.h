@@ -12,9 +12,10 @@ public:
 	CHeuristicBase();
 	~CHeuristicBase();
 	int(*rateBoard)(TBlock _board[], const Pos2D &_player1, const Pos2D &_player2, const int nextPlayer);
+	int(*quickRateBoard)(TBlock _board[], const Pos2D &_player1, const Pos2D &_player2, const int nextPlayer);
 
-	static int treeOfChambersRateBoard(TBlock _board[], const Pos2D &_player1, const Pos2D &_player2, const int nextPlayer);
 	static int pureTreeOfChamber(TBlock _board[], const Pos2D &_player1, const Pos2D &_player2, const int nextPlayer);
+	static int pureTreeOfChamber2(TBlock _board[], const Pos2D &_player1, const Pos2D &_player2, const int nextPlayer);
 	static int simpleRateBoard(TBlock _board[], const Pos2D &_player1, const Pos2D &_player2, const int nextPlayer);
 	static int voronoiRateBoard(TBlock _board[], const Pos2D &_player1, const Pos2D &_player2, const int nextPlayer);
 
@@ -27,7 +28,5 @@ public:
 	static void sortMoves(vector<TMove> &moves, TBlock* board, const Pos2D &_player1, const Pos2D &_player2, const TPlayer next);
 
 	static int evaluateBoard(const TBlock _board[], const Pos2D &_player1, const Pos2D &_player2, const TPlayer nextPlayer, int &point);
-	// static int calculatePotentialPoint(const TBlock * board, const Pos2D & _p, TBlock * oBoard, TBlock * distanceBoard);
-	// static void constructNewGraphUsedInRateBoard(const TBlock oBoard1[], const Pos2D &_p1, vector<Area> &areas, int* numberOfConnectionsToEnemyArea, set<Edge> &edgesOfCode);
 };
 

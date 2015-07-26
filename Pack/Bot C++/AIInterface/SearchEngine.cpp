@@ -35,7 +35,7 @@ int CSearchEngine::negaMax(TBlock board[], const Pos2D&_p1, const Pos2D&_p2, TPl
 
 	assert(!isIsolated(board, _p1, _p2));
 
-	if (depth == MAX_DEPTH || CMyTimer::getInstance()->timeUp())
+	if (depth == MAX_DEPTH)
 	{
 		CMyAI::getInstance()->doneDepth = max(CMyAI::getInstance()->doneDepth, depth - 1);
 		return color*heuristic.rateBoard(board, _p1, _p2, next);
@@ -91,7 +91,7 @@ int CSearchEngine::negaScout(TBlock board[], const Pos2D&_p1, const Pos2D&_p2, T
 	assert(!isIsolated(board, _p1, _p2));
 
 
-	if (depth == MAX_DEPTH || CMyTimer::getInstance()->timeUp()){
+	if (depth == MAX_DEPTH){
 		return heuristic.rateBoard(board, _p1, _p2, next) * color;
 	}
 
@@ -162,7 +162,7 @@ int CSearchEngine::alphaBeta(TBlock board[], const Pos2D&_p1, const Pos2D&_p2, T
 
 	assert(!isIsolated(board, _p1, _p2));
 
-	if (depth == MAX_DEPTH || CMyTimer::getInstance()->timeUp())
+	if (depth == MAX_DEPTH)
 	{
 		CMyAI::getInstance()->doneDepth = depth - 1;
 		return heuristic.rateBoard(board, _p1, _p2, next);
@@ -259,7 +259,7 @@ int CSearchEngine::negaMaxWithMemory(TBlock board[], const Pos2D&_p1, const Pos2
 	else if (winner == PLAYER_2){
 		return color * ((MAX_POINTS + 3 * MIN_POINTS) / 4 - point);
 	}
-	else if (depth == MAX_DEPTH || CMyTimer::getInstance()->timeUp()){
+	else if (depth == MAX_DEPTH){
 		return color * heuristic.rateBoard(board, _p1, _p2, next);
 	}
 
@@ -306,13 +306,13 @@ int CSearchEngine::negaMaxWithMemory(TBlock board[], const Pos2D&_p1, const Pos2
 	return bestValue;
 }
 
-int CSearchEngine::iterative_deepening(TBlock board[], const Pos2D&_p1, const Pos2D&_p2, TPlayer next, int depth = 50)
+int CSearchEngine::mtdfIterativeDeepening(TBlock board[], const Pos2D&_p1, const Pos2D&_p2, TPlayer next, int depth = 19)
 {
-	CTranspositionTable *table = CTranspositionTable::getInstance();
+	static CTranspositionTable *table = CTranspositionTable::getInstance();
 	startTime = clock();
 	int firstGuest = 0;
 	int d = 1;
-	for (d = 1; d <= depth; d++){
+	for (d = MIN_DEPTH; d <= depth; d++){
 		firstGuest = mtdF(board, _p1, _p2, next, firstGuest, d);
 		double time = double(clock() - startTime);
 		if (CMyTimer::getInstance()->timeUp())
@@ -357,14 +357,20 @@ TMove CSearchEngine::optimalMove(TBlock board[121], const Pos2D &_p1, const Pos2
 				points[iMove] = negaMaxWithMemory(board, newPos, _p2, PLAYER_2, 0, -MY_INFINITY, MY_INFINITY);
 				break;
 			case MTDF_ITERATIVE_DEEPENING:
-				points[iMove] = iterative_deepening(board, newPos, _p2, PLAYER_2);
+				points[iMove] = mtdfIterativeDeepening(board, newPos, _p2, PLAYER_2);
+				break;
 			case NEGAMAX:
 				points[iMove] = negaMax(board, newPos, _p2, PLAYER_2, 0, -MY_INFINITY, MY_INFINITY);
 				break;
 			case NEGASCOUT:
 				points[iMove] = negaScout(board, newPos, _p2, PLAYER_2, 0, -MY_INFINITY, MY_INFINITY);
+				break;
+			case NEGA_WITH_MEMORY:
+				points[iMove] = negaScoutIterativeDeepening(board, newPos, _p2, PLAYER_2, MAX_DEPTH);
+				break;
 			default:
 				assert(false);
+				break;
 			}
 			bOk = move(board, newPos, getOpositeDirection(allMoves[iMove]), true); assert(bOk);
 		}
@@ -379,14 +385,20 @@ TMove CSearchEngine::optimalMove(TBlock board[121], const Pos2D &_p1, const Pos2
 				points[iMove] = negaMaxWithMemory(board, _p1, newPos, PLAYER_1, 0, -MY_INFINITY, MY_INFINITY);
 				break;
 			case MTDF_ITERATIVE_DEEPENING:
-				points[iMove] = iterative_deepening(board, _p1, newPos, PLAYER_1);
+				points[iMove] = mtdfIterativeDeepening(board, _p1, newPos, PLAYER_1);
+				break;
 			case NEGAMAX:
 				points[iMove] = negaMax(board, _p1, newPos, PLAYER_1, 0, -MY_INFINITY, MY_INFINITY);
 				break;
 			case NEGASCOUT:
 				points[iMove] = negaScout(board, _p1, newPos, PLAYER_1, 0, -MY_INFINITY, MY_INFINITY);
+				break;
+			case NEGA_WITH_MEMORY:
+				points[iMove] = negaScoutIterativeDeepening(board, newPos, _p2, PLAYER_2, MAX_DEPTH);
+				break;
 			default:
 				assert(false);
+				break;
 			}
 			bOk = move(board, newPos, getOpositeDirection(allMoves[iMove]), true); assert(bOk);
 		}
@@ -408,4 +420,22 @@ TMove CSearchEngine::optimalMove(TBlock board[121], const Pos2D &_p1, const Pos2
 	assert(memcmp(board, backup, BOARD_SIZE*sizeof(TBlock)) == 0);
 #endif // _DEBUG
 	return allMoves[iMax];
+}
+
+int CSearchEngine::negaScoutIterativeDeepening(TBlock board[], const Pos2D&_p1, const Pos2D&_p2, TPlayer next, int depth){
+	static CTranspositionTable *table = CTranspositionTable::getInstance();
+	startTime = clock();
+	int firstGuest = 0;
+	int d = 1;
+	for (d = MIN_DEPTH; d <= depth; d++){
+		firstGuest = negaScout(board, _p1, _p2, next, d, -MY_INFINITY, MY_INFINITY);
+		double time = double(clock() - startTime);
+		if (CMyTimer::getInstance()->timeUp())
+		{
+			break;
+		}
+	}
+	cout << "\t\tThe reached depth = " << d << endl;
+	cout << "\t\tgetok/getmiss/put = " << table->nGetOk << "/" << table->nGetMiss << "/" << table->nPut << endl;
+	return firstGuest;
 }

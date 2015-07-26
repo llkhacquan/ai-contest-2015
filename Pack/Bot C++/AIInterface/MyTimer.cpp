@@ -31,7 +31,6 @@ CMyTimer::~CMyTimer()
 
 bool CMyTimer::timeUp()
 {
-	return false;
 	if (getTimeInMs() > DANGER_TIME){
 		DEBUG(cout << "timeUp - let quit!!!\n");
 		return true;

@@ -14,8 +14,9 @@ CMyAI::CMyAI()
 	CTranspositionTable::getInstance();
 
 	// bugs in ab with memory, mtdf iterative deepening
-	searcher.flag = CSearchEngine::ALPHA_BETA;
-	searcher.heuristic.rateBoard = &CHeuristicBase::simpleRateBoard;
+	searcher.flag = CSearchEngine::NEGAMAX;
+	searcher.heuristic.rateBoard = &CHeuristicBase::voronoiRateBoard;
+	searcher.heuristic.quickRateBoard = &CHeuristicBase::voronoiRateBoard;
 }
 
 CMyAI::~CMyAI()
@@ -76,15 +77,6 @@ void CMyAI::updateBoard(const int* newBoard, const Pos2D &_p1, const Pos2D &_p2,
 	myPos = we == PLAYER_1 ? &posPlayer1 : &posPlayer2;
 	myPos = we != PLAYER_1 ? &posPlayer1 : &posPlayer2;
 	CMyAI::getInstance()->doneDepth = 0;
-
-	if (iTurn < 4){
-		if (nObjectsIn5x5 < 3)
-			searcher.heuristic.rateBoard = CHeuristicBase::voronoiRateBoard;
-		else
-			searcher.heuristic.rateBoard = CHeuristicBase::simpleRateBoard;
-	}
-	else if (iTurn == 4)
-		searcher.heuristic.rateBoard = CHeuristicBase::simpleRateBoard;
 }
 
 // calculate and give an optimal move for ourselves 
@@ -129,7 +121,7 @@ TMove CMyAI::newTurn()
 		pos = p_ai->GetMyPosition();
 		cout << "Time of this turn: " << double(clock() - startTime) / (double)CLOCKS_PER_SEC
 			<< " seconds. Reached depth : " << doneDepth << endl;
-		return CHeuristicBase::getFirstMoveOfTheLongestPath(boardData, pos, 5);
+		return CHeuristicBase::getFirstMoveOfTheLongestPath(boardData, pos, ISOLATED_DEPTH);
 	}
 	// end ISOLATED MODE
 

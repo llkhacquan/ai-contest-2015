@@ -10,11 +10,13 @@ CBiconnectedComponents::~CBiconnectedComponents(){}
 void CBiconnectedComponents::biconnectedComponents(TBlock const board[], const Pos2D &playerPos,
 	CBiconnectedComponentsOutput *output, TBlock *oBoard)
 {
+	assert(getBlock(board, playerPos) == BLOCK_PLAYER_1 || getBlock(board, playerPos) == BLOCK_PLAYER_2);
 	// setting up
 	CBiconnectedComponents bc;
 	output->clear();
 	memcpy(bc.oBoard, board, sizeof(TBlock)*BOARD_SIZE);
-	bc.playerPos = playerPos;
+
+	setBlock(bc.oBoard, playerPos, BLOCK_OBSTACLE);
 	bc.iCount = 0;
 	bc.output = output;
 
@@ -29,14 +31,17 @@ void CBiconnectedComponents::biconnectedComponents(TBlock const board[], const P
 	}
 
 	// build the areas by biconnected components algorithm 
-	bc.dfsVisit(playerPos);
+	for (int i = 1; i <= 4; i++){
+		if (getBlock(bc.oBoard, playerPos.move(i)) == BLOCK_EMPTY)
+			bc.dfsVisit(playerPos.move(i));
+	}
 	output->manager(playerPos);
 
 	if (oBoard != NULL){
 		memcpy(oBoard, board, sizeof(TBlock)*BOARD_SIZE);
 		for (int i = 0; i < BOARD_SIZE; i++){
 			if (output->iAreaOfVertices[i] >= 0){
-				oBoard[i] = SPECIAL_BLOCK | ipowBase2(output->iAreaOfVertices[i]);
+				oBoard[i] = SPECIAL_BLOCK + (output->iAreaOfVertices[i]);
 			}
 		}
 		printBoard(oBoard, true);
@@ -110,6 +115,46 @@ int CBiconnectedComponents::getEstimatedLength(TBlock const board[], const Pos2D
 	return out.findLengthOfLongestPath(playerPos);
 }
 
+void CBiconnectedComponents::getArticulationPoints(TBlock const board[], const Pos2D &_p1, const Pos2D &_p2, TBlock oBoard[])
+{
+	CBiconnectedComponentsOutput output;
+	assert(getBlock(board, _p1) == BLOCK_PLAYER_1 || getBlock(board, _p1) == BLOCK_PLAYER_2);
+	// setting up
+	CBiconnectedComponents bc;
+	output.clear();
+	memcpy(bc.oBoard, board, sizeof(TBlock)*BOARD_SIZE);
+
+	setBlock(bc.oBoard, _p1, BLOCK_OBSTACLE);
+	bc.iCount = 0;
+	bc.output = &output;
+
+	{// clear stack
+		stack<Edge> t;
+		bc.myStack.swap(t);
+	}
+
+	for (int iVertex = 0; iVertex < BOARD_SIZE; iVertex++){
+		bc.visited[iVertex] = false;
+		bc.parrent[iVertex] = -1;
+	}
+
+	// build the areas by biconnected components algorithm 
+	for (int i = 1; i <= 4; i++){
+		if (getBlock(bc.oBoard, _p1.move(i)) == BLOCK_EMPTY)
+			bc.dfsVisit(_p1.move(i));
+	}
+	for (int i = 1; i <= 4; i++){
+		if (getBlock(bc.oBoard, _p2.move(i)) == BLOCK_EMPTY)
+			bc.dfsVisit(_p2.move(i));
+	}
+
+	memcpy(oBoard, board, sizeof(TBlock)*BOARD_SIZE);
+	for (int iVertex = 0; iVertex < BOARD_SIZE; iVertex++){
+		if (output.nAreasOfVertices[iVertex] >= 2)
+			setBlock(oBoard, iVertex, SPECIAL_BLOCK);
+	}
+}
+
 int CBiconnectedComponentsOutput::calculateLengthOfPath(const vector<int> &path, const int &startPos) const
 {
 	assert(path.size() > 0);
@@ -160,36 +205,39 @@ int CBiconnectedComponentsOutput::calculateLengthOfPath(const vector<int> &path,
 
 			int a = -1;
 			for (auto i = 0; i < 4; i++){
-				Pos1D start = aXa[path[iArea]][path[iArea - 1]][i];
-				Pos1D end = aXa[path[iArea]][path[iArea + 1]][i];;
-				if (start < 0 || end < 0)
-					break;
-				if (end < 0)
-					continue;
-				int b = -1;
-				{
-					if (start == end) // start and end in the same position
-						b = 1;
-					else if (start % 2 != end % 2) // start and end in odd/even position
-						b = min(odd, even) * 2;
-					else if (start % 2 == 1) // start with odd, end with odd
-						if (odd > even)
-							b = even * 2 + 1;
-						else if (even > odd)
-							b = odd * 2 - 1;
-						else // even == odd
-							b = odd * 2 - 1;
-					else // if (it1->connections % 2 == 0) // start with even, end with even
-						if (odd > even)
-							b = even * 2 - 1;
-						else if (odd < even)
-							b = odd * 2 + 1;
-						else // even == odd
-							b = even * 2 - 1;
+				for (auto j = 0; j < 4; j++){
+					int b = -1;
+					Pos1D start = aXa[path[iArea]][path[iArea - 1]][i];
+					if (start < 0)
+						break;
+					assert(aXa[path[iArea - 1]][path[iArea]][i] >= 0);
+					Pos1D end = aXa[path[iArea]][path[iArea + 1]][j];;
+					if (end < 0)
+						break;
+					assert(aXa[path[iArea + 1]][path[iArea]][j] >= 0);
+					{
+						if (start == end) // start and end in the same position
+							b = 1;
+						else if (start % 2 != end % 2) // start and end in odd/even position
+							b = min(odd, even) * 2;
+						else if (start % 2 == 1) // start with odd, end with odd
+							if (odd > even)
+								b = even * 2 + 1;
+							else if (even > odd)
+								b = odd * 2 - 1;
+							else // even == odd
+								b = odd * 2 - 1;
+						else // if (it1->connections % 2 == 0) // start with even, end with even
+							if (odd > even)
+								b = even * 2 - 1;
+							else if (odd < even)
+								b = odd * 2 + 1;
+							else // even == odd
+								b = even * 2 - 1;
+					}
+					if (a < b)
+						a = b;
 				}
-				// assert(b>0);
-				if (a < b)
-					a = b;
 			}
 			assert(a > 0);
 			result += a;

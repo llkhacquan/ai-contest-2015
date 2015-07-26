@@ -390,7 +390,7 @@ cv::Mat toImage(TBlock board[], bool special)
 		}
 		target->copyTo(result.rowRange(PIXEL_PER_BLOCK*y, PIXEL_PER_BLOCK*(y + 1)).
 			colRange(PIXEL_PER_BLOCK*x, PIXEL_PER_BLOCK*(x + 1)));
-}
+	}
 	return result;
 }
 #endif // OPENCV
@@ -478,7 +478,74 @@ void setupImage()
 }
 #endif // OPENCV
 
-static inline bool lessThan(const Area* a1, const Area* a2)
+void fillChamberWithBattleFields(const TBlock gatesBoard[], const TBlock board[], vector<Pos1D> enemies, TBlock fillBoard[])
 {
-	return a1->nVertices < a2->nVertices;
+	memcpy(fillBoard, board, sizeof(TBlock)*BOARD_SIZE);
+	while (enemies.size() > 0){
+		Pos2D v(enemies.back());
+		enemies.pop_back();
+
+		fillBoard[v] = BLOCK_ENEMY_AREA;
+		for (int i = 1; i <= 4; i++){
+			Pos2D u = v.move(i);
+			if (getBlock(fillBoard, u) == BLOCK_EMPTY && getBlock(gatesBoard, u) != SPECIAL_BLOCK)
+				enemies.push_back(u);
+		}
+	}
+}
+
+int lengthWhenTryToReachBattleFields(const TBlock board[], const TBlock dBoard[], const TBlock filledBoard[], const Pos2D& _p){
+	queue<Pos1D> q;
+	q.push(_p);
+	TBlock ourBoard[BOARD_SIZE];
+
+	bool visitted[BOARD_SIZE] = { false };
+	Pos1D parrent[BOARD_SIZE];
+	visitted[_p] = true;
+	while (!q.empty()){
+		Pos2D v(q.front());
+		if (getBlock(filledBoard, v) == BLOCK_ENEMY_AREA)
+			break;
+		q.pop();
+		for (int i = 1; i <= 4; i++){
+			Pos2D u = v.move(i);
+			TBlock block = getBlock(board, u);
+			if (!(block == BLOCK_EMPTY || block == BLOCK_ENEMY_AREA))
+				continue;
+			if (visitted[u])
+				continue;
+			visitted[u] = true;
+			parrent[u] = v;
+			q.push(u);
+		}
+	}
+
+	int minDistance = dBoard[q.front()];
+	int maxLength = -1;
+	while (!q.empty()){
+		Pos2D v(q.front());
+		q.pop();
+		if (dBoard[v] > SPECIAL_BLOCK + minDistance)
+			continue;
+		if (filledBoard[v]!=BLOCK_ENEMY_AREA)
+			continue;
+		memcpy(ourBoard, board, sizeof(BOARD_SIZE));
+		ourBoard[v] = board[_p];
+
+		TBlock oldBlock;
+		do {
+			oldBlock = ourBoard[parrent[v]];
+			ourBoard[parrent[v]] = BLOCK_OBSTACLE;
+			v = parrent[v];
+		} while (oldBlock != board[_p]);
+		maxLength = max(maxLength,
+			CBiconnectedComponents::getEstimatedLength(ourBoard, v) + (int)dBoard[v]);
+	}
+	return maxLength;
+}
+
+void getArticulationPoints(const TBlock board[], const Pos2D& _p1, const Pos2D&_p2, const TBlock oBoard)
+{
+	assert(getBlock(board, _p1) == BLOCK_PLAYER_1 || getBlock(board, _p1) == BLOCK_PLAYER_2);
+
 }

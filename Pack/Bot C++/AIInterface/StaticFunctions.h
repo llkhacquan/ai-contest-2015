@@ -60,6 +60,8 @@ cv::Mat toImage(TBlock board[], bool special = false);
 
 void setupImage();
 #endif // OPENCV
-
+void fillChamberWithBattleFields(const TBlock gatesBoard[], const TBlock board[], vector<Pos1D> enemies, TBlock oBoard[]);
+int lengthWhenTryToReachBattleFields(const TBlock board[], const TBlock dBoard[], const TBlock filledBoard[], const Pos2D& _p);
+void getArticulationPoints(const TBlock board, const Pos2D& _p1, const Pos2D&_p2, const TBlock oBoard);
 
 #endif // STATIC_FUNCTIONS

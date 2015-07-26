@@ -25,7 +25,7 @@ void AI_Update()
 
 void setupBoard(TBlock *board, const vector<Pos2D> *positions, Pos2D&p1 = Pos2D(0, 0), Pos2D &p2 = Pos2D(10, 10)){
 	if (positions == NULL){
-		createNewBoard(board, rand() % 30 + 5);
+		createNewBoard(board, rand() % 20 + 10);
 		board[0] = board[BOARD_SIZE - 1] = BLOCK_OBSTACLE;
 		while (true) {
 			int i = rand() % 121;
@@ -81,9 +81,11 @@ void testFindPath(TBlock *board, const Pos2D&p = Pos2D(0, 0))
 {
 	Pos2D pos = p;
 	int c = 0;
+	int n = 0;
 	bool bOk;
 	printBoard(board, false);
-	cout << "Estimated length : " << CHeuristicBase::getEstimatedLengthOfTheLongestPath(board, pos) << endl;
+	n = CHeuristicBase::getEstimatedLengthOfTheLongestPath(board, pos);
+	cout << "Estimated length : " << n << endl;
 	int iCount = 0;
 
 	while (c != 27){
@@ -102,8 +104,9 @@ void testFindPath(TBlock *board, const Pos2D&p = Pos2D(0, 0))
 		c = waitKey(50);
 #endif // OPENCV
 	}
-	cout << "Traveled length : " << iCount << endl;
-	// system("pause");
+	cout << "Traveled length : " << iCount << endl << endl;
+	if (iCount > n)
+		system("pause");
 }
 
 void testConnectedComponents(TBlock *board, Pos2D p = Pos2D(0, 0))
@@ -116,6 +119,7 @@ void testConnectedComponents(TBlock *board, Pos2D p = Pos2D(0, 0))
 	cout << endl;
 	CBiconnectedComponentsOutput output;
 	CBiconnectedComponents::biconnectedComponents(board, p, &output, board2);
+	printBoard(board2, true);
 	cout << "n = " << output.nAreas << endl;
 
 	n = CBiconnectedComponents::getEstimatedLength(board, p);
@@ -123,6 +127,7 @@ void testConnectedComponents(TBlock *board, Pos2D p = Pos2D(0, 0))
 #ifdef OPENCV
 	waitKey(100);
 #endif // OPENCV
+	system("pause");
 }
 
 void testEstimateLongestLength(TBlock* board, Pos2D p = Pos2D(0, 0)){
@@ -141,7 +146,7 @@ void testRateBoard(TBlock*board, const Pos2D &p1 = Pos2D(0, 0), const Pos2D &p2 
 		break;
 	}
 #endif // OPENCV
-	CHeuristicBase::treeOfChambersRateBoard(board, p1, p2, PLAYER_1);
+	CHeuristicBase::pureTreeOfChamber(board, p1, p2, PLAYER_1);
 	CHeuristicBase::simpleRateBoard(board, p1, p2, PLAYER_1);
 }
 
@@ -149,13 +154,11 @@ void testOptimalMove(TBlock*board, const Pos2D &p1 = Pos2D(0, 0), const Pos2D &p
 	if (isIsolated(board, p1, p2))
 		return;
 
+	pAI->searcher.heuristic.rateBoard = CHeuristicBase::pureTreeOfChamber;
 	int ab, negawm, negaMax, negaScout, mtdf;
 	int depth = 5;
-	CMyTimer::getInstance()->reset();
 	cout << "\tab:" << (ab = pAI->searcher.alphaBeta(board, p1, p2, PLAYER_1, depth, -MY_INFINITY, +MY_INFINITY));
-	CMyTimer::getInstance()->reset();
 	cout << "\tnegaScout:" << (negaScout = pAI->searcher.negaScout(board, p1, p2, PLAYER_1, depth, -MY_INFINITY, +MY_INFINITY));
-	CMyTimer::getInstance()->reset();
 	cout << "\tnega:" << (negaMax = pAI->searcher.negaMax(board, p1, p2, PLAYER_1, depth, -MY_INFINITY, +MY_INFINITY));
 	// CMyTimer::getInstance()->reset();
 	// cout << "\tabwm:" << (negawm = pAI->searcher.negaMaxWithMemory(board, p1, p2, PLAYER_1, depth, -MY_INFINITY, +MY_INFINITY));
@@ -183,6 +186,20 @@ void testOptimalMove(TBlock*board, const Pos2D &p1 = Pos2D(0, 0), const Pos2D &p
 	// 	}
 }
 
+void testGetArticulationPoints(TBlock *board, const Pos2D &p1 = Pos2D(0, 0), const Pos2D &p2 = Pos2D(10, 10)){
+#ifdef OPENCV
+	imshow("test", toImage(board));
+#endif // OPENCV
+	TBlock oBoard[BOARD_SIZE];
+	CBiconnectedComponents::getArticulationPoints(board, p1, p2, oBoard);
+	printBoard(oBoard, true);
+
+#ifdef OPENCV
+	waitKey(100);
+#endif // OPENCV
+	system("pause");
+}
+
 #if BOT_ACTIVE
 int main_(int argc, char* argv[])
 #else
@@ -194,11 +211,15 @@ int main(int argc, char* argv[])
 #ifdef OPENCV
 	setupImage();
 #endif // OPENCV
-	std::srand(time(0));
+	std::srand(0);
 	TBlock board[BOARD_SIZE];
 
 	vector<Pos2D> _p1 = { Pos2D(2, 0), Pos2D(2, 0), Pos2D(3, 0), Pos2D(4, 1), Pos2D(4, 2), Pos2D(4, 3), Pos2D(4, 4), Pos2D(4, 5),
 		Pos2D(3, 5), Pos2D(2, 5), Pos2D(1, 5), Pos2D(0, 5), Pos2D(0, 2), Pos2D(0, 3), Pos2D(0, 4) };
+	vector<Pos2D> _p2 = { Pos2D(10, 0), Pos2D(6, 1), Pos2D(7, 1), Pos2D(9, 1), Pos2D(10, 0), Pos2D(0, 2), Pos2D(3, 2), Pos2D(5, 2),
+		Pos2D(8, 2), Pos2D(10, 0), Pos2D(1, 3), Pos2D(2, 3), Pos2D(10, 0), Pos2D(4, 3), Pos2D(7, 3), Pos2D(8, 3), Pos2D(9, 3),
+		Pos2D(1, 4), Pos2D(4, 5), Pos2D(6, 5), Pos2D(7, 5), Pos2D(8, 5), Pos2D(10, 5), Pos2D(0, 6), Pos2D(2, 6), Pos2D(3, 6),
+		Pos2D(5, 6), Pos2D(9, 6), Pos2D(1, 7), };
 	clock_t tStart = clock();
 	for (int i = 0; i < 1000; i++){
 		/*setupBoard(board, &p5, Pos2D(1, 9));
@@ -206,7 +227,7 @@ int main(int argc, char* argv[])
 
 		setupBoard(board, &p5, Pos2D(0, 10));
 		testConnectedComponents(board, Pos2D(0, 10));*/
-		Pos2D p1(0, 0), p2;
+		Pos2D p1(9, 5), p2(10, 10);
 		setupBoard(board, NULL, p1, p2);
 		// testConnectedComponents(board, p1);
 		// cout << CHeuristicBase::getEstimatedLengthOfTheLongestPath(board, p1);
@@ -214,6 +235,7 @@ int main(int argc, char* argv[])
 		// testRateBoard(board, p1, p2);
 		// testEstimateLongestLength(board, p1);
 		testOptimalMove(board, p1, p2);
+		// testGetArticulationPoints(board, p1, p2);
 	}
 
 	printf("Time taken: %.2fs\n", (double)(clock() - tStart) / CLOCKS_PER_SEC);
