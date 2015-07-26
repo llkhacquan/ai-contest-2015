@@ -54,6 +54,9 @@
     <ClInclude Include="BiconnectedComponentsOutput.h">
       <Filter>Header Files</Filter>
     </ClInclude>
+    <ClInclude Include="ArticulationPoints.h">
+      <Filter>Header Files</Filter>
+    </ClInclude>
   </ItemGroup>
   <ItemGroup>
     <ClCompile Include="HeuristicBase.cpp">
@@ -81,6 +84,9 @@
       <Filter>Source Files</Filter>
     </ClCompile>
     <ClCompile Include="BiconnectedComponentsOutput.cpp">
+      <Filter>Source Files</Filter>
+    </ClCompile>
+    <ClCompile Include="ArticulationPoints.cpp">
       <Filter>Source Files</Filter>
     </ClCompile>
   </ItemGroup>

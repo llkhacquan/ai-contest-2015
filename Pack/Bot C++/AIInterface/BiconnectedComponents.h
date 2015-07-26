@@ -149,7 +149,6 @@ public:
 
 	static int getEstimatedLength(TBlock const board[], const Pos2D &playerPos);
 	static void biconnectedComponents(TBlock const board[], const Pos2D &playerPos, CBiconnectedComponentsOutput *output, TBlock *oBoard = NULL);
-	static void getArticulationPoints(TBlock const board[], const Pos2D &_p1, const Pos2D &_p2, TBlock oBoard[]);
 private:
 	void dfsVisit(const Pos1D & u);
 	void createNewArea(const Pos1D &v1, const Pos1D &v2);

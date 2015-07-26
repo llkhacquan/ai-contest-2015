@@ -24,13 +24,13 @@
 
 
 #ifdef _DEBUG
-#define MIN_DEPTH	 5
-#define MAX_DEPTH	 7
-#define ISOLATED_DEPTH 13
+#define MIN_DEPTH	 10
+#define MAX_DEPTH	 10
+#define ISOLATED_DEPTH 10
 #else
 #define MIN_DEPTH	 12
 #define MAX_DEPTH	 14
-#define ISOLATED_DEPTH 17
+#define ISOLATED_DEPTH 15
 #endif
 
 typedef long long TBlock;
@@ -42,9 +42,7 @@ using namespace std;
 #define POINTS 1000
 #define CC(x,y)	CONVERT_COORD(x,y)
 #define BOARD_SIZE (MAP_SIZE*MAP_SIZE)
-#define MY_INFINITY	(MAX_POINTS + 10)
-#define MAX_POINTS	 POINTS
-#define MIN_POINTS	(-MAX_POINTS)
+#define MY_INFINITY	(POINTS + 10)
 #define BLOCK_ENEMY_AREA (-2)
 
 /// GRAPHIC

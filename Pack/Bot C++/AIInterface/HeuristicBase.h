@@ -15,7 +15,6 @@ public:
 	int(*quickRateBoard)(TBlock _board[], const Pos2D &_player1, const Pos2D &_player2, const int nextPlayer);
 
 	static int pureTreeOfChamber(TBlock _board[], const Pos2D &_player1, const Pos2D &_player2, const int nextPlayer);
-	static int pureTreeOfChamber2(TBlock _board[], const Pos2D &_player1, const Pos2D &_player2, const int nextPlayer);
 	static int simpleRateBoard(TBlock _board[], const Pos2D &_player1, const Pos2D &_player2, const int nextPlayer);
 	static int voronoiRateBoard(TBlock _board[], const Pos2D &_player1, const Pos2D &_player2, const int nextPlayer);
 

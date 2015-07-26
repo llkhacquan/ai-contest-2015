@@ -14,8 +14,8 @@ CMyAI::CMyAI()
 	CTranspositionTable::getInstance();
 
 	// bugs in ab with memory, mtdf iterative deepening
-	searcher.flag = CSearchEngine::NEGAMAX;
-	searcher.heuristic.rateBoard = &CHeuristicBase::voronoiRateBoard;
+	searcher.flag = CSearchEngine::ALPHA_BETA;
+	searcher.heuristic.rateBoard = &CHeuristicBase::simpleRateBoard;
 	searcher.heuristic.quickRateBoard = &CHeuristicBase::voronoiRateBoard;
 }
 
@@ -119,9 +119,10 @@ TMove CMyAI::newTurn()
 		else
 			cout << "\t => It seems that we will fucking lost :(\n";
 		pos = p_ai->GetMyPosition();
+		TMove t = CHeuristicBase::getFirstMoveOfTheLongestPath(boardData, pos, ISOLATED_DEPTH);
 		cout << "Time of this turn: " << double(clock() - startTime) / (double)CLOCKS_PER_SEC
 			<< " seconds. Reached depth : " << doneDepth << endl;
-		return CHeuristicBase::getFirstMoveOfTheLongestPath(boardData, pos, ISOLATED_DEPTH);
+		return t;
 	}
 	// end ISOLATED MODE
 

@@ -28,9 +28,9 @@ int CSearchEngine::negaMax(TBlock board[], const Pos2D&_p1, const Pos2D&_p2, TPl
 	int winner = CHeuristicBase::evaluateBoard(board, _p1, _p2, next, point);
 	switch (winner){
 	case PLAYER_1:
-		return color*((3 * MAX_POINTS + MIN_POINTS) / 4 + point);
+		return color*(POINTS / 2 + point);
 	case PLAYER_2:
-		return color*((MAX_POINTS + 3 * MIN_POINTS) / 4 - point);
+		return color*(-POINTS / 2 - point);
 	}
 
 	assert(!isIsolated(board, _p1, _p2));
@@ -82,10 +82,10 @@ int CSearchEngine::negaScout(TBlock board[], const Pos2D&_p1, const Pos2D&_p2, T
 	int point;
 	int winner = CHeuristicBase::evaluateBoard(board, _p1, _p2, next, point);
 	if (winner == PLAYER_1){
-		return (MAX_POINTS / 2 + point)* color;
+		return (POINTS / 2 + point)* color;
 	}
 	else if (winner == PLAYER_2){
-		return (MIN_POINTS / 2 - point)* color;
+		return (-POINTS / 2 - point)* color;
 	}
 
 	assert(!isIsolated(board, _p1, _p2));
@@ -95,7 +95,7 @@ int CSearchEngine::negaScout(TBlock board[], const Pos2D&_p1, const Pos2D&_p2, T
 		return heuristic.rateBoard(board, _p1, _p2, next) * color;
 	}
 
-	int bestValue = MIN_POINTS - 1;
+	int bestValue = -MY_INFINITY;
 	Pos2D newPos;
 	vector<TMove> moves;
 	moves = next == PLAYER_1 ? getAvailableMoves(board, _p1) : getAvailableMoves(board, _p2);
@@ -149,22 +149,23 @@ int CSearchEngine::alphaBeta(TBlock board[], const Pos2D&_p1, const Pos2D&_p2, T
 	assert(next == PLAYER_1 || next == PLAYER_2);
 
 	bool bOk;
-	int bestValue = MIN_POINTS - 1;
+	int bestValue = -MY_INFINITY;
 
 	int point;
 	int winner = CHeuristicBase::evaluateBoard(board, _p1, _p2, next, point);
-	switch (winner){
-	case PLAYER_1:
-		return ((3 * MAX_POINTS + MIN_POINTS) / 4 + point);
-	case PLAYER_2:
-		return ((MAX_POINTS + 3 * MIN_POINTS) / 4 - point);
+	assert(point >= 0);
+	if (winner == PLAYER_1){
+		return (POINTS / 2 + point);
+	}
+	else if (winner == PLAYER_2){
+		return (-POINTS / 2 - point);
 	}
 
 	assert(!isIsolated(board, _p1, _p2));
 
 	if (depth == MAX_DEPTH)
 	{
-		CMyAI::getInstance()->doneDepth = depth - 1;
+		CMyAI::getInstance()->doneDepth = max(depth, CMyAI::getInstance()->doneDepth);
 		return heuristic.rateBoard(board, _p1, _p2, next);
 	}
 
@@ -254,10 +255,10 @@ int CSearchEngine::negaMaxWithMemory(TBlock board[], const Pos2D&_p1, const Pos2
 	int point;
 	int winner = CHeuristicBase::evaluateBoard(board, _p1, _p2, next, point);
 	if (winner == PLAYER_1){
-		return color * ((MAX_POINTS * 3 + MIN_POINTS) / 4 + point);
+		return (POINTS / 2 + point)* color;
 	}
 	else if (winner == PLAYER_2){
-		return color * ((MAX_POINTS + 3 * MIN_POINTS) / 4 - point);
+		return (-POINTS / 2 - point)* color;
 	}
 	else if (depth == MAX_DEPTH){
 		return color * heuristic.rateBoard(board, _p1, _p2, next);

@@ -115,46 +115,6 @@ int CBiconnectedComponents::getEstimatedLength(TBlock const board[], const Pos2D
 	return out.findLengthOfLongestPath(playerPos);
 }
 
-void CBiconnectedComponents::getArticulationPoints(TBlock const board[], const Pos2D &_p1, const Pos2D &_p2, TBlock oBoard[])
-{
-	CBiconnectedComponentsOutput output;
-	assert(getBlock(board, _p1) == BLOCK_PLAYER_1 || getBlock(board, _p1) == BLOCK_PLAYER_2);
-	// setting up
-	CBiconnectedComponents bc;
-	output.clear();
-	memcpy(bc.oBoard, board, sizeof(TBlock)*BOARD_SIZE);
-
-	setBlock(bc.oBoard, _p1, BLOCK_OBSTACLE);
-	bc.iCount = 0;
-	bc.output = &output;
-
-	{// clear stack
-		stack<Edge> t;
-		bc.myStack.swap(t);
-	}
-
-	for (int iVertex = 0; iVertex < BOARD_SIZE; iVertex++){
-		bc.visited[iVertex] = false;
-		bc.parrent[iVertex] = -1;
-	}
-
-	// build the areas by biconnected components algorithm 
-	for (int i = 1; i <= 4; i++){
-		if (getBlock(bc.oBoard, _p1.move(i)) == BLOCK_EMPTY)
-			bc.dfsVisit(_p1.move(i));
-	}
-	for (int i = 1; i <= 4; i++){
-		if (getBlock(bc.oBoard, _p2.move(i)) == BLOCK_EMPTY)
-			bc.dfsVisit(_p2.move(i));
-	}
-
-	memcpy(oBoard, board, sizeof(TBlock)*BOARD_SIZE);
-	for (int iVertex = 0; iVertex < BOARD_SIZE; iVertex++){
-		if (output.nAreasOfVertices[iVertex] >= 2)
-			setBlock(oBoard, iVertex, SPECIAL_BLOCK);
-	}
-}
-
 int CBiconnectedComponentsOutput::calculateLengthOfPath(const vector<int> &path, const int &startPos) const
 {
 	assert(path.size() > 0);

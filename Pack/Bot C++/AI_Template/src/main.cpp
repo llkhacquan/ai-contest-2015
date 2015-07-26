@@ -9,6 +9,7 @@
 #include "../AIInterface/HeuristicBase.h"
 #include "../AIInterface/TranspositionTable.h"
 #include "../AIInterface/MyTimer.h"
+#include "../AIInterface/ArticulationPoints.h"
 
 CMyAI* pAI;
 // This function is called automatically each turn.
@@ -150,11 +151,11 @@ void testRateBoard(TBlock*board, const Pos2D &p1 = Pos2D(0, 0), const Pos2D &p2 
 	CHeuristicBase::simpleRateBoard(board, p1, p2, PLAYER_1);
 }
 
-void testOptimalMove(TBlock*board, const Pos2D &p1 = Pos2D(0, 0), const Pos2D &p2 = Pos2D(10, 10)){
+void testSearchEngine(TBlock*board, const Pos2D &p1 = Pos2D(0, 0), const Pos2D &p2 = Pos2D(10, 10)){
 	if (isIsolated(board, p1, p2))
 		return;
 
-	pAI->searcher.heuristic.rateBoard = CHeuristicBase::pureTreeOfChamber;
+	pAI->searcher.heuristic.rateBoard = CHeuristicBase::voronoiRateBoard;
 	int ab, negawm, negaMax, negaScout, mtdf;
 	int depth = 5;
 	cout << "\tab:" << (ab = pAI->searcher.alphaBeta(board, p1, p2, PLAYER_1, depth, -MY_INFINITY, +MY_INFINITY));
@@ -191,7 +192,7 @@ void testGetArticulationPoints(TBlock *board, const Pos2D &p1 = Pos2D(0, 0), con
 	imshow("test", toImage(board));
 #endif // OPENCV
 	TBlock oBoard[BOARD_SIZE];
-	CBiconnectedComponents::getArticulationPoints(board, p1, p2, oBoard);
+	CArticulationPoints::getArticulationPoints(board, p1, p2, oBoard);
 	printBoard(oBoard, true);
 
 #ifdef OPENCV
@@ -234,7 +235,7 @@ int main(int argc, char* argv[])
 		// testFindPath(board, p1);
 		// testRateBoard(board, p1, p2);
 		// testEstimateLongestLength(board, p1);
-		testOptimalMove(board, p1, p2);
+		testSearchEngine(board, p1, p2);
 		// testGetArticulationPoints(board, p1, p2);
 	}
 

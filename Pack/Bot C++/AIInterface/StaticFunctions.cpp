@@ -543,9 +543,3 @@ int lengthWhenTryToReachBattleFields(const TBlock board[], const TBlock dBoard[]
 	}
 	return maxLength;
 }
-
-void getArticulationPoints(const TBlock board[], const Pos2D& _p1, const Pos2D&_p2, const TBlock oBoard)
-{
-	assert(getBlock(board, _p1) == BLOCK_PLAYER_1 || getBlock(board, _p1) == BLOCK_PLAYER_2);
-
-}
