@@ -1,10 +1,8 @@
 #pragma once
 
-#include "..\AI_Template\mydefine.h"
+#include "mydefine.h"
 
 class CBiconnectedComponentsOutput{
-private:
-	bool checkConsitency()const;
 public:
 	bool vXa[BOARD_SIZE][MAX_N_AREAS];
 	signed char aXa[MAX_N_AREAS][MAX_N_AREAS][4];
@@ -28,6 +26,7 @@ public:
 	int findLengthOfLongestPath(const Pos1D &startPos)const;
 
 private:
+	bool checkConsitency(bool checkAxA = false)const;
 
 	void insertEdgeOf2Areas(const int a1, const int a2, const int u, const int v);
 

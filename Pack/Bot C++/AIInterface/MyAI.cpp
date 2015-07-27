@@ -1,10 +1,10 @@
 #include "MyAI.h"
 #include "mydefine.h"
-#include "..\AIInterface\StaticFunctions.h"
-#include "..\AIInterface\HeuristicBase.h"
-#include "..\AIInterface\SearchEngine.h"
-#include "..\AIInterface\TranspositionTable.h"
-#include "..\AIInterface\MyTimer.h"
+#include "StaticFunctions.h"
+#include "HeuristicBase.h"
+#include "SearchEngine.h"
+#include "TranspositionTable.h"
+#include "MyTimer.h"
 
 CMyAI* CMyAI::instance;
 
@@ -76,13 +76,12 @@ void CMyAI::updateBoard(const int* newBoard, const Pos2D &_p1, const Pos2D &_p2,
 	posPlayer2 = _p2;
 	myPos = we == PLAYER_1 ? &posPlayer1 : &posPlayer2;
 	myPos = we != PLAYER_1 ? &posPlayer1 : &posPlayer2;
-	CMyAI::getInstance()->doneDepth = 0;
 }
 
 // calculate and give an optimal move for ourselves 
 TMove CMyAI::newTurn()
 {
-	static TBlock tempBoard[BOARD_SIZE];
+	TBlock tempBoard[BOARD_SIZE];
 	clock_t startTime = clock();
 	// update board first
 	TPlayer we, next;
@@ -105,7 +104,6 @@ TMove CMyAI::newTurn()
 	// start ISOLATED MODE
 	if (isIsolated(this->boardData, this->posPlayer1, this->posPlayer2)){
 		cout << "Isolated mode!" << endl;
-		CMyTimer::getInstance()->reset();
 		Pos2D pos;
 		pos = p_ai->GetEnemyPosition();
 		int n2 = CHeuristicBase::getEstimatedLengthOfTheLongestPath(this->boardData, pos);
@@ -120,8 +118,7 @@ TMove CMyAI::newTurn()
 			cout << "\t => It seems that we will fucking lost :(\n";
 		pos = p_ai->GetMyPosition();
 		TMove t = CHeuristicBase::getFirstMoveOfTheLongestPath(boardData, pos, ISOLATED_DEPTH);
-		cout << "Time of this turn: " << double(clock() - startTime) / (double)CLOCKS_PER_SEC
-			<< " seconds. Reached depth : " << doneDepth << endl;
+		cout << "Time of this turn: " << double(clock() - startTime) / (double)CLOCKS_PER_SEC << endl;
 		return t;
 	}
 	// end ISOLATED MODE
@@ -133,8 +130,7 @@ TMove CMyAI::newTurn()
 		move = searcher.optimalMove(boardData, posPlayer1, posPlayer2, PLAYER_1);
 	else
 		move = searcher.optimalMove(boardData, posPlayer1, posPlayer2, PLAYER_2);
-	cout << "Time of this turn: " << double(clock() - startTime) / (double)CLOCKS_PER_SEC
-		<< " seconds. Reached depth : " << doneDepth << endl;
+	cout << "Time of this turn: " << double(clock() - startTime) / (double)CLOCKS_PER_SEC << endl;
 	return move;
 	// end NORMAL_MODE
 }

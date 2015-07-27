@@ -1,7 +1,7 @@
 #pragma once
 #include "..\AI_Template\include/ai/defines.h"
 #include "..\AI_Template\include/ai/AI.h"
-#include "..\AI_Template\mydefine.h"
+#include "mydefine.h"
 #include "Pos2D.h"
 #include "BiconnectedComponentsOutput.h"
 
@@ -37,95 +37,6 @@ public:
 	bool operator < (const Edge& e) const
 	{
 		return (hash() < e.hash());
-	}
-};
-
-class AdjArea{
-public:
-	int codeOfAdjArea;
-	Pos1D connections;
-	AdjArea operator=(const AdjArea &a){
-		codeOfAdjArea = a.codeOfAdjArea;
-		connections = a.connections;
-	}
-
-	bool operator==(const AdjArea &e) const {
-		return codeOfAdjArea == e.codeOfAdjArea && connections == e.connections;
-	}
-
-	bool operator<(const AdjArea &e) const {
-		return codeOfAdjArea < e.codeOfAdjArea || (codeOfAdjArea == e.codeOfAdjArea && connections < e.connections);
-	}
-
-	bool operator>(const AdjArea &e) const {
-		return codeOfAdjArea > e.codeOfAdjArea || (codeOfAdjArea == e.codeOfAdjArea && connections > e.connections);
-	}
-};
-
-class Area{
-public:
-	int code;
-	bool inTheAreas[BOARD_SIZE];
-	int odd, even;
-	int nVertices;
-	set<AdjArea> adjAreas;
-
-	Area(){
-		clear();
-	}
-
-	void clear(){
-		nVertices = 0;
-		odd = even = 0;
-		memset(inTheAreas, 0, BOARD_SIZE);
-	}
-
-	void insert(const Pos1D &u){
-		if (!inTheAreas[u]){
-			inTheAreas[u] = true;
-			nVertices++;
-			if (u % 2 == 1)
-				odd++;
-			else
-				even++;
-		}
-	}
-
-	void erase(const Pos1D &u){
-		if (inTheAreas[u]){
-			inTheAreas[u] = false;
-			nVertices--;
-			if (u % 2 == 1)
-				odd--;
-			else
-				even--;
-		}
-	}
-
-	Area operator =(const Area &e) {
-		odd = e.odd;
-		even = e.even;
-		code = e.code;
-		nVertices = e.nVertices;
-		memcpy(inTheAreas, e.inTheAreas, BOARD_SIZE);
-		adjAreas = set<AdjArea>(e.adjAreas);
-		return *this;
-	}
-
-	bool operator==(const Area &e) const {
-		return nVertices == e.nVertices;
-	}
-
-	bool operator>(const Area &e) const {
-		return nVertices > e.nVertices;
-	}
-
-	bool operator<(const Area &e) const {
-		return nVertices < e.nVertices;
-	}
-
-	bool operator!=(const Area &e) const {
-		return nVertices > e.nVertices;
 	}
 };
 

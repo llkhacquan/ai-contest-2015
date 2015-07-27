@@ -9,23 +9,18 @@ public:
 
 	enum SearchFunction
 	{
-		ALPHA_BETA, NEGAMAX_WITH_MEMORY, NEGAMAX, NEGASCOUT, MTDF_ITERATIVE_DEEPENING, NEGA_WITH_MEMORY
+		ALPHA_BETA, MTDF_ITERATIVE_DEEPENING
 	};
 
 	clock_t startTime;
 	SearchFunction flag;
 	TMove optimalMove(TBlock board[], const Pos2D&_p1, const Pos2D&_p2, TPlayer next);
+	TMove optimalMove(TBlock board[], const Pos2D&_p1, const Pos2D&_p2, TPlayer next, int maxDepth);
 
 	CHeuristicBase heuristic;
 
 	int alphaBeta(TBlock board[], const Pos2D&_p1, const Pos2D&_p2, TPlayer next, int depth, int a, int b);
-	// int negaMaxWithMemory(TBlock board[], const Pos2D&_p1, const Pos2D&_p2, TPlayer next, int depth, int a, int b);
-	int negaMaxWithMemory(TBlock board[], const Pos2D&_p1, const Pos2D&_p2, TPlayer next, int depth, int a, int b);
-	int negaMax(TBlock board[], const Pos2D&_p1, const Pos2D&_p2, TPlayer next, int depth, int a, int b);
-	int negaScout(TBlock board[], const Pos2D&_p1, const Pos2D&_p2, TPlayer next, int depth, int a, int b);
-
 	int mtdfIterativeDeepening(TBlock board[], const Pos2D&_p1, const Pos2D&_p2, TPlayer next, int depth);
 	int mtdF(TBlock board[], const Pos2D&_p1, const Pos2D&_p2, TPlayer next, int f, int depth);
-	int negaScoutIterativeDeepening(TBlock board[], const Pos2D&_p1, const Pos2D&_p2, TPlayer next, int depth = 19);
 };
 

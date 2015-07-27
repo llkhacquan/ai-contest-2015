@@ -1,6 +1,6 @@
 #include "HeuristicBase.h"
 #include "BiconnectedComponents.h"
-#include "..\AI_Template\MyAI.h"
+#include "MyAI.h"
 #include "MyTimer.h"
 #include "GameState.h"
 #include "TranspositionTable.h"

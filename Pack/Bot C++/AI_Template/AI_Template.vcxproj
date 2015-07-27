@@ -183,6 +183,9 @@
       <SubSystem>Console</SubSystem>
       <TargetMachine>MachineX86</TargetMachine>
     </Link>
+    <PostBuildEvent>
+      <Command>if exist "$(SolutionDir)..\Arena" copy "$(TargetDir)AI_Template.exe" "$(SolutionDir)..\Arena"</Command>
+    </PostBuildEvent>
   </ItemDefinitionGroup>
   <ItemDefinitionGroup Condition="'$(Configuration)|$(Platform)'=='2013_Release|Win32'">
     <ClCompile>
@@ -206,6 +209,9 @@
       <EnableCOMDATFolding>true</EnableCOMDATFolding>
       <TargetMachine>MachineX86</TargetMachine>
     </Link>
+    <PostBuildEvent>
+      <Command>if exist "$(SolutionDir)..\Arena" copy "$(TargetDir)AI_Template.exe" "$(SolutionDir)..\Arena"</Command>
+    </PostBuildEvent>
   </ItemDefinitionGroup>
   <ItemDefinitionGroup Condition="'$(Configuration)|$(Platform)'=='2012_Debug|Win32'">
     <ClCompile>
@@ -251,15 +257,12 @@
     </Link>
   </ItemDefinitionGroup>
   <ItemGroup>
-    <ClCompile Include="MyAI.cpp" />
     <ClCompile Include="src\main.cpp" />
   </ItemGroup>
   <ItemGroup>
     <ClInclude Include="include\ai\AI.h" />
     <ClInclude Include="include\ai\defines.h" />
     <ClInclude Include="include\ai\Game.h" />
-    <ClInclude Include="MyAI.h" />
-    <ClInclude Include="mydefine.h" />
   </ItemGroup>
   <ItemGroup>
     <ProjectReference Include="..\AIInterface\AIInterface.vcxproj">

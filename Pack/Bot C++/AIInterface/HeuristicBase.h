@@ -1,5 +1,5 @@
 #pragma once
-#include "..\AI_Template\mydefine.h"
+#include "mydefine.h"
 #include "Pos2D.h"
 #include "StaticFunctions.h"
 #include "BiconnectedComponents.h"

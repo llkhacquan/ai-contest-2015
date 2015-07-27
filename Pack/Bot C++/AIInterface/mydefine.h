@@ -13,24 +13,25 @@
 #include <algorithm>
 #include <set>
 #include <bitset>
+#include <thread>
+#include <chrono>
 
-#include "include\ai\defines.h"
-#include "include\ai\AI.h"
+#include "..\AI_Template\include\ai\defines.h"
+#include "..\AI_Template\include\ai\AI.h"
 
 #define BOT_ACTIVE	1
 #define SHOW_DEBUG_INFORMATION	0
-// 2600 ms is danger
-#define DANGER_TIME		1000
-
 
 #ifdef _DEBUG
-#define MIN_DEPTH	 10
-#define MAX_DEPTH	 10
+#define MIN_DEPTH	 7
+#define MAX_DEPTH	 20
 #define ISOLATED_DEPTH 10
+#define DANGER_TIME		2500
 #else
 #define MIN_DEPTH	 12
-#define MAX_DEPTH	 14
+#define MAX_DEPTH	 27
 #define ISOLATED_DEPTH 15
+#define DANGER_TIME		2700
 #endif
 
 typedef long long TBlock;
@@ -39,6 +40,7 @@ typedef int TMove;
 typedef int Pos1D;
 using namespace std;
 
+#define TIMEOUT_POINTS 2000
 #define POINTS 1000
 #define CC(x,y)	CONVERT_COORD(x,y)
 #define BOARD_SIZE (MAP_SIZE*MAP_SIZE)

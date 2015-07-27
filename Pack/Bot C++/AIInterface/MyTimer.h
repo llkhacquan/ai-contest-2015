@@ -1,5 +1,5 @@
 #pragma once
-#include "..\AI_Template\mydefine.h"
+#include "mydefine.h"
 
 class CMyTimer
 {

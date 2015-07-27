@@ -18,9 +18,6 @@
     <ClCompile Include="src\main.cpp">
       <Filter>Source Files</Filter>
     </ClCompile>
-    <ClCompile Include="MyAI.cpp">
-      <Filter>Source Files</Filter>
-    </ClCompile>
   </ItemGroup>
   <ItemGroup>
     <ClInclude Include="include\ai\AI.h">
@@ -30,12 +27,6 @@
       <Filter>Header Files</Filter>
     </ClInclude>
     <ClInclude Include="include\ai\Game.h">
-      <Filter>Header Files</Filter>
-    </ClInclude>
-    <ClInclude Include="MyAI.h">
-      <Filter>Header Files</Filter>
-    </ClInclude>
-    <ClInclude Include="mydefine.h">
       <Filter>Header Files</Filter>
     </ClInclude>
   </ItemGroup>

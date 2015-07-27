@@ -1,10 +1,9 @@
 #pragma once
+#include "Pos2D.h"
+#include "BiconnectedComponents.h"
+#include "SearchEngine.h"
+#include "HeuristicBase.h"
 #include "mydefine.h"
-#include <vector>
-#include "..\AIInterface\Pos2D.h"
-#include "..\AIInterface\BiconnectedComponents.h"
-#include "..\AIInterface\SearchEngine.h"
-#include "..\AIInterface\HeuristicBase.h"
 
 using namespace std;
 
@@ -16,7 +15,6 @@ private:
 public:
 	static CMyAI* getInstance();
 	AI *p_ai;
-	int doneDepth;
 	int iTurn;
 	CSearchEngine searcher;
 	int nObjectsIn5x5;

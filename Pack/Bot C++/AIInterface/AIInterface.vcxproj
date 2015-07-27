@@ -79,12 +79,13 @@
   </ItemGroup>
   <ItemGroup>
     <ClInclude Include="..\AI_Template\include\ai\defines.h" />
-    <ClInclude Include="..\AI_Template\mydefine.h" />
     <ClInclude Include="ArticulationPoints.h" />
     <ClInclude Include="BiconnectedComponents.h" />
     <ClInclude Include="BiconnectedComponentsOutput.h" />
     <ClInclude Include="GameState.h" />
     <ClInclude Include="HeuristicBase.h" />
+    <ClInclude Include="MyAI.h" />
+    <ClInclude Include="mydefine.h" />
     <ClInclude Include="MyTimer.h" />
     <ClInclude Include="Pos2D.h" />
     <ClInclude Include="SearchEngine.h" />
@@ -97,6 +98,7 @@
     <ClCompile Include="BiconnectedComponentsOutput.cpp" />
     <ClCompile Include="GameState.cpp" />
     <ClCompile Include="HeuristicBase.cpp" />
+    <ClCompile Include="MyAI.cpp" />
     <ClCompile Include="MyTimer.cpp" />
     <ClCompile Include="Pos2D.cpp" />
     <ClCompile Include="SearchEngine.cpp" />

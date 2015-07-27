@@ -32,7 +32,7 @@ void CBiconnectedComponents::biconnectedComponents(TBlock const board[], const P
 
 	// build the areas by biconnected components algorithm 
 	for (int i = 1; i <= 4; i++){
-		if (getBlock(bc.oBoard, playerPos.move(i)) == BLOCK_EMPTY)
+		if (getBlock(bc.oBoard, playerPos.move(i)) == BLOCK_EMPTY && !bc.visited[playerPos.move(i)])
 			bc.dfsVisit(playerPos.move(i));
 	}
 	output->manager(playerPos);

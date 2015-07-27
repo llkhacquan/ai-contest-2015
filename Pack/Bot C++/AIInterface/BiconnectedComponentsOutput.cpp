@@ -55,8 +55,6 @@ void CBiconnectedComponentsOutput::manager(const Pos1D &playerPos)
 {
 	{
 		// take care the area contains the playerPos
-		// 		for (int iArea = 0; iArea < nAreas; iArea++)
-		// 			mark(iArea, playerPos, false);
 		nAreas++;
 		mark(nAreas - 1, playerPos, true);
 	}
@@ -123,15 +121,17 @@ void CBiconnectedComponentsOutput::clear()
 	memset(nOddVertices, 0, sizeof(nVertices[0])*MAX_N_AREAS);
 	memset(nEvenVertices, 0, sizeof(nVertices[0])*MAX_N_AREAS);
 	memset(nAreasOfVertices, 0, sizeof(nAreasOfVertices[0]) * BOARD_SIZE);
-	memset(iAreaOfVertices, -1, sizeof(iAreaOfVertices[0])*MAX_N_AREAS);
+	memset(iAreaOfVertices, -1, sizeof(iAreaOfVertices[0])*BOARD_SIZE);
 }
 
 void CBiconnectedComponentsOutput::mark(int iArea, int iVertex, bool value /*= true*/)
 {
 	assert(iArea >= 0 && iArea < nAreas);
 	assert(iVertex >= 0 && iVertex < BOARD_SIZE);
+
 	if (vXa[iVertex][iArea] == value)
 		return;
+
 	vXa[iVertex][iArea] = value;
 	if (value == true){
 		nVertices[iArea]++;
@@ -149,7 +149,10 @@ void CBiconnectedComponentsOutput::mark(int iArea, int iVertex, bool value /*= t
 		else
 			nOddVertices[iArea]--;
 		nAreasOfVertices[iVertex]--;
+		assert(nEvenVertices[iArea] >= 0);
+		assert(nOddVertices[iArea] >= 0);
 	}
+	assert(checkConsitency());
 }
 
 CBiconnectedComponentsOutput::CBiconnectedComponentsOutput()
@@ -157,8 +160,15 @@ CBiconnectedComponentsOutput::CBiconnectedComponentsOutput()
 	clear();
 }
 
-bool CBiconnectedComponentsOutput::checkConsitency() const
+bool CBiconnectedComponentsOutput::checkConsitency(bool checkAxA) const
 {
+	if (nAreas > MAX_N_AREAS)
+		return true;
+	// check nAreas
+	for (int i = nAreas; i < MAX_N_AREAS; i++){
+		assert(nVertices[i] == 0);
+	}
+
 	// check nVertices[], odd, even
 	for (int iArea = 0; iArea < MAX_N_AREAS; iArea++){
 		int nOdd = 0;
@@ -189,6 +199,8 @@ bool CBiconnectedComponentsOutput::checkConsitency() const
 			return false;
 	}
 
+	if (!checkAxA)
+		return true;
 	// check iAreasOfVertices
 	for (int iVertex = 0; iVertex < BOARD_SIZE; iVertex++){
 		if (nAreasOfVertices[iVertex] == 0)

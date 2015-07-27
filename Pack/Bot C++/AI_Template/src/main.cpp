@@ -2,8 +2,8 @@
 #include <ai/AI.h>
 #include <time.h>
 #include <ctime>
-#include "MyAI.h"
-#include "mydefine.h"
+#include "../AIInterface/MyAI.h"
+#include "../AIInterface/mydefine.h"
 #include "../AIInterface/BiconnectedComponents.h"
 #include "../AIInterface/StaticFunctions.h"
 #include "../AIInterface/HeuristicBase.h"
@@ -12,18 +12,41 @@
 #include "../AIInterface/ArticulationPoints.h"
 
 CMyAI* pAI;
+bool shouldStop;
+
+void threadInEnemyTurn()
+{
+	int i = 0;
+	while (!shouldStop)
+	{
+		std::this_thread::sleep_for(std::chrono::milliseconds(10));
+		i++;
+	}
+	cout << i * 10 << "\n";
+}
+
 void AI_Update()
 {
+	thread *t;
 	assert(pAI != NULL);
 	if (pAI->p_ai->IsMyTurn()){
+		CMyTimer::getInstance()->reset();
+		cout << "Our turn:\n";
+		shouldStop = true;
 		TMove direction = pAI->newTurn();
 		Game::GetInstance()->AI_Move(direction);
+	}
+	else {
+		cout << "Enemy turn...";
+		shouldStop = false;
+		t = new thread(threadInEnemyTurn);
+		t->detach();
 	}
 }
 
 void setupBoard(TBlock *board, const vector<Pos2D> *positions, Pos2D&p1 = Pos2D(0, 0), Pos2D &p2 = Pos2D(10, 10)){
 	if (positions == NULL){
-		createNewBoard(board, rand() % 20 + 10);
+		createNewBoard(board, rand() % 20 + 5);
 		board[0] = board[BOARD_SIZE - 1] = BLOCK_OBSTACLE;
 		while (true) {
 			int i = rand() % 121;
@@ -101,11 +124,11 @@ void testFindPath(TBlock *board, const Pos2D&p = Pos2D(0, 0))
 		imshow("game", toImage(board));
 		c = waitKey(50);
 #endif // OPENCV
-	}
+		}
 	cout << "Traveled length : " << iCount << endl << endl;
 	if (iCount > n)
 		system("pause");
-}
+	}
 
 void testConnectedComponents(TBlock *board, Pos2D p = Pos2D(0, 0))
 {
@@ -142,7 +165,7 @@ void testRateBoard(TBlock*board, const Pos2D &p1 = Pos2D(0, 0), const Pos2D &p2 
 		int c = waitKey(10);
 		// if (c == ' ')
 		break;
-	}
+}
 #endif // OPENCV
 	CHeuristicBase::pureTreeOfChamber(board, p1, p2, PLAYER_1);
 	CHeuristicBase::simpleRateBoard(board, p1, p2, PLAYER_1);
@@ -152,28 +175,24 @@ void testSearchEngine(TBlock*board, const Pos2D &p1 = Pos2D(0, 0), const Pos2D &
 	if (isIsolated(board, p1, p2))
 		return;
 
-	pAI->searcher.heuristic.rateBoard = CHeuristicBase::voronoiRateBoard;
+	pAI->searcher.heuristic.rateBoard = CHeuristicBase::simpleRateBoard;
+	pAI->searcher.heuristic.quickRateBoard = CHeuristicBase::simpleRateBoard;
 	int ab, negawm, negaMax, negaScout, mtdf;
 	int depth = 5;
-	cout << "\tab:" << (ab = pAI->searcher.alphaBeta(board, p1, p2, PLAYER_1, depth, -MY_INFINITY, +MY_INFINITY));
-	cout << "\tnegaScout:" << (negaScout = pAI->searcher.negaScout(board, p1, p2, PLAYER_1, depth, -MY_INFINITY, +MY_INFINITY));
-	cout << "\tnega:" << (negaMax = pAI->searcher.negaMax(board, p1, p2, PLAYER_1, depth, -MY_INFINITY, +MY_INFINITY));
-	// CMyTimer::getInstance()->reset();
-	// cout << "\tabwm:" << (negawm = pAI->searcher.negaMaxWithMemory(board, p1, p2, PLAYER_1, depth, -MY_INFINITY, +MY_INFINITY));
-	// CMyTimer::getInstance()->reset();
-	// cout << "\tmtdf:" << (mtdf = pAI->searcher.iterative_deepening(board, p1, p2, PLAYER_1, depth));
+	//cout << "\tab:" << (ab = pAI->searcher.alphaBeta(board, p1, p2, PLAYER_1, depth, -MY_INFINITY, +MY_INFINITY));
+	// cout << "\tnegaScout:" << (negaScout = pAI->searcher.negaScout(board, p1, p2, PLAYER_1, depth, -MY_INFINITY, +MY_INFINITY));
 	cout << endl;
 
 #ifdef OPENCV
 	while (true){
-		imshow("test", toImage(board));
-		int c = waitKey(100);
+		// imshow("test", toImage(board));
+		int c = waitKey(1);
 		// if (c == ' ')
 		break;
-	}
+}
 #endif // OPENCV
-	assert(ab == negaScout);
-	assert(ab == negaMax);
+	//assert(ab == negaScout);
+	//assert(ab == negaMax);
 
 	// 	if (ab == negawm)
 	// 		cout << "good\n";
@@ -211,13 +230,6 @@ int main(int argc, char* argv[])
 #endif // OPENCV
 	std::srand(0);
 	TBlock board[BOARD_SIZE];
-
-	vector<Pos2D> _p1 = { Pos2D(2, 0), Pos2D(2, 0), Pos2D(3, 0), Pos2D(4, 1), Pos2D(4, 2), Pos2D(4, 3), Pos2D(4, 4), Pos2D(4, 5),
-		Pos2D(3, 5), Pos2D(2, 5), Pos2D(1, 5), Pos2D(0, 5), Pos2D(0, 2), Pos2D(0, 3), Pos2D(0, 4) };
-	vector<Pos2D> _p2 = { Pos2D(10, 0), Pos2D(6, 1), Pos2D(7, 1), Pos2D(9, 1), Pos2D(10, 0), Pos2D(0, 2), Pos2D(3, 2), Pos2D(5, 2),
-		Pos2D(8, 2), Pos2D(10, 0), Pos2D(1, 3), Pos2D(2, 3), Pos2D(10, 0), Pos2D(4, 3), Pos2D(7, 3), Pos2D(8, 3), Pos2D(9, 3),
-		Pos2D(1, 4), Pos2D(4, 5), Pos2D(6, 5), Pos2D(7, 5), Pos2D(8, 5), Pos2D(10, 5), Pos2D(0, 6), Pos2D(2, 6), Pos2D(3, 6),
-		Pos2D(5, 6), Pos2D(9, 6), Pos2D(1, 7), };
 	clock_t tStart = clock();
 	for (int i = 0; i < 1000; i++){
 		/*setupBoard(board, &p5, Pos2D(1, 9));
@@ -249,21 +261,21 @@ int main_(int argc, char* argv[])
 {
 	cout << "LouisLzcute's bot" << endl;
 	srand(clock());
-	
-#ifdef _WIN32
-    INT rc;
-    WSADATA wsaData;
 
-    rc = WSAStartup(MAKEWORD(2, 2), &wsaData);
-    if (rc) {
-        printf("WSAStartup Failed.\n");
-        return 1;
-    }
+#ifdef _WIN32
+	INT rc;
+	WSADATA wsaData;
+
+	rc = WSAStartup(MAKEWORD(2, 2), &wsaData);
+	if (rc) {
+		printf("WSAStartup Failed.\n");
+		return 1;
+	}
 #endif
 
 	Game::CreateInstance();
 	Game * p_Game = Game::GetInstance();
-	
+
 	// Create connection
 	if (p_Game->Connect(argc, argv) == -1)
 	{
@@ -273,7 +285,7 @@ int main_(int argc, char* argv[])
 
 	// Set up function pointer
 	AI::GetInstance()->Update = &AI_Update;
-	
+
 	pAI = CMyAI::getInstance();
 	CTranspositionTable::getInstance();
 
@@ -282,7 +294,7 @@ int main_(int argc, char* argv[])
 	Game::DestroyInstance();
 
 #ifdef _WIN32
-    WSACleanup();
+	WSACleanup();
 #endif
 	return 0;
 }
