@@ -5,7 +5,6 @@
 #include <string>
 #include <iostream>
 #include <iomanip>
-#include <queue>
 #include <stack>
 #include <fstream>
 #include <ctime>
@@ -22,22 +21,24 @@
 #define BOT_ACTIVE	1
 #define SHOW_DEBUG_INFORMATION	0
 
+#define DISTANCE 9
+
 #ifdef _DEBUG
-#define MIN_DEPTH	 7
+#define MIN_DEPTH	 6
 #define MAX_DEPTH	 20
 #define ISOLATED_DEPTH 10
 #define DANGER_TIME		2500
 #else
 #define MIN_DEPTH	 12
-#define MAX_DEPTH	 27
+#define MAX_DEPTH	 25
 #define ISOLATED_DEPTH 15
-#define DANGER_TIME		2700
+#define DANGER_TIME		2650
 #endif
 
 typedef long long TBlock;
 typedef int TPlayer;
-typedef int TMove;
 typedef int Pos1D;
+typedef int TMove;
 using namespace std;
 
 #define TIMEOUT_POINTS 2000

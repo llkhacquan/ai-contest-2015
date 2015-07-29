@@ -53,3 +53,8 @@ int Pos2D::to1D() const
 {
 	return CC(x, y);
 }
+
+int Pos2D::operator-(const Pos2D &pos) const
+{
+	return abs(x - pos.x) + abs(y - pos.y);
+}

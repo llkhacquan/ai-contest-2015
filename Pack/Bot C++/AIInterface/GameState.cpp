@@ -9,6 +9,7 @@ CGameState::CGameState()
 
 CGameState::CGameState(const TBlock _board[], const Pos2D& _pos1, const Pos2D &_pos2, const TPlayer next)
 {
+	clear();
 	set(_board, _pos1, _pos2, next);
 }
 
@@ -52,23 +53,11 @@ void CGameState::set(const TBlock _board[], const Pos2D& _pos1, const Pos2D &_po
 	data[16] = _pos2.to1D();
 	assert(data[16] >= 0 && data[16] < BOARD_SIZE);
 
-	TBlock board[BOARD_SIZE];
-
 	if (next == PLAYER_1)
 		set(0, 0);
 
-
-	memcpy(board, _board, BOARD_SIZE*sizeof(TBlock));
-	fillDistance(board, _pos1);
 	for (int i = 1; i <= 119; i++){
-		if (board[i] > SPECIAL_BLOCK)
-			set(i, 0);
-	}
-
-	memcpy(board, _board, BOARD_SIZE*sizeof(TBlock));
-	fillDistance(board, _pos2);
-	for (int i = 1; i <= 119; i++){
-		if (board[i] > SPECIAL_BLOCK)
+		if (_board[i] == BLOCK_EMPTY)
 			set(i, 0);
 	}
 }
@@ -108,6 +97,10 @@ void CGameState::clear()
 	signed char t = -1;
 	memcpy(data + 15, &t, 1);
 	memcpy(data + 16, &t, 1);
+	upperBound = MY_INFINITY;
+	lowerbound = -MY_INFINITY;
+	depth = -1;
+	vono = TIMEOUT_POINTS;
 }
 
 bool CGameState::isSet() const
@@ -129,12 +122,11 @@ signed char CGameState::getPos1() const
 	return c;
 }
 
-CGameState CGameState::operator=(const CGameState &state)
+CGameState CGameState::operator=(const CGameState &s)
 {
-	memcpy(data, state.data, 17);
-	flag = state.flag;
-	depth = state.depth;
-	value = state.value;
+	memcpy(data, s.data, 17);
+	upperBound = s.upperBound;
+	lowerbound = s.lowerbound;
 	return *this;
 }
 

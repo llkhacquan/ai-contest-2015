@@ -82,6 +82,7 @@
     <ClInclude Include="ArticulationPoints.h" />
     <ClInclude Include="BiconnectedComponents.h" />
     <ClInclude Include="BiconnectedComponentsOutput.h" />
+    <ClInclude Include="FastPos1DDeque.h" />
     <ClInclude Include="GameState.h" />
     <ClInclude Include="HeuristicBase.h" />
     <ClInclude Include="MyAI.h" />
@@ -96,6 +97,7 @@
     <ClCompile Include="ArticulationPoints.cpp" />
     <ClCompile Include="BiconnectedComponents.cpp" />
     <ClCompile Include="BiconnectedComponentsOutput.cpp" />
+    <ClCompile Include="FastPos1DDeque.cpp" />
     <ClCompile Include="GameState.cpp" />
     <ClCompile Include="HeuristicBase.cpp" />
     <ClCompile Include="MyAI.cpp" />

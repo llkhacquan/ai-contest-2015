@@ -13,6 +13,7 @@ public:
 	Pos2D(const int _x, const int _y);
 	Pos2D operator =(const Pos2D &pos);
 	Pos2D operator =(const Position &pos);
+	int operator-(const Pos2D &pos) const;
 	bool operator==(const Pos2D &pos) const;
 	const Pos2D move(const int direction) const;
 	int to1D() const;

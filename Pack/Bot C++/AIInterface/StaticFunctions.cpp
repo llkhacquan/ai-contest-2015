@@ -1,4 +1,5 @@
 #include "StaticFunctions.h"
+#include "FastPos1DDeque.h"
 
 void setBit(TBlock &number, int iBit)
 {
@@ -144,7 +145,7 @@ vector<TMove> &getALongestPath(TBlock const boardData[], const Pos2D &pos)
 
 	Pos2D p = pos;
 
-	static vector<int> c(BOARD_SIZE), l(BOARD_SIZE); // store the current path and the longest path
+	static vector<TMove> c(BOARD_SIZE), l(BOARD_SIZE); // store the current path and the longest path
 	c.clear();
 	l.clear();
 	findLongestPath(board, p, c, l);
@@ -298,18 +299,17 @@ vector<TMove> &findShortestPath(const TBlock _board[], const Pos2D& start, const
 int fillDistance(TBlock _board[121], const Pos2D &pos) {
 	TBlock result = 0;
 	setBlock(_board, pos.x, pos.y, SPECIAL_BLOCK);
-	queue<Pos2D> q;
-	q.push(pos);
+	CFastPos1DDeque q;
+	q.push_back(pos);
 
 	while (q.size() > 0){
-		Pos2D p = q.front();
-		q.pop();
+		Pos2D p(q.pop_front());
 		for (int i = 1; i <= 4; i++){
 			Pos2D newP = p.move(i);
 			if (getBlock(_board, newP) == BLOCK_EMPTY){
 				result += getBlock(_board, p) + 1 - SPECIAL_BLOCK;
 				setBlock(_board, newP, getBlock(_board, p) + 1);
-				q.push(newP);
+				q.push_back(newP);
 			}
 		}
 	}
@@ -325,13 +325,12 @@ bool isIsolated(const TBlock _board[121], const Pos2D &_p1, const Pos2D &_p2)
 
 	bool visisted[BOARD_SIZE] = { false };
 	// search for _pos2 form _pos1
-	queue<Pos1D> queue;
-	queue.push(_p1);
+	CFastPos1DDeque queue;
+	queue.push_back(_p1);
 	visisted[_p1] = true;
 	while (!queue.empty())
 	{
-		Pos1D p = queue.front();
-		queue.pop();
+		Pos1D p = queue.pop_front();
 		board[p] = SPECIAL_BLOCK;
 		for (int i = 1; i <= 4; i++){
 			Pos2D u = Pos2D(p).move(i);
@@ -339,7 +338,7 @@ bool isIsolated(const TBlock _board[121], const Pos2D &_p1, const Pos2D &_p2)
 				continue;
 			if (visisted[u])
 				continue;
-			queue.push(u);
+			queue.push_back(u);
 			visisted[u] = true;
 		}
 	}
@@ -482,7 +481,7 @@ void fillChamberWithBattleFields(const TBlock gatesBoard[], const TBlock board[]
 {
 	memcpy(fillBoard, board, sizeof(TBlock)*BOARD_SIZE);
 	while (enemies.size() > 0){
-		Pos2D v(enemies.back());
+		Pos2D v(enemies[enemies.size()-1]);
 		enemies.pop_back();
 
 		fillBoard[v] = BLOCK_ENEMY_AREA;
@@ -495,8 +494,8 @@ void fillChamberWithBattleFields(const TBlock gatesBoard[], const TBlock board[]
 }
 
 int lengthWhenTryToReachBattleFields(const TBlock board[], const TBlock dBoard[], const TBlock filledBoard[], const Pos2D& _p){
-	queue<Pos1D> q;
-	q.push(_p);
+	CFastPos1DDeque q;
+	q.push_back(_p);
 	TBlock ourBoard[BOARD_SIZE];
 
 	bool visitted[BOARD_SIZE] = { false };
@@ -506,7 +505,7 @@ int lengthWhenTryToReachBattleFields(const TBlock board[], const TBlock dBoard[]
 		Pos2D v(q.front());
 		if (getBlock(filledBoard, v) == BLOCK_ENEMY_AREA)
 			break;
-		q.pop();
+		q.pop_front();
 		for (int i = 1; i <= 4; i++){
 			Pos2D u = v.move(i);
 			TBlock block = getBlock(board, u);
@@ -516,15 +515,14 @@ int lengthWhenTryToReachBattleFields(const TBlock board[], const TBlock dBoard[]
 				continue;
 			visitted[u] = true;
 			parrent[u] = v;
-			q.push(u);
+			q.push_back(u);
 		}
 	}
 
-	int minDistance = dBoard[q.front()];
+	TBlock minDistance = dBoard[q.front()];
 	int maxLength = -1;
 	while (!q.empty()){
-		Pos2D v(q.front());
-		q.pop();
+		Pos2D v(q.pop_front());
 		if (dBoard[v] > SPECIAL_BLOCK + minDistance)
 			continue;
 		if (filledBoard[v]!=BLOCK_ENEMY_AREA)
@@ -539,7 +537,7 @@ int lengthWhenTryToReachBattleFields(const TBlock board[], const TBlock dBoard[]
 			v = parrent[v];
 		} while (oldBlock != board[_p]);
 		maxLength = max(maxLength,
-			CBiconnectedComponents::getEstimatedLength(ourBoard, v) + (int)dBoard[v]);
+			CBiconnectedComponents::getEstimatedLength(ourBoard, v, Pos2D(-1, -1)) + (int)dBoard[v]);
 	}
 	return maxLength;
 }

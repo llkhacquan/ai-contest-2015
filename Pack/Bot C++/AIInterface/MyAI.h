@@ -12,12 +12,18 @@ class CMyAI
 private:
 	CMyAI();
 	static CMyAI *instance;
+	void printInformation();
 public:
+	bool inEnemyTurn = false;
+	bool calculatingInEnemyTurn = false;
+	bool newGame = false;
+	bool activeIsolatedMode = false;
+	bool useGoodEvaluation = false;
+
 	static CMyAI* getInstance();
+
 	AI *p_ai;
-	int iTurn;
 	CSearchEngine searcher;
-	int nObjectsIn5x5;
 
 	TBlock boardData[BOARD_SIZE];
 	Pos2D posPlayer1, posPlayer2, *myPos = NULL, *enemyPos = NULL;

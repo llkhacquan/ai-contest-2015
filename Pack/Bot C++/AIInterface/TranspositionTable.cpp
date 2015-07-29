@@ -20,7 +20,10 @@ CGameState* CTranspositionTable::get(const CGameState &gameState)const
 	}
 	else
 	{
-		nGetOk++;
+		if (table[hash].depth >= gameState.depth)
+			nGetOk++;
+		else
+			nGetMiss++;
 		return &table[hash];
 	}
 }

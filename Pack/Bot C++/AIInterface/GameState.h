@@ -14,11 +14,11 @@ public:
 	CGameState();
 	CGameState(const TBlock _board[], const Pos2D& _pos1, const Pos2D &_pos2, const TPlayer next);
 	~CGameState();
+	TMove bestMove[4];
 	char depth;
-	int value;
-	enum Flag {
-		LOWERBOUND, UPPERBOUND, EXACT
-	} flag;
+	int lowerbound;
+	int upperBound;
+	int vono;
 
 	TPlayer getNextPlayer() const;
 

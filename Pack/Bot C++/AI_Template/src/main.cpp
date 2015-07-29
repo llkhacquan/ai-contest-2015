@@ -1,7 +1,5 @@
 #include <ai/Game.h>
 #include <ai/AI.h>
-#include <time.h>
-#include <ctime>
 #include "../AIInterface/MyAI.h"
 #include "../AIInterface/mydefine.h"
 #include "../AIInterface/BiconnectedComponents.h"
@@ -12,35 +10,42 @@
 #include "../AIInterface/ArticulationPoints.h"
 
 CMyAI* pAI;
-bool shouldStop;
 
 void threadInEnemyTurn()
 {
-	int i = 0;
-	while (!shouldStop)
+	static CMyTimer *timer = CMyTimer::getInstance();
+	timer->reset();
+	pAI->calculatingInEnemyTurn = true;
+
+	// run till pAI->inEnemyTurn == false
+	// TMove direction = pAI->newTurn();
+
+	while (pAI->inEnemyTurn)
 	{
-		std::this_thread::sleep_for(std::chrono::milliseconds(10));
-		i++;
+
 	}
-	cout << i * 10 << "\n";
+	cout << "Enemy turn: " << timer->getTimeInMs() << " ms" << endl;
+
+	pAI->calculatingInEnemyTurn = false;
+	timer->reset();
 }
 
 void AI_Update()
 {
-	thread *t;
+	static CMyTimer *timer = CMyTimer::getInstance();
+	timer->reset();
+	thread* t;
 	assert(pAI != NULL);
 	if (pAI->p_ai->IsMyTurn()){
-		CMyTimer::getInstance()->reset();
-		cout << "Our turn:\n";
-		shouldStop = true;
+		pAI->inEnemyTurn = false;
+
 		TMove direction = pAI->newTurn();
 		Game::GetInstance()->AI_Move(direction);
 	}
 	else {
-		cout << "Enemy turn...";
-		shouldStop = false;
-		t = new thread(threadInEnemyTurn);
-		t->detach();
+		//pAI->inEnemyTurn = true;
+		//t = new thread(threadInEnemyTurn);
+		//t->detach();
 	}
 }
 
@@ -102,11 +107,17 @@ void testFindPath(TBlock *board, const Pos2D&p = Pos2D(0, 0))
 {
 	Pos2D pos = p;
 	int c = 0;
-	int n = 0;
+	int upper = 0, lower = 0;
 	bool bOk;
 	printBoard(board, false);
-	n = CHeuristicBase::getEstimatedLengthOfTheLongestPath(board, pos);
-	cout << "Estimated length : " << n << endl;
+#ifdef OPENCV
+	imshow("original board", toImage(board));
+#endif // OPENCV
+	upper = CHeuristicBase::getUpperLengthOfTheLongestPath(board, pos);
+	cout << "Upper Estimated length : " << upper << endl;
+
+	lower = CHeuristicBase::getLowerLengthOfTheLongestPath(board, pos);
+	cout << "Lower Estimated length : " << lower << endl;
 	int iCount = 0;
 
 	while (c != 27){
@@ -115,7 +126,7 @@ void testFindPath(TBlock *board, const Pos2D&p = Pos2D(0, 0))
 			if (getAvailableMoves(board, pos, out).size() == 0)
 				break;
 			CMyTimer::getInstance()->reset();
-			TMove i = CHeuristicBase::getFirstMoveOfTheLongestPath(board, pos, 3);
+			TMove i = CHeuristicBase::getFirstMoveOfTheLongestPath(board, pos, 1);
 			iCount++;
 			bOk = move(board, pos, i); assert(bOk);
 			pos = pos.move(i);
@@ -126,7 +137,7 @@ void testFindPath(TBlock *board, const Pos2D&p = Pos2D(0, 0))
 #endif // OPENCV
 		}
 	cout << "Traveled length : " << iCount << endl << endl;
-	if (iCount > n)
+	if (iCount > upper || iCount < lower)
 		system("pause");
 	}
 
@@ -139,11 +150,11 @@ void testConnectedComponents(TBlock *board, Pos2D p = Pos2D(0, 0))
 	TBlock board2[BOARD_SIZE];
 	cout << endl;
 	CBiconnectedComponentsOutput output;
-	CBiconnectedComponents::biconnectedComponents(board, p, &output, board2);
+	CBiconnectedComponents::biconnectedComponents(board, &output, p, Pos2D(-1, -1), board2);
 	printBoard(board2, true);
 	cout << "n = " << output.nAreas << endl;
 
-	n = CBiconnectedComponents::getEstimatedLength(board, p);
+	n = CBiconnectedComponents::getEstimatedLength(board, p, Pos2D(-1, -1));
 	printf("estimated length = %d\n", n);
 #ifdef OPENCV
 	waitKey(100);
@@ -177,7 +188,6 @@ void testSearchEngine(TBlock*board, const Pos2D &p1 = Pos2D(0, 0), const Pos2D &
 
 	pAI->searcher.heuristic.rateBoard = CHeuristicBase::simpleRateBoard;
 	pAI->searcher.heuristic.quickRateBoard = CHeuristicBase::simpleRateBoard;
-	int ab, negawm, negaMax, negaScout, mtdf;
 	int depth = 5;
 	//cout << "\tab:" << (ab = pAI->searcher.alphaBeta(board, p1, p2, PLAYER_1, depth, -MY_INFINITY, +MY_INFINITY));
 	// cout << "\tnegaScout:" << (negaScout = pAI->searcher.negaScout(board, p1, p2, PLAYER_1, depth, -MY_INFINITY, +MY_INFINITY));
@@ -241,10 +251,10 @@ int main(int argc, char* argv[])
 		setupBoard(board, NULL, p1, p2);
 		// testConnectedComponents(board, p1);
 		// cout << CHeuristicBase::getEstimatedLengthOfTheLongestPath(board, p1);
-		// testFindPath(board, p1);
+		testFindPath(board, p1);
 		// testRateBoard(board, p1, p2);
 		// testEstimateLongestLength(board, p1);
-		testSearchEngine(board, p1, p2);
+		// testSearchEngine(board, p1, p2);
 		// testGetArticulationPoints(board, p1, p2);
 	}
 
@@ -259,7 +269,6 @@ int main(int argc, char* argv[])
 int main_(int argc, char* argv[])
 #endif // BOT_ACTIVE
 {
-	cout << "LouisLzcute's bot" << endl;
 	srand(clock());
 
 #ifdef _WIN32

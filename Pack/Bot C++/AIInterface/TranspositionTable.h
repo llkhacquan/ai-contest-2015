@@ -22,5 +22,9 @@ public:
 	CGameState* get(const CGameState &gameState) const;
 
 	bool remove(const CGameState &gameState);
+
+	void printStatic(){
+		printf("\t\t\t%i/%i/%i\n", nGetOk, nGetMiss, nPut);
+	}
 };
 

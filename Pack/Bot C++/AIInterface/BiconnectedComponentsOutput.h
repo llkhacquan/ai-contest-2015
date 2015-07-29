@@ -4,6 +4,7 @@
 
 class CBiconnectedComponentsOutput{
 public:
+	int depth;
 	bool vXa[BOARD_SIZE][MAX_N_AREAS];
 	signed char aXa[MAX_N_AREAS][MAX_N_AREAS][4];
 	int nAreas;
@@ -19,20 +20,21 @@ public:
 
 	void clear();
 
-	void manager(const Pos1D &playerPos);
+	void manager(const Pos1D &playerPos, const Pos1D &endPos);
 
 	void buildAreaXArea(const Pos1D &playerPos);
 
-	int findLengthOfLongestPath(const Pos1D &startPos)const;
+	int findLengthOfLongestPath(const Pos1D &startPos, const Pos1D &endPos)const;
 
 private:
-	bool checkConsitency(bool checkAxA = false)const;
+	void checkConsitency(bool checkAxA = false)const;
 
 	void insertEdgeOf2Areas(const int a1, const int a2, const int u, const int v);
 
-	void visitNode(vector<int> &cPath, int &cLength, vector<int> &lPath, int &lLength,
-		bool *visitted, const int cCode, const int &startPos) const;
+	void visitNode(vector<TMove> &cPath, int &cLength, vector<TMove> &lPath, int &lLength,
+		bool *visitted, const int cCode, const int &startPos, const int &endPos = -1) const;
 
-	int calculateLengthOfPath(const vector<int> &path, const int &startPos) const;
+	int estimateLengthOfPath(const vector<int> &path, const int &startPos) const;
+	int calculateLengthBetween2NodeIn1Area(const Pos1D &u, const Pos1D &v, int depth = 0);
 };
 
