@@ -14,24 +14,25 @@
 #include <bitset>
 #include <thread>
 #include <chrono>
+#include <bitset>
 
 #include "..\AI_Template\include\ai\defines.h"
 #include "..\AI_Template\include\ai\AI.h"
 
-#define BOT_ACTIVE	1
+#define BOT_ACTIVE	0
 #define SHOW_DEBUG_INFORMATION	0
-
-#define DISTANCE 9
 
 #ifdef _DEBUG
 #define MIN_DEPTH	 6
 #define MAX_DEPTH	 20
 #define ISOLATED_DEPTH 10
+#define DISTANCE 7
 #define DANGER_TIME		2500
 #else
 #define MIN_DEPTH	 12
 #define MAX_DEPTH	 25
 #define ISOLATED_DEPTH 15
+#define DISTANCE 9
 #define DANGER_TIME		2650
 #endif
 

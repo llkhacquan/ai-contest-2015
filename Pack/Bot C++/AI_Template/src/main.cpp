@@ -34,7 +34,6 @@ void AI_Update()
 {
 	static CMyTimer *timer = CMyTimer::getInstance();
 	timer->reset();
-	thread* t;
 	assert(pAI != NULL);
 	if (pAI->p_ai->IsMyTurn()){
 		pAI->inEnemyTurn = false;
@@ -135,11 +134,11 @@ void testFindPath(TBlock *board, const Pos2D&p = Pos2D(0, 0))
 		imshow("game", toImage(board));
 		c = waitKey(50);
 #endif // OPENCV
-		}
+	}
 	cout << "Traveled length : " << iCount << endl << endl;
 	if (iCount > upper || iCount < lower)
 		system("pause");
-	}
+}
 
 void testConnectedComponents(TBlock *board, Pos2D p = Pos2D(0, 0))
 {
@@ -176,21 +175,32 @@ void testRateBoard(TBlock*board, const Pos2D &p1 = Pos2D(0, 0), const Pos2D &p2 
 		int c = waitKey(10);
 		// if (c == ' ')
 		break;
-}
+	}
 #endif // OPENCV
 	CHeuristicBase::pureTreeOfChamber(board, p1, p2, PLAYER_1);
 	CHeuristicBase::simpleRateBoard(board, p1, p2, PLAYER_1);
 }
+
+int bad, good;
 
 void testSearchEngine(TBlock*board, const Pos2D &p1 = Pos2D(0, 0), const Pos2D &p2 = Pos2D(10, 10)){
 	if (isIsolated(board, p1, p2))
 		return;
 
 	pAI->searcher.heuristic.rateBoard = CHeuristicBase::simpleRateBoard;
-	pAI->searcher.heuristic.quickRateBoard = CHeuristicBase::simpleRateBoard;
-	int depth = 5;
-	//cout << "\tab:" << (ab = pAI->searcher.alphaBeta(board, p1, p2, PLAYER_1, depth, -MY_INFINITY, +MY_INFINITY));
-	// cout << "\tnegaScout:" << (negaScout = pAI->searcher.negaScout(board, p1, p2, PLAYER_1, depth, -MY_INFINITY, +MY_INFINITY));
+	pAI->searcher.heuristic.quickRateBoard = CHeuristicBase::voronoiRateBoard;
+	int ab, abtt, nega;
+	int depth = 6;
+	CMyTimer::getInstance()->reset();
+	cout << "\tab  :" << (ab = pAI->searcher.alphaBeta(board, p1, p2, PLAYER_1, depth, -MY_INFINITY, +MY_INFINITY)) << endl;
+
+	CMyTimer::getInstance()->reset();
+	cout << "\tabtt:" << (abtt = pAI->searcher.alphaBetaTT(board, p1, p2, PLAYER_1, depth, -MY_INFINITY, +MY_INFINITY)) << endl;
+
+	CMyTimer::getInstance()->reset();
+	cout << "\tnega:" << (nega = pAI->searcher.negaMaxTT(board, p1, p2, PLAYER_1, depth, -MY_INFINITY, +MY_INFINITY)) << endl;
+
+	CTranspositionTable::getInstance()->printStatic();
 	cout << endl;
 
 #ifdef OPENCV
@@ -199,18 +209,22 @@ void testSearchEngine(TBlock*board, const Pos2D &p1 = Pos2D(0, 0), const Pos2D &
 		int c = waitKey(1);
 		// if (c == ' ')
 		break;
-}
+	}
 #endif // OPENCV
-	//assert(ab == negaScout);
-	//assert(ab == negaMax);
+	// assert(ab == abtt);
+	assert(abtt == nega);
 
-	// 	if (ab == negawm)
-	// 		cout << "good\n";
-	// 	else {
-	// 		cout << "bad!\n";
-	// 		system("pause");
-	// 		return;
-	// 	}
+	if (ab == abtt && ab == nega)
+	{
+		cout << "good\n";
+		good++;
+	}
+	else
+	{
+		cout << "bad!\n"; 
+		system("pause");
+		bad++;
+	}
 }
 
 void testGetArticulationPoints(TBlock *board, const Pos2D &p1 = Pos2D(0, 0), const Pos2D &p2 = Pos2D(10, 10)){
@@ -251,10 +265,10 @@ int main(int argc, char* argv[])
 		setupBoard(board, NULL, p1, p2);
 		// testConnectedComponents(board, p1);
 		// cout << CHeuristicBase::getEstimatedLengthOfTheLongestPath(board, p1);
-		testFindPath(board, p1);
+		// testFindPath(board, p1);
 		// testRateBoard(board, p1, p2);
 		// testEstimateLongestLength(board, p1);
-		// testSearchEngine(board, p1, p2);
+		testSearchEngine(board, p1, p2);
 		// testGetArticulationPoints(board, p1, p2);
 	}
 

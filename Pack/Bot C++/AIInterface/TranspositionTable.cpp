@@ -4,6 +4,7 @@ int CTranspositionTable::nGetMiss;
 int CTranspositionTable::nGetOk;
 int CTranspositionTable::nObjects;
 int CTranspositionTable::nPut;
+int CTranspositionTable::nBadHash;
 
 CTranspositionTable * CTranspositionTable::instance = NULL;
 
@@ -38,7 +39,10 @@ CGameState* CTranspositionTable::put(const CGameState &gameState)
 	unsigned long key = gameState.hash();
 	int hash = (key % TABLE_SIZE);
 	while (table[hash].isSet() && table[hash] != gameState)
+	{
 		hash = (hash + 1) % TABLE_SIZE;
+		nBadHash++;
+	}
 	table[hash] = gameState;
 	return table + hash;
 }
@@ -67,7 +71,7 @@ CTranspositionTable::CTranspositionTable()
 	clock_t startTime = clock();
 	table = new CGameState[TABLE_SIZE];
 	cout << "Creating CTT : " << double(clock() - startTime) / (double)CLOCKS_PER_SEC << " seconds." << endl;
-	nGetMiss = nGetOk = nPut = 0;
+	nGetMiss = nGetOk = nPut = nBadHash = 0;
 }
 
 bool CTranspositionTable::remove(const CGameState &gameState)
@@ -80,4 +84,9 @@ bool CTranspositionTable::remove(const CGameState &gameState)
 		s->clear();
 		return true;
 	}
+}
+
+void CTranspositionTable::printStatic()
+{
+	printf("\t\t\t%i/%i/%i/%i\n", nGetOk, nGetMiss, nPut, nBadHash);
 }

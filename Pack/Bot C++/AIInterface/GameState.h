@@ -3,13 +3,19 @@
 #include "Pos2D.h"
 #include "StaticFunctions.h"
 
-class CGameState
-{
-private:
+class GameStateData{
+public:
+
 	// the first bit indicate the next player: 0 => PLAYER_1; 1 => PLAYER_2
 	// the next 119 bit indicate the state of board[1]->board[119] (since board[0] and board[120] always be occuppied)
 	//    0 => Empty; 1 => not empty
 	unsigned char data[17]; // the last 2 byte indicates player 1 and player 2 positions
+};
+
+class CGameState
+{
+private:
+	GameStateData data;
 public:
 	CGameState();
 	CGameState(const TBlock _board[], const Pos2D& _pos1, const Pos2D &_pos2, const TPlayer next);
@@ -18,7 +24,8 @@ public:
 	char depth;
 	int lowerbound;
 	int upperBound;
-	int vono;
+	int value;
+	enum Flag{ EXACT, LOWER, UPPER } flag;
 
 	TPlayer getNextPlayer() const;
 
@@ -32,7 +39,7 @@ public:
 
 	inline void set(int iBit, bool value = true);
 
-	unsigned long hash() const;
+	unsigned int hash() const;
 
 	bool isSet() const;
 

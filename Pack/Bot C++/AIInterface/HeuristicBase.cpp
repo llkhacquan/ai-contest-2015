@@ -458,14 +458,14 @@ void CHeuristicBase::sortMovesWithTT(vector<TMove> &moves, TBlock* board, const 
 	for (vector<TMove>::iterator m = moves.begin(); m != moves.end(); m++){
 		if (next == PLAYER_1){
 			bOk = move(board, _p1, *m, false); assert(bOk);
-			points[i] = ai->searcher.alphaBetaWithTT(board, _p1.move(*m), _p2, PLAYER_2, 0, -MY_INFINITY, MY_INFINITY);
+			points[i] = ai->searcher.alphaBetaTT(board, _p1.move(*m), _p2, PLAYER_2, 0, -MY_INFINITY, MY_INFINITY);
 			bOk = move(board, _p1.move(*m), getOpositeDirection(*m), true); assert(bOk);
 			if (points[i] == TIMEOUT_POINTS)
 				return;
 		}
 		else{
 			bOk = move(board, _p2, *m, false); assert(bOk);
-			points[i] = ai->searcher.alphaBetaWithTT(board, _p1, _p2.move(*m), PLAYER_1, 0, -MY_INFINITY, MY_INFINITY);
+			points[i] = ai->searcher.alphaBetaTT(board, _p1, _p2.move(*m), PLAYER_1, 0, -MY_INFINITY, MY_INFINITY);
 			bOk = move(board, _p2.move(*m), getOpositeDirection(*m), true); assert(bOk);
 			if (points[i] == TIMEOUT_POINTS)
 				return;

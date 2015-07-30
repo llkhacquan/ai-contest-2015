@@ -19,6 +19,7 @@ public:
 	bool newGame = false;
 	bool activeIsolatedMode = false;
 	bool useGoodEvaluation = false;
+	int lastReachedDepth = 0;
 
 	static CMyAI* getInstance();
 

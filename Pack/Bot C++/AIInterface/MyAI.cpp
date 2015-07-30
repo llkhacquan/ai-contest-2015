@@ -13,7 +13,7 @@ CMyAI::CMyAI()
 	p_ai = AI::GetInstance();
 	CTranspositionTable::getInstance();
 
-	searcher.usingTT = false;
+	searcher.usingTT = true;
 	searcher.flag = CSearchEngine::ALPHA_BETA_ITERATIVE_DEEPENING;
 	searcher.heuristic.rateBoard = &CHeuristicBase::simpleRateBoard;
 	searcher.heuristic.quickRateBoard = &CHeuristicBase::voronoiRateBoard;

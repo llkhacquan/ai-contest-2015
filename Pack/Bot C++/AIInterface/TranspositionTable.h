@@ -10,9 +10,10 @@ public:
 	static int nGetOk;
 	static int nGetMiss;
 	static int nPut;
+	static int nBadHash;
 	static int nObjects;
 	~CTranspositionTable();
-	const int TABLE_SIZE = 1 << 24;
+	static const int TABLE_SIZE = 1 << 24;
 	CGameState *table;
 
 	static CTranspositionTable* getInstance();
@@ -23,8 +24,6 @@ public:
 
 	bool remove(const CGameState &gameState);
 
-	void printStatic(){
-		printf("\t\t\t%i/%i/%i\n", nGetOk, nGetMiss, nPut);
-	}
+	void printStatic();
 };
 
