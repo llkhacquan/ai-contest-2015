@@ -1,6 +1,6 @@
 #ifndef MY_DEFINE
-
 #define MY_DEFINE
+
 #include <vector>
 #include <string>
 #include <iostream>
@@ -19,21 +19,32 @@
 #include "..\AI_Template\include\ai\defines.h"
 #include "..\AI_Template\include\ai\AI.h"
 
-#define BOT_ACTIVE	0
+#define BOT_ACTIVE	1
 #define SHOW_DEBUG_INFORMATION	0
 
+// set DISABLE_TIMEOUT 1 when run You vs P1 Debug
+#define DISABLE_TIMEOUT 0
+
 #ifdef _DEBUG
-#define MIN_DEPTH	 6
-#define MAX_DEPTH	 20
+#define MIN_DEPTH	 5
+#ifdef DISABLE_TIMEOUT
+#define MAX_DEPTH	 11
+#else
+#define MAX_DEPTH	 17
+#endif // DISABLE_TIMEOUT
 #define ISOLATED_DEPTH 10
 #define DISTANCE 7
 #define DANGER_TIME		2500
 #else
-#define MIN_DEPTH	 12
+#define MIN_DEPTH	 8
+#ifdef DISABLE_TIMEOUT
+#define MAX_DEPTH	 17
+#else
 #define MAX_DEPTH	 25
+#endif // DISABLE_TIMEOUT
 #define ISOLATED_DEPTH 15
 #define DISTANCE 9
-#define DANGER_TIME		2650
+#define DANGER_TIME		2500
 #endif
 
 typedef long long TBlock;

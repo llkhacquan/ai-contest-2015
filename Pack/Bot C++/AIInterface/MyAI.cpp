@@ -26,60 +26,11 @@ CMyAI::~CMyAI()
 	instance = NULL;
 }
 
-
-void CMyAI::updateBoard(const int* newBoard, const Pos2D &_p1, const Pos2D &_p2, const TPlayer next, const TPlayer we)
-{
-	// update newBoard to boardData and players' positions
-	for (int i = 0; i < BOARD_SIZE; i++){
-		boardData[i] = newBoard[i];
-	}
-
-	if (!newGame) // assume this only run 1
-		if (boardData[0] == BLOCK_PLAYER_1 || boardData[120] == BLOCK_PLAYER_2)
-		{
-			newGame = true;
-			// it is our first move
-			// new game
-			cout << "===================start a new game=====================" << endl;
-
-			if (we == PLAYER_1)
-			{
-				cout << "\t\twe are player 1 \n";
-				if (boardData[120] == BLOCK_PLAYER_2)
-					cout << "\tYeah! We go first!\n";
-				else
-				{
-					cout << "\tOh shit! We do not go first!\n";
-				}
-			}
-			else
-			{
-				cout << "\t\twe are player 2 \n";
-				if (boardData[0] == BLOCK_PLAYER_1)
-					cout << "\tYeah! We go first!\n";
-				else
-				{
-					cout << "\tOh shit! We do not go first!\n";
-				}
-			}
-		}
-
-	if (we != next)
-		return;
-	// we = next player
-	posPlayer1 = _p1;
-	posPlayer2 = _p2;
-	myPos = we == PLAYER_1 ? &posPlayer1 : &posPlayer2;
-	myPos = we != PLAYER_1 ? &posPlayer1 : &posPlayer2;
-}
-
 // calculate and give an optimal move for ourselves 
 TMove CMyAI::newTurn()
 {
-	static CMyTimer *timer = CMyTimer::getInstance();
 	// update board first
-	TPlayer we, next;
-	Pos2D p1, p2;
+
 	if (p_ai->GetBlock(p_ai->GetMyPosition()) == BLOCK_PLAYER_1){
 		we = PLAYER_1;
 		p1 = p_ai->GetMyPosition();
@@ -93,40 +44,52 @@ TMove CMyAI::newTurn()
 		next = p_ai->IsMyTurn() ? PLAYER_2 : PLAYER_1;
 	}
 
-	updateBoard(p_ai->GetBoard(), p1, p2, next, we);
+	auto newBoard = p_ai->GetBoard();
 
-	// start ISOLATED MODE
-	if (activeIsolatedMode || isIsolated(this->boardData, this->posPlayer1, this->posPlayer2)){
-		activeIsolatedMode = true;
-		cout << "Isolated mode!" << endl;
-		Pos2D pos;
-		pos = p_ai->GetEnemyPosition();
-		int n2 = CHeuristicBase::getLowerLengthOfTheLongestPath(this->boardData, pos);
-
-		pos = p_ai->GetMyPosition();
-		int n1 = CHeuristicBase::getLowerLengthOfTheLongestPath(this->boardData, pos);
-		cout << "\tEstimated length of our path : " << n1 << endl;
-		cout << "\tEstimated length of enemy path : " << n2 << endl;
-		if (n1 > n2)
-			cout << "\t => It seems that we will fucking win  :)\n";
-		else
-			cout << "\t => It seems that we will fucking lost :(\n";
-		pos = p_ai->GetMyPosition();
-		TMove t = CHeuristicBase::getFirstMoveOfTheLongestPath(boardData, pos, ISOLATED_DEPTH);
-		cout << "Time of this turn: " << timer->getTimeInMs() << " ms\n";
-		return t;
+	// update newBoard to boardData and players' positions
+	for (int i = 0; i < BOARD_SIZE; i++){
+		boardData[i] = newBoard[i];
 	}
-	// end ISOLATED MODE
 
-	// start NORMAL_MODE
+	if (!firstMoveIsOver) // assume this only run 1
+	{
+		assert(boardData[0] == BLOCK_PLAYER_1 || boardData[120] == BLOCK_PLAYER_2);
+		newGame();
+	}
+	else{
+		// calculate history
+		if (next == PLAYER_1)
+		{
+			for (int i = 1; i <= 4; i++){
+				if (oP2.move(i) == p2)
+				{
+					history.push_back(i);
+					break;
+				}
+			}
+		}
+		else {
+			for (int i = 1; i <= 4; i++){
+				if (oP1.move(i) == p1)
+				{
+					history.push_back(i);
+					break;
+				}
+			}
+		}
+	}
+	oP1 = p1; oP2 = p2;
 
-	TMove move = searcher.optimalMove(boardData, posPlayer1, posPlayer2, next);
-	if (inEnemyTurn)
-		cout << "Enemy turn: ";
+	if (first == next)
+		assert(history.size() % 2 == 0);
 	else
-		cout << "Our   turn: ";
-	cout << timer->getTimeInMs() << " ms\n";
-	return move;
+		assert(history.size() % 2 == 1);
+
+	if (we == next)
+		return ourNewTurn();
+	else
+		return enemyNewTurn();
+
 	// end NORMAL_MODE
 }
 
@@ -145,5 +108,96 @@ void CMyAI::printInformation()
 	else
 		cout << "\tNoUseTT";
 	cout << "\n\n\n";
+}
+
+void CMyAI::newGame()
+{
+	memcpy(originalBoard, p_ai->GetBoard(), sizeof(int)*BOARD_SIZE);
+	history.clear();
+	firstMoveIsOver = true;
+	cout << "===================start a new game=====================" << endl;
+
+	if (we == PLAYER_1)
+	{
+		cout << "\t\twe are player 1" << endl;
+	}
+	else
+	{
+		cout << "\t\twe are player 2" << endl;
+	}
+	if (next == we)
+	{
+		cout << "\tYeah! We go first!!!" << endl;
+		first = next;
+	}
+	else
+	{
+		cout << "\tOh shit! We do not go first!" << endl;
+		first = next;
+	}
+}
+
+TMove CMyAI::ourNewTurn()
+{
+	assert(!inEnemyTurn);
+	TMove result;
+	static CMyTimer *timer = CMyTimer::getInstance();
+
+	if (activeIsolatedMode || isIsolated(this->boardData, this->p1, this->p2)){
+		activeIsolatedMode = true;
+		cout << "Isolated mode!" << endl;
+		Pos2D pos;
+		pos = p_ai->GetEnemyPosition();
+		int n2 = CHeuristicBase::getLowerLengthOfTheLongestPath(this->boardData, pos);
+
+		pos = p_ai->GetMyPosition();
+		int n1 = CHeuristicBase::getLowerLengthOfTheLongestPath(this->boardData, pos);
+		cout << "\tEstimated length of our path : " << n1 << endl;
+		cout << "\tEstimated length of enemy path : " << n2 << endl;
+		if (n1 > n2)
+			cout << "\t => It seems that we will fucking WIN  :)\n";
+		else
+			cout << "\t => It seems that we will fucking LOST :(\n";
+		pos = p_ai->GetMyPosition();
+		TMove t = CHeuristicBase::getFirstMoveOfTheLongestPath(boardData, pos, ISOLATED_DEPTH);
+		result = t;
+	}
+	else
+	{
+		result = searcher.optimalMove(boardData, p1, p2, next);
+	}
+	cout << "We take " << timer->getTimeInMs() << " ms\n";
+	return result;
+}
+
+TMove CMyAI::enemyNewTurn()
+{
+	assert(inEnemyTurn);
+	TMove result;
+	static CMyTimer *timer = CMyTimer::getInstance();
+
+	if (activeIsolatedMode || isIsolated(this->boardData, this->p1, this->p2)){
+		activeIsolatedMode = true;
+		Pos2D pos;
+		pos = p_ai->GetEnemyPosition();
+		result = CHeuristicBase::getFirstMoveOfTheLongestPath(boardData, pos, ISOLATED_DEPTH);
+	}
+	else
+	{
+		result = searcher.optimalMove(boardData, p1, p2, next);
+	}
+	return result;
+}
+
+bool CMyAI::shouldEndMoveNow()
+{
+	static CMyTimer* timer = CMyTimer::getInstance();
+
+	if (timer->timeUp())
+		return true;
+	if (isCalculatingInEnemyTurn && !inEnemyTurn)
+		return true;
+
+	return false;
 }
 

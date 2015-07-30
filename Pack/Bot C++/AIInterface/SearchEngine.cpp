@@ -27,7 +27,7 @@ int CSearchEngine::alphaBeta(TBlock board[], const Pos2D&_p1, const Pos2D&_p2, T
 	assert(next == PLAYER_1 || next == PLAYER_2);
 	static CMyAI* pAI = CMyAI::getInstance();
 	static CMyTimer *timer = CMyTimer::getInstance();
-	if (timer->timeUp())
+	if (pAI->shouldEndMoveNow())
 		return TIMEOUT_POINTS;
 
 	bool bOk;
@@ -102,7 +102,7 @@ int CSearchEngine::alphaBetaTT(TBlock board[], const Pos2D&_p1, const Pos2D&_p2,
 	assert(next == PLAYER_1 || next == PLAYER_2);
 	static CMyTimer *timer = CMyTimer::getInstance();
 	static CMyAI* pAI = CMyAI::getInstance();
-	if (timer->timeUp())
+	if (pAI->shouldEndMoveNow())
 		return TIMEOUT_POINTS;
 	static CTranspositionTable *tt = CTranspositionTable::getInstance();
 	CGameState state(board, _p1, _p2, next);
@@ -199,7 +199,7 @@ int CSearchEngine::negaMaxTT(TBlock board[], const Pos2D&_p1, const Pos2D&_p2, T
 	assert(next == PLAYER_1 || next == PLAYER_2);
 	static CMyTimer *timer = CMyTimer::getInstance();
 	static CMyAI* pAI = CMyAI::getInstance();
-	if (timer->timeUp())
+	if (pAI->shouldEndMoveNow())
 		return TIMEOUT_POINTS;
 	int alphaOrig = alpha;
 	static CTranspositionTable *tt = CTranspositionTable::getInstance();
@@ -335,7 +335,6 @@ TMove CSearchEngine::optimalMove(TBlock board[121], const Pos2D &_p1, const Pos2
 	allMoves = next == PLAYER_1 ? getAvailableMoves(board, _p1) : getAvailableMoves(board, _p2);
 
 	if (allMoves.size() == 0){
-		// we die
 		return rand() % 4 + 1;
 	}
 
@@ -391,14 +390,15 @@ TMove CSearchEngine::optimalMove(TBlock board[121], const Pos2D &_p1, const Pos2
 		}
 	}
 
-	CMyAI *ai = CMyAI::getInstance();
-	if (memcmp(lastPoints, points, sizeof(points[0])*allMoves.size()) == 0 || ai->lastReachedDepth > MIN_DEPTH + 4){
-		CMyAI::getInstance()->useGoodEvaluation = true;
+	CMyAI *pAI = CMyAI::getInstance();
+	if (memcmp(lastPoints, points, sizeof(points[0])*allMoves.size()) == 0 || pAI->lastReachedDepth > MIN_DEPTH + 4){
+		pAI->useGoodEvaluation = true;
 	}
 	memcpy(lastPoints, points, sizeof(points[0])*allMoves.size());
 
 	int iMax = 0;
 	for (int i = 0; i < (int)allMoves.size(); i++){
+		if (!pAI->isCalculatingInEnemyTurn)
 		cout << points[i] << "\t";
 		if (next == PLAYER_1){
 			if (points[iMax] < points[i])
@@ -407,6 +407,7 @@ TMove CSearchEngine::optimalMove(TBlock board[121], const Pos2D &_p1, const Pos2
 		else if (points[iMax] > points[i])
 			iMax = i;
 	}
+	if (!pAI->isCalculatingInEnemyTurn)
 	cout << endl;
 
 #ifdef _DEBUG
@@ -429,7 +430,8 @@ TMove CSearchEngine::optimalMove(TBlock board[], const Pos2D&_p1, const Pos2D&_p
 			bestMove = newBestMove;
 	}
 	pAI->lastReachedDepth = d;
-	cout << "Reached depth = " << d << endl;
+	if (!pAI->isCalculatingInEnemyTurn)
+		cout << "Reached depth = " << d << endl;
 
 	CTranspositionTable::getInstance()->printStatic();
 	return bestMove;

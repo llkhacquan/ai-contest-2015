@@ -39,7 +39,7 @@ void CHeuristicBase::exploreToPathLongestPath(TBlock board[], Pos2D &pos, vector
 			oldL = l;
 			oldPath = vector<TMove>(cPath);
 		}
-		else if (cPath.size() == oldPath.size() + oldL && oldL > l){
+		else if ((cPath.size() + l == oldPath.size() + oldL) && (cPath.size() > oldPath.size())){
 			oldL = l;
 			oldPath = vector<TMove>(cPath);
 		}

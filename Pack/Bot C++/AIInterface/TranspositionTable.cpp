@@ -88,5 +88,5 @@ bool CTranspositionTable::remove(const CGameState &gameState)
 
 void CTranspositionTable::printStatic()
 {
-	printf("\t\t\t%i/%i/%i/%i\n", nGetOk, nGetMiss, nPut, nBadHash);
+	printf("\tstatic: %i:%i:%i:%i\n", nGetOk, nGetMiss, nPut, nBadHash);
 }

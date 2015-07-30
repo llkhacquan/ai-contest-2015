@@ -11,40 +11,48 @@
 
 CMyAI* pAI;
 
+thread *t;
+
 void threadInEnemyTurn()
 {
 	static CMyTimer *timer = CMyTimer::getInstance();
 	timer->reset();
-	pAI->calculatingInEnemyTurn = true;
-
-	// run till pAI->inEnemyTurn == false
-	// TMove direction = pAI->newTurn();
-
-	while (pAI->inEnemyTurn)
-	{
-
+	pAI->iTurn++;
+	cout << "\n=============================================\nTurn number " << pAI->iTurn << endl;
+	pAI->isCalculatingInEnemyTurn = true;
+	cout << "Start calculating in enemy's turn..." << endl;
+	// newTurn should exit when pAI->inEnemyTurn = false
+	pAI->newTurn();
+	while (pAI->inEnemyTurn && (!DISABLE_TIMEOUT)){
+		this_thread::sleep_for(chrono::milliseconds(10));
 	}
-	cout << "Enemy turn: " << timer->getTimeInMs() << " ms" << endl;
+	cout << "Stop calculating in enemy's turn." << endl;
+	cout << "Enemy take " << timer->getTimeInMs() << " ms" << endl;
 
-	pAI->calculatingInEnemyTurn = false;
+	pAI->isCalculatingInEnemyTurn = false;
 	timer->reset();
 }
 
 void AI_Update()
 {
 	static CMyTimer *timer = CMyTimer::getInstance();
-	timer->reset();
 	assert(pAI != NULL);
 	if (pAI->p_ai->IsMyTurn()){
 		pAI->inEnemyTurn = false;
 
+		while (pAI->isCalculatingInEnemyTurn){
+			this_thread::sleep_for(chrono::milliseconds(10));
+		}
+
+		pAI->iTurn++;
+		cout << "\n=============================================\nTurn number " << pAI->iTurn << endl;
 		TMove direction = pAI->newTurn();
 		Game::GetInstance()->AI_Move(direction);
 	}
 	else {
-		//pAI->inEnemyTurn = true;
-		//t = new thread(threadInEnemyTurn);
-		//t->detach();
+		pAI->inEnemyTurn = true;
+		t = new thread(threadInEnemyTurn);
+		t->detach();
 	}
 }
 
@@ -221,8 +229,8 @@ void testSearchEngine(TBlock*board, const Pos2D &p1 = Pos2D(0, 0), const Pos2D &
 	}
 	else
 	{
-		cout << "bad!\n"; 
-		system("pause");
+		cout << "bad!\n";
+		// system("pause");
 		bad++;
 	}
 }

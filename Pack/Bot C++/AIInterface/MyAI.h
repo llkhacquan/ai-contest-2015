@@ -15,24 +15,36 @@ private:
 	void printInformation();
 public:
 	bool inEnemyTurn = false;
-	bool calculatingInEnemyTurn = false;
-	bool newGame = false;
+	bool isCalculatingInEnemyTurn = false;
+	bool firstMoveIsOver = false;
 	bool activeIsolatedMode = false;
 	bool useGoodEvaluation = false;
 	int lastReachedDepth = 0;
+	int iTurn = -1;
 
 	static CMyAI* getInstance();
 
+	vector<TMove> history;
+	TPlayer we, next, first;
+	int originalBoard[BOARD_SIZE];
+
+
+	TBlock boardData[BOARD_SIZE];
+	Pos2D p1, p2, oP1, oP2;
 	AI *p_ai;
 	CSearchEngine searcher;
 
-	TBlock boardData[BOARD_SIZE];
-	Pos2D posPlayer1, posPlayer2, *myPos = NULL, *enemyPos = NULL;
-	TPlayer we;
-
 	// MAIN 
-	void updateBoard(const int* newBoard, const Pos2D &_p1, const Pos2D &_p2, const TPlayer next, const TPlayer we);
+
+	void newGame();
+
 	TMove newTurn();
+
+	TMove ourNewTurn();
+
+	TMove enemyNewTurn();
+
+	bool shouldEndMoveNow();
 
 	~CMyAI();
 };

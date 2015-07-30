@@ -98,6 +98,7 @@ unsigned int CGameState::hash() const
 
 	result = bitsetData.hash();
 	hash1.insert(result);
+	int size = hash1.size();
 	result = result % (CTranspositionTable::TABLE_SIZE);
 	hash2.insert(result);
 	return result;
