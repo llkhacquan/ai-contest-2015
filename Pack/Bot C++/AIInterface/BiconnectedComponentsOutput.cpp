@@ -1,5 +1,4 @@
 #include "BiconnectedComponentsOutput.h"
-#include "Pos2D.h"
 #include "StaticFunctions.h"
 #include "FastPos1DDeque.h"
 
@@ -12,7 +11,7 @@ int CBiconnectedComponentsOutput::estimateLengthOfPath(const vector<int> &path, 
 	int result = 0; // skip the first area (areas[path[0]])
 
 	// for the last area)
-	int pathBack = path[path.size()-1];
+	int pathBack = path[path.size() - 1];
 	if (path.size() >= 2) {
 		int delta = -1;
 		int odd = nOddVertices[pathBack];
@@ -137,7 +136,7 @@ int CBiconnectedComponentsOutput::calculateLengthBetween2NodeIn1Area(const Pos1D
 			tBoard[iVertex] = BLOCK_OBSTACLE;
 	}
 
-	assert(!isIsolated(tBoard, Pos2D(u), Pos2D(v)));
+	assert(!isIsolated(tBoard, Pos1D(u), Pos1D(v)));
 	tBoard[u] = BLOCK_OBSTACLE;
 	tBoard[v] = BLOCK_OBSTACLE;
 
@@ -159,7 +158,7 @@ void CBiconnectedComponentsOutput::visitNode(vector<TMove> &cPath, int &cLength,
 	}
 
 	if (adjAreas.size() == 0){
-		if (endPos < 0 || cPath[cPath.size()-1] == iAreaOfVertices[endPos])
+		if (endPos < 0 || cPath[cPath.size() - 1] == iAreaOfVertices[endPos])
 		{
 			cLength = estimateLengthOfPath(cPath, startPos);
 			if (cLength > lLength){
@@ -258,9 +257,6 @@ void CBiconnectedComponentsOutput::manager(const Pos1D &playerPos, const Pos1D &
 			}
 		}
 	}
-#ifdef _DEBUG
-	checkConsitency();
-#endif // _DEBUG
 }
 
 void CBiconnectedComponentsOutput::clear()
@@ -380,10 +376,8 @@ void CBiconnectedComponentsOutput::buildAreaXArea(const Pos1D &playerPos)
 
 			for (TMove direction = 1; direction <= 4; direction++){
 				// check the adjection block that is not in any area
-				Pos2D u_ = Pos2D(v).move(direction);
-				if (u_.x < 0 || u_.x >= MAP_SIZE)
-					continue;
-				if (u_.y < 0 || u_.y >= MAP_SIZE)
+				Pos1D u_ = move(v, direction);
+				if (u_ < 0 || u_ >= BOARD_SIZE)
 					continue;
 				Pos1D u = u_;
 				if (nAreasOfVertices[u] == 0)

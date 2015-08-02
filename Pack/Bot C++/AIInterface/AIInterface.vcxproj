@@ -88,7 +88,6 @@
     <ClInclude Include="MyAI.h" />
     <ClInclude Include="mydefine.h" />
     <ClInclude Include="MyTimer.h" />
-    <ClInclude Include="Pos2D.h" />
     <ClInclude Include="SearchEngine.h" />
     <ClInclude Include="StaticFunctions.h" />
     <ClInclude Include="TranspositionTable.h" />
@@ -102,7 +101,6 @@
     <ClCompile Include="HeuristicBase.cpp" />
     <ClCompile Include="MyAI.cpp" />
     <ClCompile Include="MyTimer.cpp" />
-    <ClCompile Include="Pos2D.cpp" />
     <ClCompile Include="SearchEngine.cpp" />
     <ClCompile Include="StaticFunctions.cpp" />
     <ClCompile Include="TranspositionTable.cpp" />

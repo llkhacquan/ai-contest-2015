@@ -1,50 +1,138 @@
 #include "mydefine.h"
-#include "Pos2D.h"
 #include "BiconnectedComponents.h"
 
 #ifndef STATIC_FUNCTIONS
 #define STATIC_FUNCTIONS
 
-void setBit(TBlock &number, int iBit);
-void clearBit(TBlock &number, int iBit);
-void toggleBit(TBlock &number, int iBit);
-bool getBit(const TBlock &number, int iBit);
-void changeBit(TBlock &number, int iBit, int value);
+inline void setBit(TBlock &number, int iBit)
+{
+	number |= 1i64 << iBit;
+	assert(number >= 0);
+}
+inline void clearBit(TBlock &number, int iBit)
+{
+	number &= ~(1i64 << iBit);
+	assert(number >= 0);
+}
+inline void toggleBit(TBlock &number, int iBit)
+{
+	number ^= 1i64 << iBit;
+	assert(number >= 0);
+}
+inline bool getBit(const TBlock &number, int iBit)
+{
+	return ((number >> iBit) & 1i64);
+}
+inline void changeBit(TBlock &number, int iBit, int value)
+{
+	number ^= (-value ^ number) & (1i64 << iBit);
+}
 
-void setBit(unsigned char &number, int iBit);
-void clearBit(unsigned char &number, int iBit);
-void toggleBit(unsigned char &number, int iBit);
-bool getBit(const unsigned char &number, int iBit);
-void changeBit(unsigned char &number, int iBit, int value);
+inline void setBit(unsigned char &number, int iBit)
+{
+	number |= 1i8 << iBit;
+	assert(number >= 0);
+}
+inline void clearBit(unsigned char &number, int iBit)
+{
+	number &= ~(1i8 << iBit);
+	assert(number >= 0);
+}
+inline void toggleBit(unsigned char &number, int iBit)
+{
+	number ^= 1i8 << iBit;
+	assert(number >= 0);
+}
+inline bool getBit(const unsigned char &number, int iBit)
+{
+	return ((number >> iBit) & 1i8);
+}
+inline void changeBit(unsigned char &number, int iBit, int value)
+{
+	number ^= (-value ^ number) & (1i8 << iBit);
+}
 
-TBlock ipowBase2(int exp);
-int findCode(TBlock block);
+inline TMove getOpositeDirection(const TMove direction)
+{
+	switch (direction)
+	{
+	case DIRECTION_DOWN:
+		return DIRECTION_UP;
+	case DIRECTION_UP:
+		return DIRECTION_DOWN;
+	case DIRECTION_LEFT:
+		return DIRECTION_RIGHT;
+	case DIRECTION_RIGHT:
+		return DIRECTION_LEFT;
+	default:
+		assert(false);
+		return 0;
+	}
+}
 
-TMove getOpositeDirection(const TMove direction);
+inline TBlock getBlock(TBlock const board[], const Pos1D pos)
+{
+	if (pos >= 0 && pos < BOARD_SIZE)
+		return board[pos];
+	else
+		return BLOCK_OUT_OF_BOARD;
+}
 
-TBlock getBlock(TBlock const board[], const Pos1D pos);
-TBlock getBlock(TBlock const board[], const int x, const int y);
-TBlock getBlock(TBlock const board[], const Pos2D &pos);
+inline Pos1D move(const Pos1D &i, const TMove direction){
+	int x = i % MAP_SIZE;
+	int y = i / MAP_SIZE;
+	switch (direction){
+	case DIRECTION_DOWN:
+		if (y + 1 < MAP_SIZE)
+			return i + MAP_SIZE;
+		else
+			return -1;
+	case DIRECTION_UP:
+		if (y - 1 >= 0)
+			return i - MAP_SIZE;
+		else
+			return -1;
+	case DIRECTION_LEFT:
+		if (x - 1 >= 0)
+			return i - 1;
+		else
+			return -1;
+	case DIRECTION_RIGHT:
+		if (x + 1 < MAP_SIZE)
+			return i + 1;
+		else
+			return -1;
+	default:
+		assert(false);
+		return -1;
+	}
+}
 
-bool setBlock(TBlock board[], const int x, const int y, const TBlock value);
-bool setBlock(TBlock board[], const Pos1D pos, const TBlock value);
-bool setBlock(TBlock board[], const Pos2D &pos, const TBlock value);
+inline bool setBlock(TBlock board[], const Pos1D pos, const TBlock value){
+	if (pos >= 0 && pos < BOARD_SIZE)
+	{
+		board[pos] = value;
+		return true;
+	}
+	else
+		return false;
+}
 
-vector<TMove> getAvailableMoves(const TBlock board[], const Pos2D &pos, bool *output = NULL);
+vector<TMove> getAvailableMoves(const TBlock board[], const Pos1D &pos, bool *output = NULL);
 
 // this method return a longest path from pos by brute force
-vector<TMove> &getALongestPath(TBlock const boardData[], const Pos2D &pos);
+vector<TMove> &getALongestPath(TBlock const boardData[], const Pos1D &pos);
 
 // this method does modify board but restore the original board in the end
-void findLongestPath(TBlock board[], Pos2D& pos, vector<TMove> &c, vector<TMove> &l);
+void findLongestPath(TBlock board[], Pos1D& pos, vector<TMove> &c, vector<TMove> &l);
 
-bool move(TBlock _board[], const Pos2D &currentPos, const TMove direction, const bool backMode = false);
+bool move(TBlock _board[], const Pos1D &currentPos, const TMove direction, const bool backMode = false);
 
-vector<TMove> &findShortestPath(const TBlock _board[], const Pos2D& start, const Pos2D& end);
+vector<TMove> &findShortestPath(const TBlock _board[], const Pos1D& start, const Pos1D& end);
 
-int fillDistance(TBlock _board[121], const Pos2D &pos);
+int fillDistance(TBlock _board[121], const Pos1D &pos);
 
-bool isIsolated(const TBlock _boardData[], const Pos2D &pos1, const Pos2D &pos2);
+bool isIsolated(const TBlock _boardData[], const Pos1D &pos1, const Pos1D &pos2);
 
 void printBoard(const TBlock board[], const bool special);
 
@@ -61,6 +149,6 @@ cv::Mat toImage(TBlock board[], bool special = false);
 void setupImage();
 #endif // OPENCV
 void fillChamberWithBattleFields(const TBlock gatesBoard[], const TBlock board[], vector<Pos1D> enemies, TBlock oBoard[]);
-int lengthWhenTryToReachBattleFields(const TBlock board[], const TBlock dBoard[], const TBlock filledBoard[], const Pos2D& _p);
+int lengthWhenTryToReachBattleFields(const TBlock board[], const TBlock dBoard[], const TBlock filledBoard[], const Pos1D& _p);
 
 #endif // STATIC_FUNCTIONS

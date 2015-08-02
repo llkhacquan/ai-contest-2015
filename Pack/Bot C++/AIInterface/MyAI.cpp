@@ -13,11 +13,12 @@ CMyAI::CMyAI()
 	p_ai = AI::GetInstance();
 	CTranspositionTable::getInstance();
 
-	searcher.usingTT = true;
+	searcher.usingTT = USING_MEMORY;
 	searcher.flag = CSearchEngine::ALPHA_BETA_ITERATIVE_DEEPENING;
 	searcher.heuristic.rateBoard = &CHeuristicBase::simpleRateBoard;
 	searcher.heuristic.quickRateBoard = &CHeuristicBase::voronoiRateBoard;
 
+	history.reserve(BOARD_SIZE);
 	printInformation();
 }
 
@@ -26,21 +27,21 @@ CMyAI::~CMyAI()
 	instance = NULL;
 }
 
-// calculate and give an optimal move for ourselves 
 TMove CMyAI::newTurn()
 {
 	// update board first
+	iRateBoard = 0;
 
 	if (p_ai->GetBlock(p_ai->GetMyPosition()) == BLOCK_PLAYER_1){
 		we = PLAYER_1;
-		p1 = p_ai->GetMyPosition();
-		p2 = p_ai->GetEnemyPosition();
+		p1 = p_ai->GetMyPosition().x + p_ai->GetMyPosition().y*MAP_SIZE;
+		p2 = p_ai->GetEnemyPosition().x + p_ai->GetEnemyPosition().y*MAP_SIZE;
 		next = p_ai->IsMyTurn() ? PLAYER_1 : PLAYER_2;
 	}
 	else {
 		we = PLAYER_2;
-		p2 = p_ai->GetMyPosition();
-		p1 = p_ai->GetEnemyPosition();
+		p2 = p_ai->GetMyPosition().x + p_ai->GetMyPosition().y*MAP_SIZE;
+		p1 = p_ai->GetEnemyPosition().x + p_ai->GetEnemyPosition().y*MAP_SIZE;
 		next = p_ai->IsMyTurn() ? PLAYER_2 : PLAYER_1;
 	}
 
@@ -61,7 +62,7 @@ TMove CMyAI::newTurn()
 		if (next == PLAYER_1)
 		{
 			for (int i = 1; i <= 4; i++){
-				if (oP2.move(i) == p2)
+				if (move(oP2, i) == p2)
 				{
 					history.push_back(i);
 					break;
@@ -70,7 +71,7 @@ TMove CMyAI::newTurn()
 		}
 		else {
 			for (int i = 1; i <= 4; i++){
-				if (oP1.move(i) == p1)
+				if (move(oP1, i) == p1)
 				{
 					history.push_back(i);
 					break;
@@ -80,17 +81,15 @@ TMove CMyAI::newTurn()
 	}
 	oP1 = p1; oP2 = p2;
 
-	if (first == next)
-		assert(history.size() % 2 == 0);
-	else
-		assert(history.size() % 2 == 1);
-
+	TMove m;
 	if (we == next)
-		return ourNewTurn();
+		m = ourNewTurn();
 	else
-		return enemyNewTurn();
+		m = enemyNewTurn();
 
-	// end NORMAL_MODE
+	// cout << "iRateBoard = " << iRateBoard << endl;
+
+	return m;
 }
 
 CMyAI* CMyAI::getInstance()
@@ -102,11 +101,11 @@ CMyAI* CMyAI::getInstance()
 
 void CMyAI::printInformation()
 {
-	cout << "LouisLzcute's bot:";
+	cout << "LOUISLZCUTE'S BOT:";
 	if (searcher.usingTT)
-		cout << "\t  UseTT";
+		cout << "\tActiveTT";
 	else
-		cout << "\tNoUseTT";
+		cout << "\tDeactiveTT";
 	cout << "\n\n\n";
 }
 
@@ -146,11 +145,11 @@ TMove CMyAI::ourNewTurn()
 	if (activeIsolatedMode || isIsolated(this->boardData, this->p1, this->p2)){
 		activeIsolatedMode = true;
 		cout << "Isolated mode!" << endl;
-		Pos2D pos;
-		pos = p_ai->GetEnemyPosition();
+		Pos1D pos;
+		pos = CC(p_ai->GetEnemyPosition().x, p_ai->GetEnemyPosition().y);
 		int n2 = CHeuristicBase::getLowerLengthOfTheLongestPath(this->boardData, pos);
 
-		pos = p_ai->GetMyPosition();
+		pos = CC(p_ai->GetMyPosition().x, p_ai->GetMyPosition().y);
 		int n1 = CHeuristicBase::getLowerLengthOfTheLongestPath(this->boardData, pos);
 		cout << "\tEstimated length of our path : " << n1 << endl;
 		cout << "\tEstimated length of enemy path : " << n2 << endl;
@@ -158,13 +157,51 @@ TMove CMyAI::ourNewTurn()
 			cout << "\t => It seems that we will fucking WIN  :)\n";
 		else
 			cout << "\t => It seems that we will fucking LOST :(\n";
-		pos = p_ai->GetMyPosition();
+		pos = CC(p_ai->GetMyPosition().x, p_ai->GetMyPosition().y);
 		TMove t = CHeuristicBase::getFirstMoveOfTheLongestPath(boardData, pos, ISOLATED_DEPTH);
 		result = t;
 	}
 	else
 	{
-		result = searcher.optimalMove(boardData, p1, p2, next);
+		static bool followingMode = TRY_FOLLOWING && we != first;
+		if (followingMode){
+			bool out[4];
+			if (getBlock(boardData, move(we == PLAYER_1 ? p1 : p2, getOpositeDirection(history.back())) != BLOCK_EMPTY))
+				followingMode = false;
+		}
+
+		if (followingMode) {
+			assert(history.size() % 2 == 1);
+			for (unsigned int i = 0; i < history.size() - 1; i = i + 2){
+				if (history[i] != getOpositeDirection(history[i + 1]))
+				{
+					followingMode = false;
+					break;
+				}
+			}
+
+		}
+		else{
+			followingMode = false;
+		}
+
+		pair<TMove, int> re = searcher.optimalMove(boardData, p1, p2, next, history);
+		if (we == PLAYER_2)
+			re.second = -re.second;
+
+		if (!followingMode || re.first == getOpositeDirection(history.back()))
+		{
+			result = re.first;
+		}
+		else {
+			if (re.second >= 0)
+				result = re.first;
+			else
+			{
+				result = getOpositeDirection(history.back());
+				cout << "\t===FOLLOWING ENEMY===\n";
+			}
+		}
 	}
 	cout << "We take " << timer->getTimeInMs() << " ms\n";
 	return result;
@@ -178,13 +215,15 @@ TMove CMyAI::enemyNewTurn()
 
 	if (activeIsolatedMode || isIsolated(this->boardData, this->p1, this->p2)){
 		activeIsolatedMode = true;
-		Pos2D pos;
-		pos = p_ai->GetEnemyPosition();
+		Pos1D pos;
+		pos = CC(p_ai->GetEnemyPosition().x, p_ai->GetEnemyPosition().y);
 		result = CHeuristicBase::getFirstMoveOfTheLongestPath(boardData, pos, ISOLATED_DEPTH);
 	}
 	else
 	{
-		result = searcher.optimalMove(boardData, p1, p2, next);
+		int before = history.size();
+		result = searcher.optimalMove(boardData, p1, p2, next, history).first;
+		assert(history.size() == before);
 	}
 	return result;
 }

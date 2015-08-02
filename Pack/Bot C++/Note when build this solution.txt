@@ -1,4 +1,9 @@
 Build Louislzcute'bot
-- This solution is packed with Pack 1.5b
+- This solution is modified from Pack 1.5b
 - You can only build this solution with configuration Debug_2013 or Release_2013
-- Debug_2013 require opencv library (included) for debugging
+- Debug_2013 require opencv 2.4.11 library (not included because of size issue) for debugging
+	- You can download opencv library on opencv.org, extract the stuff from exe file.
+	- You will have opencv folder with 2 subforders sources and build
+	- Copy opencv folder inside the lib folder (So you will have Pack\Bot C++\lib\opencv\build\include)
+	- The solution only need opencv\build\include, opencv\build\x86\vc12\. You can delete other
+	- The solution only need opencv_core2411d, opencv_highgui2411d, opencv_imgproc2411d files. You can delete other

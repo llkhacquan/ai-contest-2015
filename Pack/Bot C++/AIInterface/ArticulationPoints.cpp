@@ -10,7 +10,7 @@ CArticulationPoints::~CArticulationPoints()
 {
 }
 
-void CArticulationPoints::getArticulationPoints(const TBlock board[], const Pos2D& _p1, const Pos2D&_p2, TBlock oBoard[])
+void CArticulationPoints::getArticulationPoints(const TBlock board[], const Pos1D& _p1, const Pos1D&_p2, TBlock oBoard[])
 {
 	// Mark all the vertices as not visited
 	memcpy(oBoard, board, sizeof(TBlock)*BOARD_SIZE);
@@ -51,7 +51,7 @@ void CArticulationPoints::APUtil(const TBlock board[], TBlock oBoard[], int u, b
 	// Go through all vertices adjacent to this
 	for (int iMove = 1; iMove <= 4; iMove++)
 	{
-		Pos2D v2d = Pos2D(u).move(iMove);
+		Pos1D v2d = move(u, iMove);
 		if (getBlock(board, v2d) != BLOCK_EMPTY)
 			continue;
 		int v = v2d;  // v is current adjacent of u

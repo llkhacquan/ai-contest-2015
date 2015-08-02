@@ -20,13 +20,11 @@ void threadInEnemyTurn()
 	pAI->iTurn++;
 	cout << "\n=============================================\nTurn number " << pAI->iTurn << endl;
 	pAI->isCalculatingInEnemyTurn = true;
-	cout << "Start calculating in enemy's turn..." << endl;
 	// newTurn should exit when pAI->inEnemyTurn = false
 	pAI->newTurn();
 	while (pAI->inEnemyTurn && (!DISABLE_TIMEOUT)){
-		this_thread::sleep_for(chrono::milliseconds(10));
+		this_thread::sleep_for(chrono::milliseconds(5));
 	}
-	cout << "Stop calculating in enemy's turn." << endl;
 	cout << "Enemy take " << timer->getTimeInMs() << " ms" << endl;
 
 	pAI->isCalculatingInEnemyTurn = false;
@@ -41,12 +39,13 @@ void AI_Update()
 		pAI->inEnemyTurn = false;
 
 		while (pAI->isCalculatingInEnemyTurn){
-			this_thread::sleep_for(chrono::milliseconds(10));
+			this_thread::sleep_for(chrono::milliseconds(5));
 		}
 
 		pAI->iTurn++;
 		cout << "\n=============================================\nTurn number " << pAI->iTurn << endl;
 		TMove direction = pAI->newTurn();
+		assert(direction >= 1 && direction <= 4);
 		Game::GetInstance()->AI_Move(direction);
 	}
 	else {
@@ -56,7 +55,7 @@ void AI_Update()
 	}
 }
 
-void setupBoard(TBlock *board, const vector<Pos2D> *positions, Pos2D&p1 = Pos2D(0, 0), Pos2D &p2 = Pos2D(10, 10)){
+void setupBoard(TBlock *board, const vector<Pos1D> *positions, Pos1D p1 = 0, Pos1D p2 = 120){
 	if (positions == NULL){
 		createNewBoard(board, rand() % 20 + 5);
 		board[0] = board[BOARD_SIZE - 1] = BLOCK_OBSTACLE;
@@ -64,7 +63,7 @@ void setupBoard(TBlock *board, const vector<Pos2D> *positions, Pos2D&p1 = Pos2D(
 			int i = rand() % 121;
 			if (board[i] == BLOCK_EMPTY){
 				board[i] = BLOCK_PLAYER_1;
-				p1 = Pos2D(i);
+				p1 = Pos1D(i);
 				break;
 			}
 		}
@@ -72,7 +71,7 @@ void setupBoard(TBlock *board, const vector<Pos2D> *positions, Pos2D&p1 = Pos2D(
 			int i = rand() % 121;
 			if (board[i] == BLOCK_EMPTY){
 				board[i] = BLOCK_PLAYER_2;
-				p2 = Pos2D(i);
+				p2 = Pos1D(i);
 				break;
 			}
 		}
@@ -87,22 +86,22 @@ void setupBoard(TBlock *board, const vector<Pos2D> *positions, Pos2D&p1 = Pos2D(
 	}
 }
 
-void createBoardWithOutIsland(TBlock *board, Pos2D&p1 = Pos2D(0, 0), Pos2D &p2 = Pos2D(10, 10)){
+void createBoardWithOutIsland(TBlock *board, Pos1D p1 = 0, Pos1D p2 = 120){
 	memset(board, 0, BOARD_SIZE*sizeof(TBlock));
 	int nObject = rand() % 30 + 30;
 	vector<int> obstacles = { 60 };
 	for (int i = 0; i < 121; i++){
-		setBlock(board, Pos2D(i), BLOCK_OBSTACLE);
+		setBlock(board, Pos1D(i), BLOCK_OBSTACLE);
 	}
 
-	setBlock(board, Pos2D(60), BLOCK_EMPTY);
+	setBlock(board, Pos1D(60), BLOCK_EMPTY);
 	for (int i = 1; i < nObject;){
-		Pos2D t = Pos2D(obstacles[rand() % obstacles.size()]);
-		Pos2D newT = t.move(rand() % 4 + 1);
+		Pos1D t = Pos1D(obstacles[rand() % obstacles.size()]);
+		Pos1D newT = move(t, rand() % 4 + 1);
 
 		if (getBlock(board, newT) == BLOCK_OBSTACLE){
 			setBlock(board, newT, BLOCK_EMPTY);
-			obstacles.push_back(newT.to1D());
+			obstacles.push_back(newT);
 			i++;
 		}
 	}
@@ -110,9 +109,9 @@ void createBoardWithOutIsland(TBlock *board, Pos2D&p1 = Pos2D(0, 0), Pos2D &p2 =
 	setBlock(board, p1, BLOCK_PLAYER_1);
 }
 
-void testFindPath(TBlock *board, const Pos2D&p = Pos2D(0, 0))
+void testFindPath(TBlock *board, const Pos1D&p = 0)
 {
-	Pos2D pos = p;
+	Pos1D pos = p;
 	int c = 0;
 	int upper = 0, lower = 0;
 	bool bOk;
@@ -129,14 +128,13 @@ void testFindPath(TBlock *board, const Pos2D&p = Pos2D(0, 0))
 
 	while (c != 27){
 		if (c == ' ' || c == -1){
-			static bool out[4];
-			if (getAvailableMoves(board, pos, out).size() == 0)
+			if (getAvailableMoves(board, pos).size() == 0)
 				break;
 			CMyTimer::getInstance()->reset();
 			TMove i = CHeuristicBase::getFirstMoveOfTheLongestPath(board, pos, 1);
 			iCount++;
 			bOk = move(board, pos, i); assert(bOk);
-			pos = pos.move(i);
+			pos = move(pos, i);
 		}
 #ifdef OPENCV
 		imshow("game", toImage(board));
@@ -148,7 +146,7 @@ void testFindPath(TBlock *board, const Pos2D&p = Pos2D(0, 0))
 		system("pause");
 }
 
-void testConnectedComponents(TBlock *board, Pos2D p = Pos2D(0, 0))
+void testConnectedComponents(TBlock *board, Pos1D p = 0)
 {
 #ifdef OPENCV
 	imshow("test", toImage(board));
@@ -157,11 +155,11 @@ void testConnectedComponents(TBlock *board, Pos2D p = Pos2D(0, 0))
 	TBlock board2[BOARD_SIZE];
 	cout << endl;
 	CBiconnectedComponentsOutput output;
-	CBiconnectedComponents::biconnectedComponents(board, &output, p, Pos2D(-1, -1), board2);
+	CBiconnectedComponents::biconnectedComponents(board, &output, p, -1, board2);
 	printBoard(board2, true);
 	cout << "n = " << output.nAreas << endl;
 
-	n = CBiconnectedComponents::getEstimatedLength(board, p, Pos2D(-1, -1));
+	n = CBiconnectedComponents::getEstimatedLength(board, p, -1);
 	printf("estimated length = %d\n", n);
 #ifdef OPENCV
 	waitKey(100);
@@ -169,12 +167,12 @@ void testConnectedComponents(TBlock *board, Pos2D p = Pos2D(0, 0))
 	system("pause");
 }
 
-void testEstimateLongestLength(TBlock* board, Pos2D p = Pos2D(0, 0)){
+void testEstimateLongestLength(TBlock* board, Pos1D p = 0){
 	createBoardWithOutIsland(board, p);
 	testFindPath(board, p);
 }
 
-void testRateBoard(TBlock*board, const Pos2D &p1 = Pos2D(0, 0), const Pos2D &p2 = Pos2D(10, 10)){
+void testRateBoard(TBlock*board, const Pos1D p1 = 0, const Pos1D p2 = 120){
 	if (isIsolated(board, p1, p2))
 		return;
 #ifdef OPENCV
@@ -191,7 +189,7 @@ void testRateBoard(TBlock*board, const Pos2D &p1 = Pos2D(0, 0), const Pos2D &p2 
 
 int bad, good;
 
-void testSearchEngine(TBlock*board, const Pos2D &p1 = Pos2D(0, 0), const Pos2D &p2 = Pos2D(10, 10)){
+void testSearchEngine(TBlock*board, const Pos1D p1 = 0, const Pos1D p2 = 120){
 	if (isIsolated(board, p1, p2))
 		return;
 
@@ -200,13 +198,13 @@ void testSearchEngine(TBlock*board, const Pos2D &p1 = Pos2D(0, 0), const Pos2D &
 	int ab, abtt, nega;
 	int depth = 6;
 	CMyTimer::getInstance()->reset();
-	cout << "\tab  :" << (ab = pAI->searcher.alphaBeta(board, p1, p2, PLAYER_1, depth, -MY_INFINITY, +MY_INFINITY)) << endl;
+	//	cout << "\tab  :" << (ab = pAI->searcher.alphaBeta(board, p1, p2, PLAYER_1, depth, -MY_INFINITY, +MY_INFINITY)) << endl;
 
 	CMyTimer::getInstance()->reset();
-	cout << "\tabtt:" << (abtt = pAI->searcher.alphaBetaTT(board, p1, p2, PLAYER_1, depth, -MY_INFINITY, +MY_INFINITY)) << endl;
+	//cout << "\tabtt:" << (abtt = pAI->searcher.alphaBetaTT(board, p1, p2, PLAYER_1, depth, -MY_INFINITY, +MY_INFINITY)) << endl;
 
 	CMyTimer::getInstance()->reset();
-	cout << "\tnega:" << (nega = pAI->searcher.negaMaxTT(board, p1, p2, PLAYER_1, depth, -MY_INFINITY, +MY_INFINITY)) << endl;
+	//cout << "\tnega:" << (nega = pAI->searcher.negaMaxTT(board, p1, p2, PLAYER_1, depth, -MY_INFINITY, +MY_INFINITY)) << endl;
 
 	CTranspositionTable::getInstance()->printStatic();
 	cout << endl;
@@ -235,7 +233,7 @@ void testSearchEngine(TBlock*board, const Pos2D &p1 = Pos2D(0, 0), const Pos2D &
 	}
 }
 
-void testGetArticulationPoints(TBlock *board, const Pos2D &p1 = Pos2D(0, 0), const Pos2D &p2 = Pos2D(10, 10)){
+void testGetArticulationPoints(TBlock *board, const Pos1D p1 = 0, const Pos1D p2 = 120){
 #ifdef OPENCV
 	imshow("test", toImage(board));
 #endif // OPENCV
@@ -269,7 +267,7 @@ int main(int argc, char* argv[])
 
 		setupBoard(board, &p5, Pos2D(0, 10));
 		testConnectedComponents(board, Pos2D(0, 10));*/
-		Pos2D p1(9, 5), p2(10, 10);
+		Pos1D p1(64), p2(120);
 		setupBoard(board, NULL, p1, p2);
 		// testConnectedComponents(board, p1);
 		// cout << CHeuristicBase::getEstimatedLengthOfTheLongestPath(board, p1);

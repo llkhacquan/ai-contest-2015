@@ -68,9 +68,7 @@ CTranspositionTable* CTranspositionTable::getInstance()
 CTranspositionTable::CTranspositionTable()
 {
 	nObjects = 0;
-	clock_t startTime = clock();
 	table = new CGameState[TABLE_SIZE];
-	cout << "Creating CTT : " << double(clock() - startTime) / (double)CLOCKS_PER_SEC << " seconds." << endl;
 	nGetMiss = nGetOk = nPut = nBadHash = 0;
 }
 
@@ -88,5 +86,5 @@ bool CTranspositionTable::remove(const CGameState &gameState)
 
 void CTranspositionTable::printStatic()
 {
-	printf("\tstatic: %i:%i:%i:%i\n", nGetOk, nGetMiss, nPut, nBadHash);
+	printf("\tTTstatic: %i:%i:%i:%i\n", nGetOk, nGetMiss, nPut, nBadHash);
 }

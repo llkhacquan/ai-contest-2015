@@ -20,31 +20,41 @@
 #include "..\AI_Template\include\ai\AI.h"
 
 #define BOT_ACTIVE	1
+#define USING_MEMORY 0
 #define SHOW_DEBUG_INFORMATION	0
+#define TRY_FOLLOWING	 0
 
 // set DISABLE_TIMEOUT 1 when run You vs P1 Debug
 #define DISABLE_TIMEOUT 0
 
 #ifdef _DEBUG
-#define MIN_DEPTH	 5
-#ifdef DISABLE_TIMEOUT
+#if USING_MEMORY
+#define MIN_DEPTH	 7
+#else
+#define MIN_DEPTH	 9
+#endif
+#if DISABLE_TIMEOUT
 #define MAX_DEPTH	 11
 #else
 #define MAX_DEPTH	 17
 #endif // DISABLE_TIMEOUT
 #define ISOLATED_DEPTH 10
-#define DISTANCE 7
-#define DANGER_TIME		2500
+#define DISTANCE 3
+#define DANGER_TIME		2700
 #else
-#define MIN_DEPTH	 8
-#ifdef DISABLE_TIMEOUT
-#define MAX_DEPTH	 17
+#if USING_MEMORY
+#define MIN_DEPTH	 9
+#else
+#define MIN_DEPTH	 14
+#endif
+#if DISABLE_TIMEOUT
+#define MAX_DEPTH	 16
 #else
 #define MAX_DEPTH	 25
 #endif // DISABLE_TIMEOUT
 #define ISOLATED_DEPTH 15
 #define DISTANCE 9
-#define DANGER_TIME		2500
+#define DANGER_TIME		2700
 #endif
 
 typedef long long TBlock;

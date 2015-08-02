@@ -1,5 +1,4 @@
 #include "BiconnectedComponents.h"
-#include "..\AIInterface\Pos2D.h" 
 #include "../AIInterface/StaticFunctions.h"
 
 CBiconnectedComponents::CBiconnectedComponents(){}
@@ -8,7 +7,7 @@ CBiconnectedComponents::~CBiconnectedComponents(){}
 
 // return the number of components
 void CBiconnectedComponents::biconnectedComponents(TBlock const board[], CBiconnectedComponentsOutput *output,
-	const Pos2D &playerPos, const Pos2D &endPos, TBlock *oBoard)
+	const Pos1D &playerPos, const Pos1D &endPos, TBlock *oBoard)
 {
 	assert(getBlock(board, playerPos) == BLOCK_PLAYER_1 || getBlock(board, playerPos) == BLOCK_PLAYER_2);
 	// setting up
@@ -33,8 +32,11 @@ void CBiconnectedComponents::biconnectedComponents(TBlock const board[], CBiconn
 
 	// build the areas by biconnected components algorithm 
 	for (int i = 1; i <= 4; i++){
-		if (getBlock(bc.oBoard, playerPos.move(i)) == BLOCK_EMPTY && !bc.visited[playerPos.move(i)])
-			bc.dfsVisit(playerPos.move(i));
+		{
+			Pos1D newPos = move(playerPos, i);
+			if (getBlock(bc.oBoard, newPos) == BLOCK_EMPTY && !bc.visited[newPos])
+				bc.dfsVisit(newPos);
+		}
 	}
 	output->manager(playerPos, endPos);
 
@@ -62,18 +64,18 @@ void CBiconnectedComponents::dfsVisit(const Pos1D &u){
 	for (int i = 0; i < 4; i++){
 		if (!bAdj[i])
 			continue;
-		Pos1D v = Pos2D(u).move(i + 1).to1D();
+		Pos1D v = move(u, i + 1);
 		if (!visited[v]){
 			myStack.push_back(u); myStack.push_back(v);
 			parrent[v] = u;
 			dfsVisit(v);
 			if (low[v] >= d[u])
 				createNewArea(u, v);
-			low[u] = min(low[u], low[v]);
+			if (low[u] > low[v]) low[u] = low[v];
 		}
 		else if (!(parrent[u] == v) && (d[v] < d[u])){
 			myStack.push_back(u); myStack.push_back(v);
-			low[u] = min(low[u], d[v]);
+			if (low[u] > d[v]) low[u] = d[v];
 		}
 	}
 }
@@ -96,10 +98,10 @@ void CBiconnectedComponents::createNewArea(const Pos1D &_u, const Pos1D &_v){
 
 void CBiconnectedComponents::adjection(bool out[], Pos1D const &u){
 	assert(u >= 0 && u < BOARD_SIZE);
-	Pos2D pos(u);
+	Pos1D pos(u);
 	for (int i = 1; i <= 4; i++){
 		TBlock block;
-		block = getBlock(oBoard, pos.move(i));
+		block = getBlock(oBoard, move(pos, i));
 		if (block == BLOCK_EMPTY || block >= SPECIAL_BLOCK)
 			out[i - 1] = true;
 		else
@@ -107,9 +109,9 @@ void CBiconnectedComponents::adjection(bool out[], Pos1D const &u){
 	}
 }
 
-int CBiconnectedComponents::getEstimatedLength(TBlock const board[], const Pos2D &playerPos, const Pos2D &endPos, const int depth)
+int CBiconnectedComponents::getEstimatedLength(TBlock const board[], const Pos1D &playerPos, const Pos1D &endPos, const int depth)
 {
-	TBlock oldBlock = board[playerPos.to1D()];
+	TBlock oldBlock = board[playerPos];
 	assert(oldBlock == BLOCK_PLAYER_1 || oldBlock == BLOCK_PLAYER_2);
 	CBiconnectedComponentsOutput out;
 	out.depth = depth;

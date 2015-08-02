@@ -1,6 +1,5 @@
 #pragma once
 #include "mydefine.h"
-#include "Pos2D.h"
 #include "StaticFunctions.h"
 class CArticulationPoints
 {
@@ -16,6 +15,6 @@ private:
 	static void APUtil(const TBlock board[], TBlock oBoard[], int u, bool visited[], int disc[], int low[], int parent[]);
 
 public:
-	static void getArticulationPoints(const TBlock board[], const Pos2D& _p1, const Pos2D&_p2, TBlock oBoard[]);
+	static void getArticulationPoints(const TBlock board[], const Pos1D& _p1, const Pos1D&_p2, TBlock oBoard[]);
 };
 
