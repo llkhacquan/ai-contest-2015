@@ -4,16 +4,16 @@
 #include "BiconnectedComponents.h"
 class CHeuristicBase
 {
-private:
+public:
 	static void exploreToPathLongestPath(TBlock _board[], Pos1D &p, vector<TMove> &c, vector<TMove> &, int &length, int depth);
 
-public:
 	CHeuristicBase();
 	~CHeuristicBase();
 	int(*rateBoard)(TBlock _board[], const Pos1D &_p1, const Pos1D &_p2, const TPlayer next);
 	int(*quickRateBoard)(TBlock _board[], const Pos1D &_p1, const Pos1D &_p2, const TPlayer next);
 
 	int rateBoardTT(TBlock _board[], const Pos1D &_p1, const Pos1D &_p2, const TPlayer next, const vector<TMove> &history);
+	int quickRateBoardTT(TBlock _board[], const Pos1D &_p1, const Pos1D &_p2, const TPlayer next, const vector<TMove> &history);
 
 	static int pureTreeOfChamber(TBlock _board[], const Pos1D &_p1, const Pos1D &_p2, const TPlayer next);
 	static int simpleRateBoard(TBlock _board[], const Pos1D &_p1, const Pos1D &_p2, const TPlayer next);

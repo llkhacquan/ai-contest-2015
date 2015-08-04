@@ -1,6 +1,7 @@
 #pragma once
 
 #include "mydefine.h"
+#include "FastPos1DDeque.h"
 
 class CBiconnectedComponentsOutput{
 public:
@@ -26,15 +27,14 @@ public:
 
 	int findLengthOfLongestPath(const Pos1D &startPos, const Pos1D &endPos)const;
 
-private:
 	void checkConsitency(bool checkAxA = false)const;
 
 	void insertEdgeOf2Areas(const int a1, const int a2, const int u, const int v);
 
-	void visitNode(vector<TMove> &cPath, int &cLength, vector<TMove> &lPath, int &lLength,
+	void visitNode(CFastPos1DDeque &cPath, int &cLength, CFastPos1DDeque &lPath, int &lLength,
 		bool *visitted, const int cCode, const int &startPos, const int &endPos = -1) const;
 
-	int estimateLengthOfPath(const vector<int> &path, const int &startPos) const;
+	int estimateLengthOfPath(const CFastPos1DDeque &path, const int &startPos) const;
 	int calculateLengthBetween2NodeIn1Area(const Pos1D &u, const Pos1D &v, int depth = 0);
 };
 

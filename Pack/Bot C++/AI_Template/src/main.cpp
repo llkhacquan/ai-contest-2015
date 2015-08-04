@@ -97,7 +97,7 @@ void createBoardWithOutIsland(TBlock *board, Pos1D p1 = 0, Pos1D p2 = 120){
 	setBlock(board, Pos1D(60), BLOCK_EMPTY);
 	for (int i = 1; i < nObject;){
 		Pos1D t = Pos1D(obstacles[rand() % obstacles.size()]);
-		Pos1D newT = move(t, rand() % 4 + 1);
+		Pos1D newT = MOVE(t, rand() % 4 + 1);
 
 		if (getBlock(board, newT) == BLOCK_OBSTACLE){
 			setBlock(board, newT, BLOCK_EMPTY);
@@ -134,7 +134,7 @@ void testFindPath(TBlock *board, const Pos1D&p = 0)
 			TMove i = CHeuristicBase::getFirstMoveOfTheLongestPath(board, pos, 1);
 			iCount++;
 			bOk = move(board, pos, i); assert(bOk);
-			pos = move(pos, i);
+			pos = MOVE(pos, i);
 		}
 #ifdef OPENCV
 		imshow("game", toImage(board));
@@ -290,6 +290,7 @@ int main_(int argc, char* argv[])
 #endif // BOT_ACTIVE
 {
 	srand(clock());
+
 
 #ifdef _WIN32
 	INT rc;

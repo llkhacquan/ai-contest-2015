@@ -25,10 +25,9 @@ public:
 
 	static int getEstimatedLength(TBlock const board[], const Pos1D &playePos, const Pos1D &endPos, const int depth = 0);
 	static void biconnectedComponents(TBlock const board[], CBiconnectedComponentsOutput *output, const Pos1D &playerPos, const Pos1D &endPos = -1, TBlock *oBoard = NULL);
-private:
-	inline void dfsVisit(const Pos1D & u);
-	inline void createNewArea(const Pos1D &v1, const Pos1D &v2);
-	inline void adjection(bool out[], Pos1D const &u);
+	void dfsVisit(const Pos1D & u);
+	void createNewArea(const Pos1D &v1, const Pos1D &v2);
+	void adjection(bool out[], Pos1D const &u);
 };
 
 

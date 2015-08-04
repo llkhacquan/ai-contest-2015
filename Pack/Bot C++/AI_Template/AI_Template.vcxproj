@@ -183,8 +183,12 @@
       <SubSystem>Console</SubSystem>
       <TargetMachine>MachineX86</TargetMachine>
     </Link>
+    <PostBuildEvent />
     <PostBuildEvent>
-      <Command>if exist "$(SolutionDir)..\Arena" copy "$(TargetDir)AI_Template.exe" "$(SolutionDir)..\Arena"</Command>
+      <Command>if exist "$(SolutionDir)..\Arena" copy "$(TargetDir)AI_Template.exe" "$(SolutionDir)..\Arena"
+if not exist "$(TargetDir)opencv_core2411d.dll" copy "$(SolutionDir)Lib\opencv\build\x86\vc12\bin\opencv_core2411d.dll" "$(TargetDir)"
+if not exist "$(TargetDir)opencv_highgui2411d.dll" copy "$(SolutionDir)Lib\opencv\build\x86\vc12\bin\opencv_highgui2411d.dll" "$(TargetDir)"
+if not exist "$(TargetDir)opencv_imgproc2411d.dll" copy "$(SolutionDir)Lib\opencv\build\x86\vc12\bin\opencv_imgproc2411d.dll" "$(TargetDir)"</Command>
     </PostBuildEvent>
   </ItemDefinitionGroup>
   <ItemDefinitionGroup Condition="'$(Configuration)|$(Platform)'=='2013_Release|Win32'">
@@ -199,6 +203,9 @@
       <PrecompiledHeader />
       <WarningLevel>Level3</WarningLevel>
       <DebugInformationFormat>ProgramDatabase</DebugInformationFormat>
+      <FavorSizeOrSpeed>Size</FavorSizeOrSpeed>
+      <EnableEnhancedInstructionSet>NotSet</EnableEnhancedInstructionSet>
+      <InlineFunctionExpansion>AnySuitable</InlineFunctionExpansion>
     </ClCompile>
     <Link>
       <AdditionalDependencies>AI_2013.lib;%(AdditionalDependencies)</AdditionalDependencies>
@@ -257,9 +264,31 @@
     </Link>
   </ItemDefinitionGroup>
   <ItemGroup>
+    <ClCompile Include="..\AIInterface\ArticulationPoints.cpp" />
+    <ClCompile Include="..\AIInterface\BiconnectedComponents.cpp" />
+    <ClCompile Include="..\AIInterface\BiconnectedComponentsOutput.cpp" />
+    <ClCompile Include="..\AIInterface\GameState.cpp" />
+    <ClCompile Include="..\AIInterface\HeuristicBase.cpp" />
+    <ClCompile Include="..\AIInterface\MyAI.cpp" />
+    <ClCompile Include="..\AIInterface\MyTimer.cpp" />
+    <ClCompile Include="..\AIInterface\SearchEngine.cpp" />
+    <ClCompile Include="..\AIInterface\StaticFunctions.cpp" />
+    <ClCompile Include="..\AIInterface\TranspositionTable.cpp" />
     <ClCompile Include="src\main.cpp" />
   </ItemGroup>
   <ItemGroup>
+    <ClInclude Include="..\AIInterface\ArticulationPoints.h" />
+    <ClInclude Include="..\AIInterface\BiconnectedComponents.h" />
+    <ClInclude Include="..\AIInterface\BiconnectedComponentsOutput.h" />
+    <ClInclude Include="..\AIInterface\FastPos1DDeque.h" />
+    <ClInclude Include="..\AIInterface\GameState.h" />
+    <ClInclude Include="..\AIInterface\HeuristicBase.h" />
+    <ClInclude Include="..\AIInterface\MyAI.h" />
+    <ClInclude Include="..\AIInterface\mydefine.h" />
+    <ClInclude Include="..\AIInterface\MyTimer.h" />
+    <ClInclude Include="..\AIInterface\SearchEngine.h" />
+    <ClInclude Include="..\AIInterface\StaticFunctions.h" />
+    <ClInclude Include="..\AIInterface\TranspositionTable.h" />
     <ClInclude Include="include\ai\AI.h" />
     <ClInclude Include="include\ai\defines.h" />
     <ClInclude Include="include\ai\Game.h" />

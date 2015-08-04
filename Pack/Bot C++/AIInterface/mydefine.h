@@ -1,3 +1,5 @@
+#pragma once
+
 #ifndef MY_DEFINE
 #define MY_DEFINE
 
@@ -31,7 +33,7 @@
 #if USING_MEMORY
 #define MIN_DEPTH	 7
 #else
-#define MIN_DEPTH	 9
+#define MIN_DEPTH	 10
 #endif
 #if DISABLE_TIMEOUT
 #define MAX_DEPTH	 11
@@ -43,18 +45,18 @@
 #define DANGER_TIME		2700
 #else
 #if USING_MEMORY
-#define MIN_DEPTH	 9
+#define MIN_DEPTH	 14
 #else
 #define MIN_DEPTH	 14
 #endif
 #if DISABLE_TIMEOUT
-#define MAX_DEPTH	 16
-#else
 #define MAX_DEPTH	 25
+#else
+#define MAX_DEPTH	 30
 #endif // DISABLE_TIMEOUT
 #define ISOLATED_DEPTH 15
 #define DISTANCE 9
-#define DANGER_TIME		2700
+#define DANGER_TIME		2600
 #endif
 
 typedef long long TBlock;
@@ -69,6 +71,9 @@ using namespace std;
 #define BOARD_SIZE (MAP_SIZE*MAP_SIZE)
 #define MY_INFINITY	(POINTS + 10)
 #define BLOCK_ENEMY_AREA (-2)
+
+extern Pos1D moveTable[BOARD_SIZE][4];
+#define MOVE(x, y) moveTable[x][(y)-1]
 
 /// GRAPHIC
 #ifdef OPENCV

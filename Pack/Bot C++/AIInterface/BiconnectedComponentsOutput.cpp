@@ -3,7 +3,7 @@
 #include "FastPos1DDeque.h"
 
 
-int CBiconnectedComponentsOutput::estimateLengthOfPath(const vector<int> &path, const int &startPos) const
+int CBiconnectedComponentsOutput::estimateLengthOfPath(const CFastPos1DDeque &path, const int &startPos) const
 {
 	assert(path.size() > 0);
 	assert(nVertices[path[0]] == 1);
@@ -143,7 +143,7 @@ int CBiconnectedComponentsOutput::calculateLengthBetween2NodeIn1Area(const Pos1D
 	return 0;
 }
 
-void CBiconnectedComponentsOutput::visitNode(vector<TMove> &cPath, int &cLength, vector<TMove> &lPath, int &lLength,
+void CBiconnectedComponentsOutput::visitNode(CFastPos1DDeque &cPath, int &cLength, CFastPos1DDeque &lPath, int &lLength,
 	bool *visitted, const int cCode, const int &startPos, const int &endPos) const
 {
 	visitted[cCode] = true;
@@ -163,7 +163,7 @@ void CBiconnectedComponentsOutput::visitNode(vector<TMove> &cPath, int &cLength,
 			cLength = estimateLengthOfPath(cPath, startPos);
 			if (cLength > lLength){
 				lLength = cLength;
-				lPath = vector<TMove>(cPath);
+				lPath = cPath;
 			}
 		}
 	}
@@ -178,9 +178,9 @@ void CBiconnectedComponentsOutput::visitNode(vector<TMove> &cPath, int &cLength,
 
 int CBiconnectedComponentsOutput::findLengthOfLongestPath(const Pos1D &startPos, const Pos1D &endPos) const
 {
-	vector<int> lPath; lPath.reserve(MAX_N_AREAS);
+	CFastPos1DDeque lPath;
 	int lLength = 0;
-	vector<int> cPath; cPath.reserve(MAX_N_AREAS);
+	CFastPos1DDeque cPath;
 	int cLength = 0;
 	bool visittedAreas[MAX_N_AREAS] = { false };
 	int startArea = iAreaOfVertices[startPos];
@@ -281,7 +281,7 @@ void CBiconnectedComponentsOutput::mark(int iArea, int iVertex, bool value /*= t
 		return;
 
 	vXa[iVertex][iArea] = value;
-	if (value == true){
+	if (value){
 		nVertices[iArea]++;
 		if (iVertex % 2 == 0)
 			nEvenVertices[iArea]++;
@@ -376,7 +376,7 @@ void CBiconnectedComponentsOutput::buildAreaXArea(const Pos1D &playerPos)
 
 			for (TMove direction = 1; direction <= 4; direction++){
 				// check the adjection block that is not in any area
-				Pos1D u_ = move(v, direction);
+				Pos1D u_ = MOVE(v, direction);
 				if (u_ < 0 || u_ >= BOARD_SIZE)
 					continue;
 				Pos1D u = u_;

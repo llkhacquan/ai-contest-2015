@@ -8,12 +8,45 @@
 
 CMyAI* CMyAI::instance;
 
+Pos1D moveTable[BOARD_SIZE][4];
+
 CMyAI::CMyAI()
 {
+	for (Pos1D p = 0; p < BOARD_SIZE; p++)
+		for (TMove m = 1; m <= 4; m++){
+			int y = p / MAP_SIZE;
+			int x = p - y * MAP_SIZE;
+			switch (m){
+			case DIRECTION_DOWN:
+				if (y + 1 < MAP_SIZE)
+					moveTable[p][m - 1] = p + MAP_SIZE;
+				else
+					moveTable[p][m - 1] = -1;
+				break;
+			case DIRECTION_UP:
+				if (y - 1 >= 0)
+					moveTable[p][m - 1] = p - MAP_SIZE;
+				else
+					moveTable[p][m - 1] = -1;
+				break;
+			case DIRECTION_LEFT:
+				if (x - 1 >= 0)
+					moveTable[p][m - 1] = p - 1;
+				else
+					moveTable[p][m - 1] = -1;
+				break;
+			case DIRECTION_RIGHT:
+				if (x + 1 < MAP_SIZE)
+					moveTable[p][m - 1] = p + 1;
+				else
+					moveTable[p][m - 1] = -1;
+				break;
+			}
+		}
+
 	p_ai = AI::GetInstance();
 	CTranspositionTable::getInstance();
 
-	searcher.usingTT = USING_MEMORY;
 	searcher.flag = CSearchEngine::ALPHA_BETA_ITERATIVE_DEEPENING;
 	searcher.heuristic.rateBoard = &CHeuristicBase::simpleRateBoard;
 	searcher.heuristic.quickRateBoard = &CHeuristicBase::voronoiRateBoard;
@@ -62,7 +95,7 @@ TMove CMyAI::newTurn()
 		if (next == PLAYER_1)
 		{
 			for (int i = 1; i <= 4; i++){
-				if (move(oP2, i) == p2)
+				if (MOVE(oP2, i) == p2)
 				{
 					history.push_back(i);
 					break;
@@ -71,7 +104,7 @@ TMove CMyAI::newTurn()
 		}
 		else {
 			for (int i = 1; i <= 4; i++){
-				if (move(oP1, i) == p1)
+				if (MOVE(oP1, i) == p1)
 				{
 					history.push_back(i);
 					break;
@@ -102,7 +135,7 @@ CMyAI* CMyAI::getInstance()
 void CMyAI::printInformation()
 {
 	cout << "LOUISLZCUTE'S BOT:";
-	if (searcher.usingTT)
+	if (USING_MEMORY)
 		cout << "\tActiveTT";
 	else
 		cout << "\tDeactiveTT";
@@ -165,8 +198,7 @@ TMove CMyAI::ourNewTurn()
 	{
 		static bool followingMode = TRY_FOLLOWING && we != first;
 		if (followingMode){
-			bool out[4];
-			if (getBlock(boardData, move(we == PLAYER_1 ? p1 : p2, getOpositeDirection(history.back())) != BLOCK_EMPTY))
+			if (getBlock(boardData, MOVE(we == PLAYER_1 ? p1 : p2, getOpositeDirection(history.back())) != BLOCK_EMPTY))
 				followingMode = false;
 		}
 

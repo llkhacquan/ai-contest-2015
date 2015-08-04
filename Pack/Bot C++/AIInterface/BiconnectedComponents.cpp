@@ -33,7 +33,7 @@ void CBiconnectedComponents::biconnectedComponents(TBlock const board[], CBiconn
 	// build the areas by biconnected components algorithm 
 	for (int i = 1; i <= 4; i++){
 		{
-			Pos1D newPos = move(playerPos, i);
+			Pos1D newPos = MOVE(playerPos, i);
 			if (getBlock(bc.oBoard, newPos) == BLOCK_EMPTY && !bc.visited[newPos])
 				bc.dfsVisit(newPos);
 		}
@@ -52,7 +52,7 @@ void CBiconnectedComponents::biconnectedComponents(TBlock const board[], CBiconn
 	output->buildAreaXArea(playerPos);
 }
 
-void CBiconnectedComponents::dfsVisit(const Pos1D &u){
+__forceinline void CBiconnectedComponents::dfsVisit(const Pos1D &u){
 	assert(u >= 0 && u < BOARD_SIZE);
 	visited[u] = true;
 	iCount++;
@@ -64,7 +64,7 @@ void CBiconnectedComponents::dfsVisit(const Pos1D &u){
 	for (int i = 0; i < 4; i++){
 		if (!bAdj[i])
 			continue;
-		Pos1D v = move(u, i + 1);
+		Pos1D v = MOVE(u, i + 1);
 		if (!visited[v]){
 			myStack.push_back(u); myStack.push_back(v);
 			parrent[v] = u;
@@ -80,7 +80,7 @@ void CBiconnectedComponents::dfsVisit(const Pos1D &u){
 	}
 }
 
-void CBiconnectedComponents::createNewArea(const Pos1D &_u, const Pos1D &_v){
+__forceinline void CBiconnectedComponents::createNewArea(const Pos1D &_u, const Pos1D &_v){
 	assert(_u >= 0 && _u < BOARD_SIZE);
 	assert(_v >= 0 && _v < BOARD_SIZE);
 	output->nAreas++;
@@ -96,12 +96,12 @@ void CBiconnectedComponents::createNewArea(const Pos1D &_u, const Pos1D &_v){
 	} while ((u != _u || v != _v) && (v != _u || u != _v));
 }
 
-void CBiconnectedComponents::adjection(bool out[], Pos1D const &u){
+__forceinline void CBiconnectedComponents::adjection(bool out[], Pos1D const &u){
 	assert(u >= 0 && u < BOARD_SIZE);
 	Pos1D pos(u);
 	for (int i = 1; i <= 4; i++){
 		TBlock block;
-		block = getBlock(oBoard, move(pos, i));
+		block = getBlock(oBoard, MOVE(pos, i));
 		if (block == BLOCK_EMPTY || block >= SPECIAL_BLOCK)
 			out[i - 1] = true;
 		else

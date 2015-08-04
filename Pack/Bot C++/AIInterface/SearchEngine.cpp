@@ -59,8 +59,8 @@ int CSearchEngine::alphaBeta(TBlock board[], const Pos1D&_p1, const Pos1D&_p2, c
 		for (auto m = moves.begin(); m != moves.end(); m++){
 			bOk = move(board, _p1, *m, false); assert(bOk);
 			history.push_back(*m);
-			value = max(value, ab = alphaBeta(board, move(_p1, *m), _p2, PLAYER_2, history, depth - 1, a, b));
-			bOk = move(board, move(_p1, *m), getOpositeDirection(*m), true); assert(bOk);
+			value = max(value, ab = alphaBeta(board, MOVE(_p1, *m), _p2, PLAYER_2, history, depth - 1, a, b));
+			bOk = move(board, MOVE(_p1, *m), getOpositeDirection(*m), true); assert(bOk);
 			history.pop_back();
 			if (ab == TIMEOUT_POINTS)
 				return TIMEOUT_POINTS;
@@ -75,8 +75,8 @@ int CSearchEngine::alphaBeta(TBlock board[], const Pos1D&_p1, const Pos1D&_p2, c
 		for (auto m = moves.begin(); m != moves.end(); m++){
 			bOk = move(board, _p2, *m, false); assert(bOk);
 			history.push_back(*m);
-			value = min(value, ab = alphaBeta(board, _p1, move(_p2, *m), PLAYER_1, history, depth - 1, a, b));
-			bOk = move(board, move(_p2, *m), getOpositeDirection(*m), true); assert(bOk);
+			value = min(value, ab = alphaBeta(board, _p1, MOVE(_p2, *m), PLAYER_1, history, depth - 1, a, b));
+			bOk = move(board, MOVE(_p2, *m), getOpositeDirection(*m), true); assert(bOk);
 			history.pop_back();
 			if (ab == TIMEOUT_POINTS)
 				return TIMEOUT_POINTS;
@@ -153,8 +153,8 @@ int CSearchEngine::alphaBetaTT(TBlock board[], const Pos1D&_p1, const Pos1D&_p2,
 			for (auto m = moves.begin(); m != moves.end(); m++){
 				bOk = move(board, _p1, *m, false); assert(bOk);
 				history.push_back(*m);
-				g = max(g, ab = alphaBetaTT(board, move(_p1, *m), _p2, PLAYER_2, history, depth - 1, a, beta));
-				bOk = move(board, move(_p1, *m), getOpositeDirection(*m), true); assert(bOk);
+				g = max(g, ab = alphaBetaTT(board, MOVE(_p1, *m), _p2, PLAYER_2, history, depth - 1, a, beta));
+				bOk = move(board, MOVE(_p1, *m), getOpositeDirection(*m), true); assert(bOk);
 				history.pop_back();
 				if (ab == TIMEOUT_POINTS)
 					return TIMEOUT_POINTS;
@@ -168,8 +168,8 @@ int CSearchEngine::alphaBetaTT(TBlock board[], const Pos1D&_p1, const Pos1D&_p2,
 			for (auto m = moves.begin(); m != moves.end(); m++){
 				bOk = move(board, _p2, *m, false); assert(bOk);
 				history.push_back(*m);
-				g = min(g, ab = alphaBetaTT(board, _p1, move(_p2, *m), PLAYER_1, history, depth - 1, alpha, b));
-				bOk = move(board, move(_p2, *m), getOpositeDirection(*m), true); assert(bOk);
+				g = min(g, ab = alphaBetaTT(board, _p1, MOVE(_p2, *m), PLAYER_1, history, depth - 1, alpha, b));
+				bOk = move(board, MOVE(_p2, *m), getOpositeDirection(*m), true); assert(bOk);
 				history.pop_back();
 				if (ab == TIMEOUT_POINTS)
 					return TIMEOUT_POINTS;
@@ -269,14 +269,14 @@ pair<TMove, int> CSearchEngine::getOptimalMoveByAB(TBlock board[], const Pos1D&_
 			bOk = move(board, _p1, *m, false); assert(bOk);
 			history.push_back(*m);
 			if (USING_MEMORY)
-				ab = alphaBetaTT(board, move(_p1, *m), _p2, PLAYER_2, history, depth - 1, a, b);
+				ab = alphaBetaTT(board, MOVE(_p1, *m), _p2, PLAYER_2, history, depth - 1, a, b);
 			else
-				ab = alphaBeta(board, move(_p1, *m), _p2, PLAYER_2, history, depth - 1, a, b);
+				ab = alphaBeta(board, MOVE(_p1, *m), _p2, PLAYER_2, history, depth - 1, a, b);
 			if (value < ab){
 				value = ab;
 				bestMove = *m;
 			}
-			bOk = move(board, move(_p1, *m), getOpositeDirection(*m), true); assert(bOk);
+			bOk = move(board, MOVE(_p1, *m), getOpositeDirection(*m), true); assert(bOk);
 			history.pop_back();
 			if (ab == TIMEOUT_POINTS)
 				return pair<TMove, int>(bestMove, TIMEOUT_POINTS);
@@ -292,14 +292,14 @@ pair<TMove, int> CSearchEngine::getOptimalMoveByAB(TBlock board[], const Pos1D&_
 			bOk = move(board, _p2, *m, false); assert(bOk);
 			history.push_back(*m);
 			if (USING_MEMORY)
-				ab = alphaBetaTT(board, _p1, move(_p2, *m), PLAYER_1, history, depth - 1, a, b);
+				ab = alphaBetaTT(board, _p1, MOVE(_p2, *m), PLAYER_1, history, depth - 1, a, b);
 			else
-				ab = alphaBeta(board, _p1, move(_p2, *m), PLAYER_1, history, depth - 1, a, b);
+				ab = alphaBeta(board, _p1, MOVE(_p2, *m), PLAYER_1, history, depth - 1, a, b);
 			if (value > ab){
 				value = ab;
 				bestMove = *m;
 			}
-			bOk = move(board, move(_p2, *m), getOpositeDirection(*m), true); assert(bOk);
+			bOk = move(board, MOVE(_p2, *m), getOpositeDirection(*m), true); assert(bOk);
 			history.pop_back();
 			if (ab == TIMEOUT_POINTS)
 				return pair<TMove, int>(bestMove, TIMEOUT_POINTS);

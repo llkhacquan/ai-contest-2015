@@ -1,3 +1,5 @@
+#pragma once
+
 #include "mydefine.h"
 #include "BiconnectedComponents.h"
 
@@ -70,7 +72,7 @@ inline TMove getOpositeDirection(const TMove direction)
 	}
 }
 
-inline TBlock getBlock(TBlock const board[], const Pos1D pos)
+__forceinline  const TBlock getBlock(TBlock const board[], const Pos1D pos)
 {
 	if (pos >= 0 && pos < BOARD_SIZE)
 		return board[pos];
@@ -78,37 +80,7 @@ inline TBlock getBlock(TBlock const board[], const Pos1D pos)
 		return BLOCK_OUT_OF_BOARD;
 }
 
-inline Pos1D move(const Pos1D &i, const TMove direction){
-	int x = i % MAP_SIZE;
-	int y = i / MAP_SIZE;
-	switch (direction){
-	case DIRECTION_DOWN:
-		if (y + 1 < MAP_SIZE)
-			return i + MAP_SIZE;
-		else
-			return -1;
-	case DIRECTION_UP:
-		if (y - 1 >= 0)
-			return i - MAP_SIZE;
-		else
-			return -1;
-	case DIRECTION_LEFT:
-		if (x - 1 >= 0)
-			return i - 1;
-		else
-			return -1;
-	case DIRECTION_RIGHT:
-		if (x + 1 < MAP_SIZE)
-			return i + 1;
-		else
-			return -1;
-	default:
-		assert(false);
-		return -1;
-	}
-}
-
-inline bool setBlock(TBlock board[], const Pos1D pos, const TBlock value){
+__forceinline  bool setBlock(TBlock board[], const Pos1D pos, const TBlock value){
 	if (pos >= 0 && pos < BOARD_SIZE)
 	{
 		board[pos] = value;

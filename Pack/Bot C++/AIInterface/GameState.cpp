@@ -76,16 +76,20 @@ bool CGameState::isSet() const
 
 bool CGameState::operator==(const CGameState &state) const
 {
-	if (historyLength != state.historyLength)
-		return false;
-	for (int i = 0; i < historyLength*2; i++){
-		if (history[i] != state.history[i])
-			return false;
-	}
-	return true;
+	return (historyLength == state.historyLength && history == state.history);
 }
 
 bool CGameState::operator!=(const CGameState &state) const
 {
-	return !(*this == state);
+	return !(historyLength == state.historyLength && history == state.history);
+}
+
+CGameState & CGameState::operator=(const CGameState &state)
+{
+	historyLength = state.historyLength;
+	history = state.history;
+	depth = state.depth;
+	lowerbound = state.lowerbound;
+	upperBound = state.upperBound;
+	return *this;
 }

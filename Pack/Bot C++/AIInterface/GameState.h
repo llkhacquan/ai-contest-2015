@@ -5,10 +5,10 @@
 
 class CGameState
 {
-private:
+public:
 	bitset<218> history;
 	signed char historyLength;
-public:
+
 	CGameState();
 	CGameState(const vector<TMove> &_history);
 	~CGameState();
@@ -28,5 +28,7 @@ public:
 	bool operator==(const CGameState &state) const;
 
 	bool operator!=(const CGameState &state) const;
+
+	CGameState &operator = (const CGameState &state) ;
 };
 

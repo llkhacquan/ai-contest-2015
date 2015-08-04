@@ -6,7 +6,7 @@ vector<TMove> getAvailableMoves(const TBlock board[], const Pos1D &pos, bool *ou
 	assert(pos >= 0 && pos < BOARD_SIZE);
 	vector<TMove> result;
 	for (TMove i = 1; i <= 4; i++)
-		if (getBlock(board, move(pos, i)) == BLOCK_EMPTY){
+		if (getBlock(board, MOVE(pos, i)) == BLOCK_EMPTY){
 			if (output != NULL)
 				output[i - 1] = true;
 			result.push_back(i);
@@ -48,13 +48,13 @@ void findLongestPath(TBlock board[], Pos1D& pos, vector<TMove> &c, vector<TMove>
 		if (!avalableMove[iMove - 1])
 			continue;
 		bOk = move(board, pos, iMove); assert(bOk);
-		pos = move(pos, iMove);
+		pos = MOVE(pos, iMove);
 		c.push_back(iMove);
 
 		findLongestPath(board, pos, c, l);
 
 		bOk = move(board, pos, getOpositeDirection(iMove), true); assert(bOk);
-		pos = move(pos, getOpositeDirection(iMove));
+		pos = MOVE(pos, getOpositeDirection(iMove));
 		c.pop_back();
 	}
 
@@ -67,7 +67,7 @@ bool move(TBlock _board[], const Pos1D &currentPos, const TMove direction, const
 {
 	TBlock block = getBlock(_board, currentPos);
 	assert(block == BLOCK_PLAYER_1 || block == BLOCK_PLAYER_2);
-	Pos1D newPos = move(currentPos, direction);
+	Pos1D newPos = MOVE(currentPos, direction);
 	if (backMode){
 		if (block == BLOCK_PLAYER_1 && getBlock(_board, newPos) == BLOCK_PLAYER_1_TRAIL){
 			setBlock(_board, newPos, BLOCK_PLAYER_1);
@@ -109,7 +109,7 @@ vector<TMove> &findShortestPath(const TBlock _board[], const Pos1D& start, const
 	// we scan the 4 blocks near the start point, find the block with minimum distance from end point (if there is no such point, start and end are separated
 	Pos1D cPos, mPos = -1;
 	for (TMove i = 1; i <= 4; i++){
-		TBlock block = getBlock(board, cPos = move(start, i));
+		TBlock block = getBlock(board, cPos = MOVE(start, i));
 		if (getBlock(_board, end) == BLOCK_EMPTY)
 		{
 			if (block >= SPECIAL_BLOCK){
@@ -153,7 +153,7 @@ vector<TMove> &findShortestPath(const TBlock _board[], const Pos1D& start, const
 			break;
 		}
 		for (TMove i = 1; i <= 4; i++){
-			if (getBlock(board, (mPos = move(cPos, i))) == block - 1){
+			if (getBlock(board, (mPos = MOVE(cPos, i))) == block - 1){
 				path.push_back(i);
 				cPos = mPos;
 				break;
@@ -166,7 +166,7 @@ vector<TMove> &findShortestPath(const TBlock _board[], const Pos1D& start, const
 	Pos1D p = start;
 	for (unsigned int i = 0; i < path.size(); i++){
 		bool bOk = move(board, p, path[i]); assert(bOk);
-		p = move(p, path[i]);
+		p = MOVE(p, path[i]);
 	}
 	assert(p == end);
 #endif
@@ -186,7 +186,7 @@ int fillDistance(TBlock _board[], const Pos1D &pos) {
 	while (q.size() > 0){
 		Pos1D p(q.pop_front());
 		for (int i = 1; i <= 4; i++){
-			const Pos1D newP = move(p, i);
+			const Pos1D newP = MOVE(p, i);
 			if (getBlock(_board, newP) == BLOCK_EMPTY){
 				result += getBlock(_board, p) + 1 - SPECIAL_BLOCK;
 				setBlock(_board, newP, getBlock(_board, p) + 1);
@@ -214,7 +214,7 @@ bool isIsolated(const TBlock _board[121], const Pos1D &_p1, const Pos1D &_p2)
 		Pos1D p = queue.pop_front();
 		board[p] = SPECIAL_BLOCK;
 		for (int i = 1; i <= 4; i++){
-			Pos1D u = move(p, i);
+			Pos1D u = MOVE(p, i);
 			if (getBlock(board, u) != BLOCK_EMPTY)
 				continue;
 			if (visisted[u])
@@ -225,7 +225,7 @@ bool isIsolated(const TBlock _board[121], const Pos1D &_p1, const Pos1D &_p2)
 	}
 
 	for (int i = 1; i <= 4; i++){
-		if (getBlock(board, move(_p2, i)) == SPECIAL_BLOCK)
+		if (getBlock(board, MOVE(_p2, i)) == SPECIAL_BLOCK)
 			return false;
 	}
 	return true;
@@ -367,7 +367,7 @@ void fillChamberWithBattleFields(const TBlock gatesBoard[], const TBlock board[]
 
 		fillBoard[v] = BLOCK_ENEMY_AREA;
 		for (int i = 1; i <= 4; i++){
-			Pos1D u = move(v, i);
+			Pos1D u = MOVE(v, i);
 			if (getBlock(fillBoard, u) == BLOCK_EMPTY && getBlock(gatesBoard, u) != SPECIAL_BLOCK)
 				enemies.push_back(u);
 		}
@@ -388,7 +388,7 @@ int lengthWhenTryToReachBattleFields(const TBlock board[], const TBlock dBoard[]
 			break;
 		q.pop_front();
 		for (int i = 1; i <= 4; i++){
-			Pos1D u = move(v, i);
+			Pos1D u = MOVE(v, i);
 			TBlock block = getBlock(board, u);
 			if (!(block == BLOCK_EMPTY || block == BLOCK_ENEMY_AREA))
 				continue;

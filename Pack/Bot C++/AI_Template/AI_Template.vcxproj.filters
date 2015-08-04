@@ -9,10 +9,49 @@
       <UniqueIdentifier>{93995380-89BD-4b04-88EB-625FBE52EBFB}</UniqueIdentifier>
       <Extensions>h;hpp;hxx;hm;inl;inc;xsd</Extensions>
     </Filter>
+    <Filter Include="Custom Bot">
+      <UniqueIdentifier>{b6b10fe9-5d81-4c57-ba95-47bbb71abf94}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="Custom Bot\Headers">
+      <UniqueIdentifier>{73785bbe-cc0c-4124-a630-7144d26107e9}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="Custom Bot\Sources">
+      <UniqueIdentifier>{c2de24ac-0195-4b18-9f81-8c8fd8e24711}</UniqueIdentifier>
+    </Filter>
   </ItemGroup>
   <ItemGroup>
     <ClCompile Include="src\main.cpp">
       <Filter>Source Files</Filter>
+    </ClCompile>
+    <ClCompile Include="..\AIInterface\TranspositionTable.cpp">
+      <Filter>Custom Bot\Sources</Filter>
+    </ClCompile>
+    <ClCompile Include="..\AIInterface\StaticFunctions.cpp">
+      <Filter>Custom Bot\Sources</Filter>
+    </ClCompile>
+    <ClCompile Include="..\AIInterface\SearchEngine.cpp">
+      <Filter>Custom Bot\Sources</Filter>
+    </ClCompile>
+    <ClCompile Include="..\AIInterface\MyTimer.cpp">
+      <Filter>Custom Bot\Sources</Filter>
+    </ClCompile>
+    <ClCompile Include="..\AIInterface\MyAI.cpp">
+      <Filter>Custom Bot\Sources</Filter>
+    </ClCompile>
+    <ClCompile Include="..\AIInterface\HeuristicBase.cpp">
+      <Filter>Custom Bot\Sources</Filter>
+    </ClCompile>
+    <ClCompile Include="..\AIInterface\GameState.cpp">
+      <Filter>Custom Bot\Sources</Filter>
+    </ClCompile>
+    <ClCompile Include="..\AIInterface\BiconnectedComponentsOutput.cpp">
+      <Filter>Custom Bot\Sources</Filter>
+    </ClCompile>
+    <ClCompile Include="..\AIInterface\BiconnectedComponents.cpp">
+      <Filter>Custom Bot\Sources</Filter>
+    </ClCompile>
+    <ClCompile Include="..\AIInterface\ArticulationPoints.cpp">
+      <Filter>Custom Bot\Sources</Filter>
     </ClCompile>
   </ItemGroup>
   <ItemGroup>
@@ -24,6 +63,42 @@
     </ClInclude>
     <ClInclude Include="include\ai\Game.h">
       <Filter>Header Files</Filter>
+    </ClInclude>
+    <ClInclude Include="..\AIInterface\TranspositionTable.h">
+      <Filter>Custom Bot\Headers</Filter>
+    </ClInclude>
+    <ClInclude Include="..\AIInterface\StaticFunctions.h">
+      <Filter>Custom Bot\Headers</Filter>
+    </ClInclude>
+    <ClInclude Include="..\AIInterface\SearchEngine.h">
+      <Filter>Custom Bot\Headers</Filter>
+    </ClInclude>
+    <ClInclude Include="..\AIInterface\MyTimer.h">
+      <Filter>Custom Bot\Headers</Filter>
+    </ClInclude>
+    <ClInclude Include="..\AIInterface\mydefine.h">
+      <Filter>Custom Bot\Headers</Filter>
+    </ClInclude>
+    <ClInclude Include="..\AIInterface\MyAI.h">
+      <Filter>Custom Bot\Headers</Filter>
+    </ClInclude>
+    <ClInclude Include="..\AIInterface\HeuristicBase.h">
+      <Filter>Custom Bot\Headers</Filter>
+    </ClInclude>
+    <ClInclude Include="..\AIInterface\GameState.h">
+      <Filter>Custom Bot\Headers</Filter>
+    </ClInclude>
+    <ClInclude Include="..\AIInterface\FastPos1DDeque.h">
+      <Filter>Custom Bot\Headers</Filter>
+    </ClInclude>
+    <ClInclude Include="..\AIInterface\BiconnectedComponentsOutput.h">
+      <Filter>Custom Bot\Headers</Filter>
+    </ClInclude>
+    <ClInclude Include="..\AIInterface\BiconnectedComponents.h">
+      <Filter>Custom Bot\Headers</Filter>
+    </ClInclude>
+    <ClInclude Include="..\AIInterface\ArticulationPoints.h">
+      <Filter>Custom Bot\Headers</Filter>
     </ClInclude>
   </ItemGroup>
 </Project>

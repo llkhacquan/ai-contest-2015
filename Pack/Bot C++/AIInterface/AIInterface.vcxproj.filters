@@ -88,8 +88,5 @@
     <ClCompile Include="MyAI.cpp">
       <Filter>Source Files</Filter>
     </ClCompile>
-    <ClCompile Include="FastPos1DDeque.cpp">
-      <Filter>Source Files</Filter>
-    </ClCompile>
   </ItemGroup>
 </Project>

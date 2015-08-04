@@ -11,7 +11,6 @@ public:
 		ALPHA_BETA_ITERATIVE_DEEPENING, MTDF_ITERATIVE_DEEPENING
 	};
 
-	bool usingTT;
 	SearchFunction flag;
 	pair<TMove, int> optimalMove(TBlock board[], const Pos1D&_p1, const Pos1D&_p2, const TPlayer next, const vector<TMove> &history);
 	pair<TMove, int> getOptimalMoveByAB(TBlock board[], const Pos1D&_p1, const Pos1D&_p2, const TPlayer next, const vector<TMove> &history,

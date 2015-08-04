@@ -51,7 +51,7 @@ void CArticulationPoints::APUtil(const TBlock board[], TBlock oBoard[], int u, b
 	// Go through all vertices adjacent to this
 	for (int iMove = 1; iMove <= 4; iMove++)
 	{
-		Pos1D v2d = move(u, iMove);
+		Pos1D v2d = MOVE(u, iMove);
 		if (getBlock(board, v2d) != BLOCK_EMPTY)
 			continue;
 		int v = v2d;  // v is current adjacent of u
