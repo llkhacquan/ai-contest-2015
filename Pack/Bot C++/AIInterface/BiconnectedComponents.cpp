@@ -47,7 +47,6 @@ void CBiconnectedComponents::biconnectedComponents(TBlock const board[], CBiconn
 				oBoard[i] = SPECIAL_BLOCK + (output->iAreaOfVertices[i]);
 			}
 		}
-		printBoard(oBoard, true);
 	}
 	output->buildAreaXArea(playerPos);
 }
@@ -109,13 +108,34 @@ __forceinline void CBiconnectedComponents::adjection(bool out[], Pos1D const &u)
 	}
 }
 
-int CBiconnectedComponents::getEstimatedLength(TBlock const board[], const Pos1D &playerPos, const Pos1D &endPos, const int depth)
+int CBiconnectedComponents::getEstimatedLength(TBlock const board[], const Pos1D &playerPos, const Pos1D &endPos, const int depth, bool printInfo)
 {
 	TBlock oldBlock = board[playerPos];
 	assert(oldBlock == BLOCK_PLAYER_1 || oldBlock == BLOCK_PLAYER_2);
 	CBiconnectedComponentsOutput out;
 	out.depth = depth;
-	biconnectedComponents(board, &out, playerPos, endPos);
-	return out.findLengthOfLongestPath(playerPos, endPos);
+
+	TBlock b[BOARD_SIZE];
+	biconnectedComponents(board, &out, playerPos, endPos, b);
+	// int result = out.findLengthOfLongestPath(playerPos, endPos);
+
+	CFastPos1DDeque lPath;
+	int lLength = 0;
+	CFastPos1DDeque cPath;
+	int cLength = 0;
+	bool visittedAreas[MAX_N_AREAS] = { false };
+	int startArea = out.iAreaOfVertices[playerPos];
+	if (SHOW_DEBUG_INFORMATION && printInfo)
+		printBoard(b, true);
+	out.visitNode(cPath, cLength, lPath, lLength, visittedAreas, startArea, playerPos);
+
+	if (SHOW_DEBUG_INFORMATION && printInfo)
+	{
+		for (int i = 0; i < lPath.size(); i++)
+			cout << lPath[i] << " ";
+		cout << "\n";
+	}
+
+	return lLength;
 }
 

@@ -35,6 +35,6 @@ public:
 		bool *visitted, const int cCode, const int &startPos, const int &endPos = -1) const;
 
 	int estimateLengthOfPath(const CFastPos1DDeque &path, const int &startPos) const;
-	int calculateLengthBetween2NodeIn1Area(const Pos1D &u, const Pos1D &v, int depth = 0);
+	int calculateLengthBetween2NodeIn1Area(const Pos1D &u, const Pos1D &v, int depth = 0) const;
 };
 

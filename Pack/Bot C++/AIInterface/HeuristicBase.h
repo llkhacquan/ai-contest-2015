@@ -21,6 +21,7 @@ public:
 
 	// this method explore the _board with nDepth
 	static TMove getFirstMoveOfTheLongestPath(const TBlock _board[], const Pos1D &p, const int nDepth = 8);
+	static vector<TMove> getTheLongestPath(const TBlock _board[], const Pos1D &p, const int nDepth);
 
 	static int getUpperLengthOfTheLongestPath(TBlock const _board[], const Pos1D &playerPos, const int depth = 0);
 	static int getLowerLengthOfTheLongestPath(TBlock const _board[], const Pos1D &playerPos);

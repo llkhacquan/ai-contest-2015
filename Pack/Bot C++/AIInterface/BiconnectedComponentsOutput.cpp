@@ -9,6 +9,8 @@ int CBiconnectedComponentsOutput::estimateLengthOfPath(const CFastPos1DDeque &pa
 	assert(nVertices[path[0]] == 1);
 
 	int result = 0; // skip the first area (areas[path[0]])
+	CFastPos1DDeque newPath;
+	newPath.push_back(startPos);
 
 	// for the last area)
 	int pathBack = path[path.size() - 1];
@@ -26,16 +28,7 @@ int CBiconnectedComponentsOutput::estimateLengthOfPath(const CFastPos1DDeque &pa
 				if (connection < 0)
 					continue;
 
-				int delta2;
-				if (odd > even) // always end with odd
-					if (connection % 2 == 1) //start with odd
-						delta2 = even * 2 + 1;
-					else delta2 = even * 2; // start with even
-				else // odd < even, end with even
-					if (connection % 2 == 1) //start with odd
-						delta2 = odd * 2;
-					else
-						delta2 = odd * 2 + 1; // start with even, end with odd
+				int delta2 = calculateLengthBetween2NodeIn1Area(connection, -1);
 				if (delta2 > delta)
 					delta = delta2;
 			}
@@ -47,14 +40,10 @@ int CBiconnectedComponentsOutput::estimateLengthOfPath(const CFastPos1DDeque &pa
 	// for the other areas (path[1] -> path[size - 2]
 	if (path.size() >= 3)
 		for (int iArea = 1; iArea < (int)path.size() - 1; iArea++){
-			//Area const *area = &(areas[path[i]]);
-			int even = nEvenVertices[path[iArea]];
-			int odd = nOddVertices[path[iArea]];
-
 			int a = -1;
 			for (auto i = 0; i < 4; i++){
 				for (auto j = 0; j < 4; j++){
-					int b = -1;
+					int delta = -1;
 					Pos1D start = aXa[path[iArea]][path[iArea - 1]][i];
 					if (start < 0)
 						break;
@@ -63,28 +52,9 @@ int CBiconnectedComponentsOutput::estimateLengthOfPath(const CFastPos1DDeque &pa
 					if (end < 0)
 						break;
 					assert(aXa[path[iArea + 1]][path[iArea]][j] >= 0);
-					{
-						if (start == end) // start and end in the same position
-							b = 1;
-						else if (start % 2 != end % 2) // start and end in odd/even position
-							b = min(odd, even) * 2;
-						else if (start % 2 == 1) // start with odd, end with odd
-							if (odd > even)
-								b = even * 2 + 1;
-							else if (even > odd)
-								b = odd * 2 - 1;
-							else // even == odd
-								b = odd * 2 - 1;
-						else // if (it1->connections % 2 == 0) // start with even, end with even
-							if (odd > even)
-								b = even * 2 - 1;
-							else if (odd < even)
-								b = odd * 2 + 1;
-							else // even == odd
-								b = even * 2 - 1;
-					}
-					if (a < b)
-						a = b;
+					delta = calculateLengthBetween2NodeIn1Area(start, end);
+					if (a < delta)
+						a = delta;
 				}
 			}
 			assert(a > 0);
@@ -93,54 +63,67 @@ int CBiconnectedComponentsOutput::estimateLengthOfPath(const CFastPos1DDeque &pa
 	return result;
 }
 
-int CBiconnectedComponentsOutput::calculateLengthBetween2NodeIn1Area(const Pos1D &u, const Pos1D &v, int depth){
+int CBiconnectedComponentsOutput::calculateLengthBetween2NodeIn1Area(const Pos1D &u, const Pos1D &v, int depth)const{
 	// make sure u and v are in the same area
-	assert(iAreaOfVertices[u] == iAreaOfVertices[v]);
-	int cArea = iAreaOfVertices[u];
+	assert(u >= 0 && u < BOARD_SIZE);
 
-	if (depth == 0){ // we have to estimate
-		if (v < -1){
-			int delta = -1;
-			int odd = nOddVertices[cArea];
-			int even = nEvenVertices[cArea];
-			if (odd == even)
-				delta = odd * 2;
-			else
-			{
-				{
-					int delta2;
-					if (odd > even) // always end with odd
-						if (u % 2 == 1) //start with odd
-							delta2 = even * 2 + 1;
-						else delta2 = even * 2; // start with even
-					else // odd < even, end with even
-						if (u % 2 == 1) //start with odd
-							delta2 = odd * 2;
-						else
-							delta2 = odd * 2 + 1; // start with even, end with odd
-					if (delta2 > delta)
-						delta = delta2;
-				}
-				assert(delta >= 0);
-				return delta;
-			}
-		}
-	}
-
-	// create a map with only block of cArea
-	TBlock tBoard[BOARD_SIZE];
-	for (int iVertex = 0; iVertex < BOARD_SIZE; iVertex++){
-		if (iAreaOfVertices[iVertex] == cArea)
-			tBoard[iVertex] = BLOCK_EMPTY;
+	if (v < 0 || v >= BOARD_SIZE){
+		// end at anywhere
+		int delta = -1;
+		int areaCode = iAreaOfVertices[u];
+		int odd = nOddVertices[areaCode];
+		int even = nEvenVertices[areaCode];
+		if (odd == even)
+			delta = odd * 2;
 		else
-			tBoard[iVertex] = BLOCK_OBSTACLE;
+		{
+			int delta2;
+			if (odd > even) // always end with odd
+				if (u % 2 == 1) //start with odd
+					delta2 = even * 2 + 1;
+				else delta2 = even * 2; // start with even
+			else // odd < even, end with even
+				if (u % 2 == 1) //start with odd
+					delta2 = odd * 2;
+				else
+					delta2 = odd * 2 + 1; // start with even, end with odd
+			if (delta2 > delta)
+				delta = delta2;
+		}
+		assert(delta >= 0);
+		return delta;
 	}
+	else {
+		// start at u, end at v
+		assert(iAreaOfVertices[u] == iAreaOfVertices[v]);
+		int areaCode = iAreaOfVertices[u];
+		int even = nEvenVertices[areaCode];
+		int odd = nOddVertices[areaCode];
 
-	assert(!isIsolated(tBoard, Pos1D(u), Pos1D(v)));
-	tBoard[u] = BLOCK_OBSTACLE;
-	tBoard[v] = BLOCK_OBSTACLE;
-
-	return 0;
+		int delta = -1;
+		{
+			if (u == v) // start and end in the same position
+				delta = 1;
+			else if (u % 2 != v % 2) // start and end in odd/even position
+				delta = min(odd, even) * 2;
+			else if (u % 2 == 1) // start with odd, end with odd
+				if (odd > even)
+					delta = even * 2 + 1;
+				else if (even > odd)
+					delta = odd * 2 - 1;
+				else // even == odd
+					delta = odd * 2 - 1;
+			else // if (it1->connections % 2 == 0) // start with even, end with even
+				if (odd > even)
+					delta = even * 2 - 1;
+				else if (odd < even)
+					delta = odd * 2 + 1;
+				else // even == odd
+					delta = even * 2 - 1;
+		}
+		assert(delta > 0);
+		return delta;
+	}
 }
 
 void CBiconnectedComponentsOutput::visitNode(CFastPos1DDeque &cPath, int &cLength, CFastPos1DDeque &lPath, int &lLength,
@@ -186,12 +169,12 @@ int CBiconnectedComponentsOutput::findLengthOfLongestPath(const Pos1D &startPos,
 	int startArea = iAreaOfVertices[startPos];
 	visitNode(cPath, cLength, lPath, lLength, visittedAreas, startArea, startPos);
 
-#if SHOW_DEBUG_INFORMATION
-	for (int i = 0; i < (int)lPath.size(); i++){
-		cout << lPath[i] << "\t";
+	if (SHOW_DEBUG_INFORMATION)
+	{
+		for (int i = 0; i < lPath.size(); i++)
+			cout << lPath[i] << " ";
+		cout << "\n";
 	}
-	cout << "estimated length = " << lLength << endl;
-#endif
 	return lLength;
 }
 
@@ -207,7 +190,7 @@ void CBiconnectedComponentsOutput::manager(const Pos1D &playerPos, const Pos1D &
 			mark(nAreas - 1, endPos, true);
 		}
 	}
-	// re-build areas so the larger areas will have more and more vertice
+	// re-build areas so the larger areas will have more and more vertices
 	for (Pos1D v = 0; v < BOARD_SIZE; v++){
 		if (nAreasOfVertices[v] == 0)
 			iAreaOfVertices[v] = -1;
@@ -234,7 +217,6 @@ void CBiconnectedComponentsOutput::manager(const Pos1D &playerPos, const Pos1D &
 		}
 		else {
 			assert(nAreasOfVertices[v] == 2);
-
 			int a1 = -1, a2 = -2;
 			for (int iArea = 0; iArea < nAreas; iArea++){
 				if (vXa[v][iArea])
@@ -257,6 +239,7 @@ void CBiconnectedComponentsOutput::manager(const Pos1D &playerPos, const Pos1D &
 			}
 		}
 	}
+	checkConsitency(true);
 }
 
 void CBiconnectedComponentsOutput::clear()
@@ -347,6 +330,39 @@ void CBiconnectedComponentsOutput::checkConsitency(bool checkAxA) const
 			assert(iAreaOfVertices[iVertex] == -1);
 		else
 			assert(vXa[iVertex][iAreaOfVertices[iVertex]]);
+	}
+
+	// check AxA
+	for (int i = 0; i < MAX_N_AREAS; i++){
+		for (int j = 0; j < MAX_N_AREAS; j++){
+			if (aXa[i][j][0] < 0)
+			{
+				assert(aXa[j][i][0] < 0);
+				continue;
+			}
+
+			int k;
+			for (k = 1; k < 4; k++){
+				if (aXa[i][j][k] >= 0){
+					assert(aXa[j][i][k] >= 0);
+					assert(aXa[j][i][k] == aXa[i][j][k] - 1 || aXa[j][i][k] == aXa[i][j][k] + 1
+						|| aXa[j][i][k] == aXa[i][j][k] - 11 || aXa[j][i][k] == aXa[i][j][k] + 11);
+
+				}
+				else
+					break;
+			}
+
+			if (k > 1)
+			{
+				bool ij = true, ji = true;
+				for (int l = 1; l < k; l++){
+					ij = ij && aXa[i][j][l] == aXa[i][j][0];
+					ji = ji && aXa[j][i][l] == aXa[j][i][0];
+				}
+				assert(ij != ji);
+			}
+		}
 	}
 }
 

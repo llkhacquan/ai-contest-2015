@@ -1,7 +1,5 @@
 #pragma once
 
-#ifndef MY_DEFINE
-#define MY_DEFINE
 
 #include <vector>
 #include <string>
@@ -21,9 +19,9 @@
 #include "..\AI_Template\include\ai\defines.h"
 #include "..\AI_Template\include\ai\AI.h"
 
-#define BOT_ACTIVE	1
+#define BOT_ACTIVE	0
 #define USING_MEMORY 0
-#define SHOW_DEBUG_INFORMATION	0
+#define SHOW_DEBUG_INFORMATION	1
 #define TRY_FOLLOWING	 0
 
 // set DISABLE_TIMEOUT 1 when run You vs P1 Debug
@@ -102,7 +100,3 @@ using namespace cv;
 #define MAX_N_AREAS		62
 static const int SPECIAL_BIT = 62;
 #define SPECIAL_BLOCK (1i64 << SPECIAL_BIT)
-
-#endif
-
-

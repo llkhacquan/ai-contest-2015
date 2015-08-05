@@ -93,87 +93,6 @@ bool move(TBlock _board[], const Pos1D &currentPos, const TMove direction, const
 	}
 }
 
-vector<TMove> &findShortestPath(const TBlock _board[], const Pos1D& start, const Pos1D& end)
-{
-	static vector<TMove> path(BOARD_SIZE);
-	path.clear();
-	if (start == end)
-		return path;
-
-	TBlock board[BOARD_SIZE];
-	memcpy(board, _board, BOARD_SIZE*sizeof(TBlock));
-
-	// we move from end point to every point
-	fillDistance(board, end);
-
-	// we scan the 4 blocks near the start point, find the block with minimum distance from end point (if there is no such point, start and end are separated
-	Pos1D cPos, mPos = -1;
-	for (TMove i = 1; i <= 4; i++){
-		cPos = MOVE(start, i);
-		TBlock block = GET_BLOCK(board, cPos);
-		if (GET_BLOCK(_board, end) == BLOCK_EMPTY)
-		{
-			if (block >= SPECIAL_BLOCK){
-				if (mPos == -1){
-					mPos = cPos;
-					path.push_back(i);
-				}
-				else if (block < GET_BLOCK(board, cPos)){
-					path[0] = i;
-					mPos = cPos;
-				}
-			}
-		}
-		else
-			if (block > SPECIAL_BLOCK){
-				if (mPos == -1){
-					mPos = cPos;
-					path.push_back(i);
-				}
-				else if (block < GET_BLOCK(board, cPos)){
-					path[0] = i;
-					mPos = cPos;
-				}
-			}
-	}
-
-	if (mPos == -1){
-		// cant reach end pos from start pos
-		return path;
-	}
-
-	assert(path.size() == 1);
-
-	// current point = mPoint (minPoint)
-	cPos = mPos;
-	while (true){
-		TBlock block = GET_BLOCK(board, cPos);
-		if (block == SPECIAL_BLOCK){
-			// we reach the end point
-			assert(cPos == end);
-			break;
-		}
-		for (TMove i = 1; i <= 4; i++){
-			if (GET_BLOCK(board, (mPos = MOVE(cPos, i))) == block - 1){
-				path.push_back(i);
-				cPos = mPos;
-				break;
-			}
-		}
-	}
-
-#ifdef _DEBUG
-	memcpy(board, _board, BOARD_SIZE*sizeof(TBlock));
-	Pos1D p = start;
-	for (unsigned int i = 0; i < path.size(); i++){
-		bool bOk = move(board, p, path[i]); assert(bOk);
-		p = MOVE(p, path[i]);
-	}
-	assert(p == end);
-#endif
-	return path;
-}
-
 // this method modify board, fill each connected empty block with pos a value equal to: SPECIAL_BLOCK + distance;
 // distance = shortest path from pos to the block. path.size >= 1
 // average time: 0.02ms for release
@@ -359,7 +278,7 @@ void setupImage()
 }
 #endif // OPENCV
 
-void fillChamberWithBattleFields(const TBlock gatesBoard[], const TBlock board[], vector<Pos1D> enemies, TBlock fillBoard[])
+void fillChamberWithBattleFields(const TBlock gatesBoard[], const TBlock board[], CFastPos1DDeque &enemies, TBlock fillBoard[])
 {
 	memcpy(fillBoard, board, sizeof(TBlock)*BOARD_SIZE);
 	while (enemies.size() > 0){

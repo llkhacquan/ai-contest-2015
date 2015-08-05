@@ -6,6 +6,10 @@
 #ifndef STATIC_FUNCTIONS
 #define STATIC_FUNCTIONS
 
+inline TBlock iPow2(const int &i){
+	return 1i64 < i;
+}
+
 inline void setBit(TBlock &number, int iBit)
 {
 	number |= 1i64 << iBit;
@@ -92,8 +96,6 @@ void findLongestPath(TBlock board[], Pos1D& pos, vector<TMove> &c, vector<TMove>
 
 bool move(TBlock _board[], const Pos1D &currentPos, const TMove direction, const bool backMode = false);
 
-vector<TMove> &findShortestPath(const TBlock _board[], const Pos1D& start, const Pos1D& end);
-
 int fillDistance(TBlock _board[121], const Pos1D &pos);
 
 bool isIsolated(const TBlock _boardData[], const Pos1D &pos1, const Pos1D &pos2);
@@ -112,7 +114,7 @@ cv::Mat toImage(TBlock board[], bool special = false);
 
 void setupImage();
 #endif // OPENCV
-void fillChamberWithBattleFields(const TBlock gatesBoard[], const TBlock board[], vector<Pos1D> enemies, TBlock oBoard[]);
+void fillChamberWithBattleFields(const TBlock gatesBoard[], const TBlock board[], CFastPos1DDeque &enemies, TBlock oBoard[]);
 int lengthWhenTryToReachBattleFields(const TBlock board[], const TBlock dBoard[], const TBlock filledBoard[], const Pos1D& _p);
 
 #endif // STATIC_FUNCTIONS

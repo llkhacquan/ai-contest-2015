@@ -57,7 +57,8 @@ void AI_Update()
 
 void setupBoard(TBlock *board, const vector<Pos1D> *positions, Pos1D &p1, Pos1D &p2){
 	if (positions == NULL){
-		createNewBoard(board, rand() % 20 + 5);
+		// createNewBoard(board, rand() % 20 + 5);
+		createNewBoard(board, rand() % 20 + 25);
 		board[0] = board[BOARD_SIZE - 1] = BLOCK_OBSTACLE;
 		while (true) {
 			int i = rand() % 121;
@@ -113,14 +114,20 @@ void testFindPath(TBlock *board, const Pos1D&p = 0)
 {
 	Pos1D pos = p;
 	int c = 0;
-	int upper = 0, lower = 0;
+	int upper = 0, lower = 0, exact = 0;
 	bool bOk;
-	printBoard(board, false);
+
 #ifdef OPENCV
 	imshow("original board", toImage(board));
+	waitKey(1);
 #endif // OPENCV
-	upper = CHeuristicBase::getUpperLengthOfTheLongestPath(board, pos);
+	upper = CBiconnectedComponents::getEstimatedLength(board, pos, -1, 0, true);
+	if (upper > 40)
+		return;
 	cout << "Upper Estimated length : " << upper << endl;
+
+	exact = CHeuristicBase::getTheLongestPath(board, pos, BOARD_SIZE).size();
+	cout << "Exact length		: " << exact << endl;
 
 	lower = CHeuristicBase::getLowerLengthOfTheLongestPath(board, pos);
 	cout << "Lower Estimated length : " << lower << endl;
@@ -131,7 +138,7 @@ void testFindPath(TBlock *board, const Pos1D&p = 0)
 			if (getAvailableMoves(board, pos).size() == 0)
 				break;
 			CMyTimer::getInstance()->reset();
-			TMove i = CHeuristicBase::getFirstMoveOfTheLongestPath(board, pos, 1);
+			TMove i = CHeuristicBase::getFirstMoveOfTheLongestPath(board, pos, 10);
 			iCount++;
 			bOk = move(board, pos, i); assert(bOk);
 			pos = MOVE(pos, i);
@@ -142,8 +149,7 @@ void testFindPath(TBlock *board, const Pos1D&p = 0)
 #endif // OPENCV
 	}
 	cout << "Traveled length : " << iCount << endl << endl;
-	//if (iCount > upper || iCount < lower)
-		system("pause");
+	system("pause");
 }
 
 void testConnectedComponents(TBlock *board, Pos1D p = 0)

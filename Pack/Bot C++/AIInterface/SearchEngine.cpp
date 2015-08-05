@@ -12,6 +12,7 @@ CSearchEngine::CSearchEngine(){}
 
 CSearchEngine::~CSearchEngine(){}
 
+
 int CSearchEngine::alphaBeta(TBlock board[], const Pos1D&_p1, const Pos1D&_p2, const TPlayer next, vector<TMove> &history,
 	int depth, int a, int b)
 {

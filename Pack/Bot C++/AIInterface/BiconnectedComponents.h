@@ -23,7 +23,7 @@ public:
 	int iCount;
 	CFastPos1DDeque myStack;
 
-	static int getEstimatedLength(TBlock const board[], const Pos1D &playePos, const Pos1D &endPos, const int depth = 0);
+	static int getEstimatedLength(TBlock const board[], const Pos1D &playePos, const Pos1D &endPos, const int depth = 0, bool printInfo = false);
 	static void biconnectedComponents(TBlock const board[], CBiconnectedComponentsOutput *output, const Pos1D &playerPos, const Pos1D &endPos = -1, TBlock *oBoard = NULL);
 	void dfsVisit(const Pos1D & u);
 	void createNewArea(const Pos1D &v1, const Pos1D &v2);

@@ -1,3 +1,5 @@
+#pragma inline_depth(20)
+
 #include "HeuristicBase.h"
 #include "BiconnectedComponents.h"
 #include "MyAI.h"
@@ -71,63 +73,65 @@ void CHeuristicBase::exploreToPathLongestPath(TBlock board[], Pos1D &pos, vector
 	assert(depth >= 0);
 	auto availMoves = getAvailableMoves(board, pos);
 	bool bOk;
-	if (availMoves.size() == 0)
-	{
-		if (cPath.size() > oldPath.size() + oldL){
-			oldL = 0;
-			oldPath = vector<TMove>(cPath);
-		}
-		else if (cPath.size() == oldPath.size() + oldL && oldL > 0){
-			oldL = 0;
-			oldPath = vector<TMove>(cPath);
-		}
-	}
-	else if (depth == 0) {
-		int l = CHeuristicBase::getUpperLengthOfTheLongestPath(board, pos);
+	if (availMoves.size() == 0 || depth == 0){
+		int l;
+		if (depth == 0)
+			l = CHeuristicBase::getUpperLengthOfTheLongestPath(board, pos);
+		else l = 0;
 		if (cPath.size() + l > oldPath.size() + oldL){
 			oldL = l;
 			oldPath = vector<TMove>(cPath);
 		}
-		else if ((cPath.size() + l == oldPath.size() + oldL) && (cPath.size() > oldPath.size())){
+		else if (cPath.size() + l == oldPath.size() + oldL && oldL > l){
 			oldL = l;
 			oldPath = vector<TMove>(cPath);
 		}
 	}
-	else
-		for (unsigned int i = 0; i < availMoves.size(); i++){
-			bOk = move(board, pos, availMoves[i]); assert(bOk);
-			pos = MOVE(pos, availMoves[i]);
-			cPath.push_back(availMoves[i]);
+	else {
+		for (unsigned int iMove = 0; iMove < availMoves.size(); iMove++){
+			TMove m = availMoves[iMove];
+			cPath.push_back(m);
+			bOk = move(board, pos, m, false); assert(bOk);
+			pos = MOVE(pos, m);
 
 			exploreToPathLongestPath(board, pos, cPath, oldPath, oldL, depth - 1);
 
-			TMove back = getOpositeDirection(availMoves[i]);
-			bOk = move(board, pos, back, true); assert(bOk);
-			pos = MOVE(pos, back);
+			bOk = move(board, pos, getOpositeDirection(m), true); assert(bOk);
+			pos = MOVE(pos, getOpositeDirection(m));
 			cPath.pop_back();
 		}
+	}
 }
 
 TMove CHeuristicBase::getFirstMoveOfTheLongestPath(const TBlock boardData[], const Pos1D &pos, const int nDepth)
 {
 	assert(nDepth > 0);
-	TBlock board[BOARD_SIZE];
-	memcpy(board, boardData, BOARD_SIZE*sizeof(TBlock));
-	vector<TMove> c, l;
-	c.reserve(nDepth);
-	l.reserve(nDepth);
-	int length = 0;
 	auto t = getAvailableMoves(boardData, pos);
-	if (t.size() == 1)
-		return t[0];
 
 	if (t.size() == 0)
 		return 0;
+	else  if (t.size() == 1)
+		return t[0];
+	return getTheLongestPath(boardData, pos, nDepth)[0];
+}
+
+vector<TMove> CHeuristicBase::getTheLongestPath(const TBlock _board[], const Pos1D &pos, const int nDepth)
+{
+	TBlock board[BOARD_SIZE];
+	memcpy(board, _board, BOARD_SIZE*sizeof(TBlock));
+	vector<TMove> c, l;
+	c.reserve(BOARD_SIZE);
+	l.reserve(BOARD_SIZE);
+	int length = 0;
+	auto t = getAvailableMoves(_board, pos);
+
+	if (t.size() == 0)
+		return l;
 
 	Pos1D p = pos;
 	exploreToPathLongestPath(board, p, c, l, length, nDepth);
 	assert(l.size() > 0);
-	return l[0];
+	return l;
 }
 
 int CHeuristicBase::evaluateBoard(const TBlock _board[], const Pos1D &_p1, const Pos1D &_p2, const TPlayer next, int &point) {
@@ -338,47 +342,51 @@ int CHeuristicBase::pureTreeOfChamber(TBlock board[], const Pos1D &_p1, const Po
 	int result = 0;
 	int n1 = 0, n2 = 0;
 
-	static TBlock board1[BOARD_SIZE], board2[BOARD_SIZE];
-	memcpy(board1, board, BOARD_SIZE*sizeof(TBlock));
-	memcpy(board2, board, BOARD_SIZE*sizeof(TBlock));
-	vector<Pos1D> enemyOfP1, enemyOfP2;
-	enemyOfP1.reserve(BOARD_SIZE);
-	enemyOfP2.reserve(BOARD_SIZE);
+	CFastPos1DDeque area2, area1;
+	TBlock board1[BOARD_SIZE], board2[BOARD_SIZE];
+	{
+		TBlock *b;
+		memcpy(board1, board, BOARD_SIZE*sizeof(TBlock));
+		memcpy(board2, board, BOARD_SIZE*sizeof(TBlock));
+		bool visited[BOARD_SIZE] = { false };
+		CFastPos1DDeque *q;
+		area1.push_back(_p1); area2.push_back(_p2);
+		visited[_p1] = visited[_p2] = true;
+		TPlayer currentPlayer = next;
 
-	static TBlock dBoard1[BOARD_SIZE], dBoard2[BOARD_SIZE];
-	memcpy(dBoard1, board, BOARD_SIZE*sizeof(TBlock));
-	memcpy(dBoard2, board, BOARD_SIZE*sizeof(TBlock));
-	fillDistance(dBoard1, _p1);
-	fillDistance(dBoard2, _p2);
-	for (int i = 0; i < BOARD_SIZE; i++){
-		if (dBoard1[i] > SPECIAL_BLOCK && dBoard2[i] > SPECIAL_BLOCK){
-			if (dBoard1[i] > dBoard2[i]) {
-				board1[i] = BLOCK_ENEMY_AREA;
-				enemyOfP1.push_back(i);
+		while (!area1.empty() && !area2.empty()){
+			if (currentPlayer == PLAYER_1){
+				q = &area1;
+				b = board2;
+				currentPlayer = PLAYER_2;
 			}
-			else if (dBoard1[i] < dBoard2[i]) {
-				board2[i] = BLOCK_ENEMY_AREA;
-				enemyOfP2.push_back(i);
+			else{
+				q = &area2;
+				b = board1;
+				currentPlayer = PLAYER_1;
 			}
-			else if (next == PLAYER_1) {
-				board2[i] = BLOCK_ENEMY_AREA;
-				enemyOfP2.push_back(i);
-			}
-			else {
-				board1[i] = BLOCK_ENEMY_AREA;
-				enemyOfP1.push_back(i);
+			if (!q->empty()){
+				Pos1D u = q->pop_front();
+				for (int m = 1; m <= 4; m++){
+					Pos1D v = MOVE(u, m);
+					if (GET_BLOCK(board, v) == BLOCK_EMPTY && !visited[v]){
+						visited[v] = true;
+						q->push_back(v);
+						b[v] = BLOCK_ENEMY_AREA;
+					}
+				}
 			}
 		}
 	}
-	board1[_p2] = BLOCK_ENEMY_AREA; enemyOfP1.push_back(_p2);
-	board2[_p1] = BLOCK_ENEMY_AREA; enemyOfP2.push_back(_p1);
+	board1[_p2] = BLOCK_ENEMY_AREA; area2.push_back(_p2);
+	board2[_p1] = BLOCK_ENEMY_AREA; area1.push_back(_p1);
 
 	static TBlock filledBoard1[BOARD_SIZE];
-	fillChamberWithBattleFields(gatesBoard, board1, enemyOfP1, filledBoard1);
+	fillChamberWithBattleFields(gatesBoard, board1, area2, filledBoard1);
 	int k1 = CBiconnectedComponents::getEstimatedLength(filledBoard1, _p1, -1);
 
 	static TBlock filledBoard2[BOARD_SIZE];
-	fillChamberWithBattleFields(gatesBoard, board2, enemyOfP2, filledBoard2);
+	fillChamberWithBattleFields(gatesBoard, board2, area1, filledBoard2);
 	int k2 = CBiconnectedComponents::getEstimatedLength(filledBoard2, _p2, -1);
 
 	int l1 = -1, l2 = -1;
@@ -571,3 +579,4 @@ int CHeuristicBase::getUpperLengthOfTheLongestPath(TBlock const board[], const P
 {
 	return CBiconnectedComponents::getEstimatedLength(board, playerPos, depth);
 }
+
