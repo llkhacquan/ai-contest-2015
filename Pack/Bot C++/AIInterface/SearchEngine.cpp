@@ -20,8 +20,8 @@ int CSearchEngine::alphaBeta(TBlock board[], const Pos1D&_p1, const Pos1D&_p2, c
 	memcpy(backup, board, BOARD_SIZE*sizeof(TBlock));
 	vector<TMove> _history(history);
 #endif // _DEBUG
-	assert((getBlock(board, _p1)) == BLOCK_PLAYER_1);
-	assert((getBlock(board, _p2)) == BLOCK_PLAYER_2);
+	assert((GET_BLOCK(board, _p1)) == BLOCK_PLAYER_1);
+	assert((GET_BLOCK(board, _p2)) == BLOCK_PLAYER_2);
 	assert(next == PLAYER_1 || next == PLAYER_2);
 	static CMyAI* pAI = CMyAI::getInstance();
 	static CMyTimer *timer = CMyTimer::getInstance();
@@ -103,8 +103,8 @@ int CSearchEngine::alphaBetaTT(TBlock board[], const Pos1D&_p1, const Pos1D&_p2,
 	memcpy(backup, board, BOARD_SIZE*sizeof(TBlock));
 	vector<TMove> _history(history);
 #endif // _DEBUG
-	assert((getBlock(board, _p1)) == BLOCK_PLAYER_1);
-	assert((getBlock(board, _p2)) == BLOCK_PLAYER_2);
+	assert((GET_BLOCK(board, _p1)) == BLOCK_PLAYER_1);
+	assert((GET_BLOCK(board, _p2)) == BLOCK_PLAYER_2);
 	assert(next == PLAYER_1 || next == PLAYER_2);
 	static CMyTimer *timer = CMyTimer::getInstance();
 	static CMyAI* pAI = CMyAI::getInstance();
@@ -324,8 +324,12 @@ pair<TMove, int> CSearchEngine::optimalMove(TBlock board[], const Pos1D&_p1, con
 	static CMyAI *pAI = CMyAI::getInstance();
 	pair<TMove, int> result;
 	pair<TMove, int> bestMove;
-	int d = 1;
-	for (d = max(MIN_DEPTH, pAI->lastReachedDepth - 3); d <= MAX_DEPTH; d++){
+	int d;
+	if (pAI->inEnemyTurn)
+		d = pAI->lastReachedDepth - 1;
+	else
+		d = max(MIN_DEPTH, pAI->lastReachedDepth - 2);
+	for (; d <= MAX_DEPTH; d++){
 		result = getOptimalMoveByAB(board, _p1, _p2, next, history, d);
 		if (result.second == TIMEOUT_POINTS)
 			break;

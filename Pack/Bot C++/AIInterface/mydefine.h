@@ -33,7 +33,7 @@
 #if USING_MEMORY
 #define MIN_DEPTH	 7
 #else
-#define MIN_DEPTH	 10
+#define MIN_DEPTH	 9
 #endif
 #if DISABLE_TIMEOUT
 #define MAX_DEPTH	 11
@@ -45,9 +45,9 @@
 #define DANGER_TIME		2700
 #else
 #if USING_MEMORY
-#define MIN_DEPTH	 14
+#define MIN_DEPTH	 13
 #else
-#define MIN_DEPTH	 14
+#define MIN_DEPTH	 17
 #endif
 #if DISABLE_TIMEOUT
 #define MAX_DEPTH	 25
@@ -74,6 +74,7 @@ using namespace std;
 
 extern Pos1D moveTable[BOARD_SIZE][4];
 #define MOVE(x, y) moveTable[x][(y)-1]
+#define GET_BLOCK(x, y) (((y)>=0 && (y) < BOARD_SIZE)?x[y]:BLOCK_OUT_OF_BOARD)
 
 /// GRAPHIC
 #ifdef OPENCV

@@ -18,16 +18,34 @@ int CHeuristicBase::rateBoardTT(TBlock _board[], const Pos1D &_p1, const Pos1D &
 	static CTranspositionTable *tt = CTranspositionTable::getInstance();
 	CGameState state(history);
 	CGameState* ttEntry = tt->get(state);
-	if (ttEntry && ttEntry->lowerbound != -MY_INFINITY){
-		return ttEntry->lowerbound;
+	if (rateBoard != &CHeuristicBase::voronoiRateBoard)
+	{
+		if (ttEntry && ttEntry->lowerbound != -MY_INFINITY){
+			return ttEntry->lowerbound;
+		}
+		else {
+			int result = rateBoard(_board, _p1, _p2, next);
+			if (!ttEntry)
+				ttEntry = tt->put(state);
+			ttEntry->lowerbound = result;
+			return result;
+		}
 	}
 	else {
-		int result = rateBoard(_board, _p1, _p2, next);
-		if (!ttEntry)
-			ttEntry = tt->put(state);
-		ttEntry->lowerbound = result;
-		return result;
+		assert(rateBoard == &CHeuristicBase::voronoiRateBoard);
+		if (ttEntry && ttEntry->upperBound != MY_INFINITY){
+			return ttEntry->upperBound;
+		}
+		else {
+			int result = rateBoard(_board, _p1, _p2, next);
+			if (!ttEntry)
+				ttEntry = tt->put(state);
+			ttEntry->upperBound = result;
+			return result;
+		}
 	}
+
+
 }
 
 int CHeuristicBase::quickRateBoardTT(TBlock _board[], const Pos1D &_p1, const Pos1D &_p2, const TPlayer next, const vector<TMove> &history)
@@ -49,7 +67,7 @@ int CHeuristicBase::quickRateBoardTT(TBlock _board[], const Pos1D &_p1, const Po
 
 void CHeuristicBase::exploreToPathLongestPath(TBlock board[], Pos1D &pos, vector<TMove> &cPath, vector<TMove> &oldPath, int &oldL, int depth)
 {
-	assert(getBlock(board, pos) == BLOCK_PLAYER_1 || getBlock(board, pos) == BLOCK_PLAYER_2);
+	assert(GET_BLOCK(board, pos) == BLOCK_PLAYER_1 || GET_BLOCK(board, pos) == BLOCK_PLAYER_2);
 	assert(depth >= 0);
 	auto availMoves = getAvailableMoves(board, pos);
 	bool bOk;
@@ -113,31 +131,31 @@ TMove CHeuristicBase::getFirstMoveOfTheLongestPath(const TBlock boardData[], con
 }
 
 int CHeuristicBase::evaluateBoard(const TBlock _board[], const Pos1D &_p1, const Pos1D &_p2, const TPlayer next, int &point) {
-	assert(getBlock(_board, _p1) == BLOCK_PLAYER_1);
-	assert(getBlock(_board, _p2) == BLOCK_PLAYER_2);
+	assert(GET_BLOCK(_board, _p1) == BLOCK_PLAYER_1);
+	assert(GET_BLOCK(_board, _p2) == BLOCK_PLAYER_2);
 	int length1, length2;
 	if (isIsolated(_board, _p1, _p2)){
 		length1 = CHeuristicBase::getUpperLengthOfTheLongestPath(_board, _p1);
 		length2 = CHeuristicBase::getUpperLengthOfTheLongestPath(_board, _p2);
-		if (abs(length2-length1)<8)
+		if (abs(length2 - length1) < 6)
 		{
 			length1 = CHeuristicBase::getLowerLengthOfTheLongestPath(_board, _p1);
 			length2 = CHeuristicBase::getLowerLengthOfTheLongestPath(_board, _p2);
 		}
 		if (length1 > length2) {
-			point = (length1 - length2)*POINTS / 2 / max(length1, length2);
+			point = (length1 - length2);
 			return PLAYER_1;
 		}
 		else if (length1 < length2) {
-			point = (length2 - length1)*POINTS / 2 / max(length1, length2);
+			point = (length2 - length1);
 			return PLAYER_2;
 		}
 		else if (next == PLAYER_1) { // player 1 lose
-			point = 1 * POINTS / 2 / (max(length1, length2) + 2);
+			point = 1;
 			return PLAYER_2;
 		}
 		else { // player 1 win
-			point = 1 * POINTS / 2 / (max(length1, length2) + 2);
+			point = 1;
 			return PLAYER_1;
 		}
 	}
@@ -153,35 +171,41 @@ int CHeuristicBase::simpleRateBoard(TBlock board[], const Pos1D &_p1, const Pos1
 
 	// not a leaf node
 	assert(next == PLAYER_1 || next == PLAYER_2);
-	assert(getBlock(board, _p1) == BLOCK_PLAYER_1 && getBlock(board, _p2) == BLOCK_PLAYER_2);
+	assert(GET_BLOCK(board, _p1) == BLOCK_PLAYER_1 && GET_BLOCK(board, _p2) == BLOCK_PLAYER_2);
 	int result = 0;
 	int n1 = 0, n2 = 0;
 
-	static TBlock dBoard1[BOARD_SIZE], dBoard2[BOARD_SIZE];
-	static TBlock board1[BOARD_SIZE], board2[BOARD_SIZE];
-
-	memcpy(dBoard1, board, BOARD_SIZE*sizeof(TBlock));
-	memcpy(dBoard2, board, BOARD_SIZE*sizeof(TBlock));
-	fillDistance(dBoard1, _p1);
-	fillDistance(dBoard2, _p2);
-
+	TBlock board1[BOARD_SIZE], board2[BOARD_SIZE], *b;
 	memcpy(board1, board, BOARD_SIZE*sizeof(TBlock));
 	memcpy(board2, board, BOARD_SIZE*sizeof(TBlock));
 
-	for (int i = 0; i < BOARD_SIZE; i++){
-		if (getBit(dBoard1[i], SPECIAL_BIT) && getBit(dBoard2[i], SPECIAL_BIT)){
-			if (dBoard1[i] > dBoard2[i])
-			{
-				board1[i] = BLOCK_ENEMY_AREA;
+	bool visited[BOARD_SIZE] = { false };
+	CFastPos1DDeque q1, q2, *q;
+	q1.push_back(_p1); q2.push_back(_p2);
+	visited[_p1] = visited[_p2] = true;
+	TPlayer currentPlayer = next;
+
+	while (!q1.empty() && !q2.empty()){
+		if (currentPlayer == PLAYER_1){
+			q = &q1;
+			b = board2;
+			currentPlayer = PLAYER_2;
+		}
+		else{
+			q = &q2;
+			b = board1;
+			currentPlayer = PLAYER_1;
+		}
+		if (!q->empty()){
+			Pos1D u = q->pop_front();
+			for (int m = 1; m <= 4; m++){
+				Pos1D v = MOVE(u, m);
+				if (GET_BLOCK(board, v) == BLOCK_EMPTY && !visited[v]){
+					visited[v] = true;
+					q->push_back(v);
+					b[v] = BLOCK_ENEMY_AREA;
+				}
 			}
-			else if (dBoard1[i] < dBoard2[i]){
-				board2[i] = BLOCK_ENEMY_AREA;
-			}
-			else if (next == PLAYER_1){
-				board2[i] = BLOCK_ENEMY_AREA;
-			}
-			else
-				board1[i] = BLOCK_ENEMY_AREA;
 		}
 	}
 
@@ -197,7 +221,7 @@ int CHeuristicBase::simpleRateBoard(TBlock board[], const Pos1D &_p1, const Pos1
 			return POINTS / 2 + 1;
 	}
 	DEBUG(cout << "n1/n2 = " << n1 << "/" << n2 << endl);
-	result = n1 *POINTS / (n1 + n2) - POINTS / 2;
+	result = n1 - n2;
 #ifdef _DEBUG
 	assert(memcmp(board, backup, BOARD_SIZE*sizeof(TBlock)) == 0);
 #endif // _DEBUG
@@ -214,10 +238,10 @@ int CHeuristicBase::voronoiRateBoard(TBlock board[], const Pos1D &_p1, const Pos
 	static CTranspositionTable *table = CTranspositionTable::getInstance();
 	// not a leaf node
 	assert(next == PLAYER_1 || next == PLAYER_2);
-	assert(getBlock(board, _p1) == BLOCK_PLAYER_1 && getBlock(board, _p2) == BLOCK_PLAYER_2);
+	assert(GET_BLOCK(board, _p1) == BLOCK_PLAYER_1 && GET_BLOCK(board, _p2) == BLOCK_PLAYER_2);
 
 	int result = 0;
-	int n1 = 0, n2 = 0;
+	int n1_[2], n2_[2];
 
 	static TBlock dBoard1[BOARD_SIZE], dBoard2[BOARD_SIZE];
 	memcpy(dBoard1, board, BOARD_SIZE*sizeof(TBlock));
@@ -233,31 +257,61 @@ int CHeuristicBase::voronoiRateBoard(TBlock board[], const Pos1D &_p1, const Pos
 	while (!q1.empty() && !q2.empty()){
 		if (currentPlayer == PLAYER_1){
 			q = &q1;
-			n = &n1;
+			n = &n1_[0];
 			currentPlayer = PLAYER_2;
 		}
 		else{
 			q = &q2;
-			n = &n2;
+			n = &n2_[0];
 			currentPlayer = PLAYER_1;
 		}
 		if (!q->empty()){
-			Pos1D u(q->pop_front());
+			Pos1D u = q->pop_front();
 
 			for (int m = 1; m <= 4; m++){
 				Pos1D v = MOVE(u, m);
-				if (getBlock(board, v) == BLOCK_EMPTY && !visited[v]){
+				if (GET_BLOCK(board, v) == BLOCK_EMPTY && !visited[v]){
 					visited[v] = true;
 					q->push_back(v);
-					*n = *n + 1;
+					if (v % 2 == 0)
+						*n = *n + 1;
+					else
+						*(n + 1) = *(n + 1) + 1;
 				}
 			}
 		}
 	}
 
-	DEBUG(cout << "n1/n2 = " << n1 << "/" << n2 << endl);
+	DEBUG(cout << "n1/n2 = " << n1_[0] << "/" << n2_[0] << endl);
+	int n1, n2;
+	if (_p1 % 2 == 0){ // start with odd
+		if (n1_[1] > n1_[0])
+			n1 = n1_[0] * 2 + 1;
+		else
+			n1 = n1_[1] * 2;
+	}
+	else {
+		if (n1_[0] > n1_[1]) // start with even
+			n1 = n1_[1] * 2 + 1;
+		else
+			n1 = n1_[0] * 2;
+	}
+
+	if (_p2 % 2 == 0){ // start with odd
+		if (n2_[1] > n2_[0])
+			n2 = n2_[0] * 2 + 1;
+		else
+			n2 = n2_[1] * 2;
+	}
+	else {
+		if (n2_[0] > n2_[1]) // start with even
+			n2 = n2_[1] * 2 + 1;
+		else
+			n2 = n2_[0] * 2;
+	}
+
 	if (n1 + n2 != 0)
-		result = n1 *POINTS / (n1 + n2) - POINTS / 2;
+		result = n1 - n2;
 	else if (next == PLAYER_2) // player 1 win
 		result = POINTS / 2 + 1;
 	else
@@ -280,7 +334,7 @@ int CHeuristicBase::pureTreeOfChamber(TBlock board[], const Pos1D &_p1, const Po
 
 	// not isolated mode, not a leaf node
 	assert(next == PLAYER_1 || next == PLAYER_2);
-	assert(getBlock(board, _p1) == BLOCK_PLAYER_1 && getBlock(board, _p2) == BLOCK_PLAYER_2);
+	assert(GET_BLOCK(board, _p1) == BLOCK_PLAYER_1 && GET_BLOCK(board, _p2) == BLOCK_PLAYER_2);
 	int result = 0;
 	int n1 = 0, n2 = 0;
 
@@ -331,7 +385,7 @@ int CHeuristicBase::pureTreeOfChamber(TBlock board[], const Pos1D &_p1, const Po
 
 	bool p1isInChamberWithBattleField = false;
 	for (int i = 1; i <= 4; i++){
-		if (getBlock(filledBoard1, MOVE(_p1, i)) == BLOCK_ENEMY_AREA)
+		if (GET_BLOCK(filledBoard1, MOVE(_p1, i)) == BLOCK_ENEMY_AREA)
 		{
 			p1isInChamberWithBattleField = true;
 			l1 = CBiconnectedComponents::getEstimatedLength(board1, _p1, -1);
@@ -341,7 +395,7 @@ int CHeuristicBase::pureTreeOfChamber(TBlock board[], const Pos1D &_p1, const Po
 
 	bool p2isInChamberWithBattleField = false;
 	for (int i = 1; i <= 4; i++){
-		if (getBlock(filledBoard1, MOVE(_p2, i)) == BLOCK_ENEMY_AREA)
+		if (GET_BLOCK(filledBoard1, MOVE(_p2, i)) == BLOCK_ENEMY_AREA)
 		{
 			p2isInChamberWithBattleField = true;
 			l1 = CBiconnectedComponents::getEstimatedLength(board2, _p2, -1);

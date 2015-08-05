@@ -29,7 +29,7 @@ void CArticulationPoints::getArticulationPoints(const TBlock board[], const Pos1
 	// Call the recursive helper function to find articulation points
 	// in DFS tree rooted with vertex 'i'
 	for (int i = 0; i < BOARD_SIZE; i++)
-		if (visited[i] == false && getBlock(board, i) == BLOCK_EMPTY)
+		if (visited[i] == false && GET_BLOCK(board, i) == BLOCK_EMPTY)
 			APUtil(board, oBoard, i, visited, disc, low, parent);
 }
 
@@ -52,7 +52,7 @@ void CArticulationPoints::APUtil(const TBlock board[], TBlock oBoard[], int u, b
 	for (int iMove = 1; iMove <= 4; iMove++)
 	{
 		Pos1D v2d = MOVE(u, iMove);
-		if (getBlock(board, v2d) != BLOCK_EMPTY)
+		if (GET_BLOCK(board, v2d) != BLOCK_EMPTY)
 			continue;
 		int v = v2d;  // v is current adjacent of u
 

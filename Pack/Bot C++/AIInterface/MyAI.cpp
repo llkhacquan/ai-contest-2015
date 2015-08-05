@@ -12,6 +12,16 @@ Pos1D moveTable[BOARD_SIZE][4];
 
 CMyAI::CMyAI()
 {
+	p_ai = AI::GetInstance();
+	CTranspositionTable::getInstance();
+
+	searcher.flag = CSearchEngine::ALPHA_BETA_ITERATIVE_DEEPENING;
+	searcher.heuristic.rateBoard = &CHeuristicBase::simpleRateBoard;
+	searcher.heuristic.quickRateBoard = &CHeuristicBase::voronoiRateBoard;
+
+	history.reserve(BOARD_SIZE);
+	printInformation();
+
 	for (Pos1D p = 0; p < BOARD_SIZE; p++)
 		for (TMove m = 1; m <= 4; m++){
 			int y = p / MAP_SIZE;
@@ -43,16 +53,6 @@ CMyAI::CMyAI()
 				break;
 			}
 		}
-
-	p_ai = AI::GetInstance();
-	CTranspositionTable::getInstance();
-
-	searcher.flag = CSearchEngine::ALPHA_BETA_ITERATIVE_DEEPENING;
-	searcher.heuristic.rateBoard = &CHeuristicBase::simpleRateBoard;
-	searcher.heuristic.quickRateBoard = &CHeuristicBase::voronoiRateBoard;
-
-	history.reserve(BOARD_SIZE);
-	printInformation();
 }
 
 CMyAI::~CMyAI()
@@ -184,12 +184,16 @@ TMove CMyAI::ourNewTurn()
 
 		pos = CC(p_ai->GetMyPosition().x, p_ai->GetMyPosition().y);
 		int n1 = CHeuristicBase::getLowerLengthOfTheLongestPath(this->boardData, pos);
-		cout << "\tEstimated length of our path : " << n1 << endl;
-		cout << "\tEstimated length of enemy path : " << n2 << endl;
+		cout << "\tEstimated length of our path		" << n1 << endl;
+		cout << "\tEstimated length of enemy path 	" << n2 << endl;
 		if (n1 > n2)
-			cout << "\t => It seems that we will fucking WIN  :)\n";
+			cout << "\t => It seems that we will fucking WIN  ";
 		else
-			cout << "\t => It seems that we will fucking LOST :(\n";
+			cout << "\t => It seems that we will fucking LOSE ";
+		if (first == we)
+			cout << "this easy game\n";
+		else
+			cout << "this hard game\n";
 		pos = CC(p_ai->GetMyPosition().x, p_ai->GetMyPosition().y);
 		TMove t = CHeuristicBase::getFirstMoveOfTheLongestPath(boardData, pos, ISOLATED_DEPTH);
 		result = t;
@@ -198,7 +202,8 @@ TMove CMyAI::ourNewTurn()
 	{
 		static bool followingMode = TRY_FOLLOWING && we != first;
 		if (followingMode){
-			if (getBlock(boardData, MOVE(we == PLAYER_1 ? p1 : p2, getOpositeDirection(history.back())) != BLOCK_EMPTY))
+			Pos1D u = MOVE(we == PLAYER_1 ? p1 : p2, getOpositeDirection(history.back())) != BLOCK_EMPTY;
+			if (GET_BLOCK(boardData, u))
 				followingMode = false;
 		}
 

@@ -55,7 +55,7 @@ void AI_Update()
 	}
 }
 
-void setupBoard(TBlock *board, const vector<Pos1D> *positions, Pos1D p1 = 0, Pos1D p2 = 120){
+void setupBoard(TBlock *board, const vector<Pos1D> *positions, Pos1D &p1, Pos1D &p2){
 	if (positions == NULL){
 		createNewBoard(board, rand() % 20 + 5);
 		board[0] = board[BOARD_SIZE - 1] = BLOCK_OBSTACLE;
@@ -99,7 +99,7 @@ void createBoardWithOutIsland(TBlock *board, Pos1D p1 = 0, Pos1D p2 = 120){
 		Pos1D t = Pos1D(obstacles[rand() % obstacles.size()]);
 		Pos1D newT = MOVE(t, rand() % 4 + 1);
 
-		if (getBlock(board, newT) == BLOCK_OBSTACLE){
+		if (GET_BLOCK(board, newT) == BLOCK_OBSTACLE){
 			setBlock(board, newT, BLOCK_EMPTY);
 			obstacles.push_back(newT);
 			i++;
@@ -142,7 +142,7 @@ void testFindPath(TBlock *board, const Pos1D&p = 0)
 #endif // OPENCV
 	}
 	cout << "Traveled length : " << iCount << endl << endl;
-	if (iCount > upper || iCount < lower)
+	//if (iCount > upper || iCount < lower)
 		system("pause");
 }
 
@@ -271,10 +271,10 @@ int main(int argc, char* argv[])
 		setupBoard(board, NULL, p1, p2);
 		// testConnectedComponents(board, p1);
 		// cout << CHeuristicBase::getEstimatedLengthOfTheLongestPath(board, p1);
-		// testFindPath(board, p1);
+		testFindPath(board, p1);
 		// testRateBoard(board, p1, p2);
 		// testEstimateLongestLength(board, p1);
-		testSearchEngine(board, p1, p2);
+		// testSearchEngine(board, p1, p2);
 		// testGetArticulationPoints(board, p1, p2);
 	}
 

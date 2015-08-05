@@ -302,11 +302,6 @@ void CBiconnectedComponentsOutput::mark(int iArea, int iVertex, bool value /*= t
 	}
 }
 
-CBiconnectedComponentsOutput::CBiconnectedComponentsOutput()
-{
-	clear();
-}
-
 void CBiconnectedComponentsOutput::checkConsitency(bool checkAxA) const
 {
 	if (nAreas > MAX_N_AREAS)
@@ -420,4 +415,9 @@ void CBiconnectedComponentsOutput::insertEdgeOf2Areas(const int a1, const int a2
 	assert(aXa[a2][a1][i] == -1);
 	aXa[a1][a2][i] = u;
 	aXa[a2][a1][i] = v;
+}
+
+CBiconnectedComponentsOutput::CBiconnectedComponentsOutput()
+{
+	clear();
 }

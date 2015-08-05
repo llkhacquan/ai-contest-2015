@@ -9,7 +9,7 @@ CBiconnectedComponents::~CBiconnectedComponents(){}
 void CBiconnectedComponents::biconnectedComponents(TBlock const board[], CBiconnectedComponentsOutput *output,
 	const Pos1D &playerPos, const Pos1D &endPos, TBlock *oBoard)
 {
-	assert(getBlock(board, playerPos) == BLOCK_PLAYER_1 || getBlock(board, playerPos) == BLOCK_PLAYER_2);
+	assert(GET_BLOCK(board, playerPos) == BLOCK_PLAYER_1 || GET_BLOCK(board, playerPos) == BLOCK_PLAYER_2);
 	// setting up
 	CBiconnectedComponents bc;
 	output->clear();
@@ -34,7 +34,7 @@ void CBiconnectedComponents::biconnectedComponents(TBlock const board[], CBiconn
 	for (int i = 1; i <= 4; i++){
 		{
 			Pos1D newPos = MOVE(playerPos, i);
-			if (getBlock(bc.oBoard, newPos) == BLOCK_EMPTY && !bc.visited[newPos])
+			if (GET_BLOCK(bc.oBoard, newPos) == BLOCK_EMPTY && !bc.visited[newPos])
 				bc.dfsVisit(newPos);
 		}
 	}
@@ -101,7 +101,7 @@ __forceinline void CBiconnectedComponents::adjection(bool out[], Pos1D const &u)
 	Pos1D pos(u);
 	for (int i = 1; i <= 4; i++){
 		TBlock block;
-		block = getBlock(oBoard, MOVE(pos, i));
+		block = GET_BLOCK(oBoard, MOVE(pos, i));
 		if (block == BLOCK_EMPTY || block >= SPECIAL_BLOCK)
 			out[i - 1] = true;
 		else

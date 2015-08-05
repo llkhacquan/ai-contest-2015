@@ -72,14 +72,6 @@ inline TMove getOpositeDirection(const TMove direction)
 	}
 }
 
-__forceinline  const TBlock getBlock(TBlock const board[], const Pos1D pos)
-{
-	if (pos >= 0 && pos < BOARD_SIZE)
-		return board[pos];
-	else
-		return BLOCK_OUT_OF_BOARD;
-}
-
 __forceinline  bool setBlock(TBlock board[], const Pos1D pos, const TBlock value){
 	if (pos >= 0 && pos < BOARD_SIZE)
 	{
