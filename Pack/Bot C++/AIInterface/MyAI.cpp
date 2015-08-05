@@ -16,7 +16,7 @@ CMyAI::CMyAI()
 	CTranspositionTable::getInstance();
 
 	searcher.flag = CSearchEngine::ALPHA_BETA_ITERATIVE_DEEPENING;
-	searcher.heuristic.rateBoard = &CHeuristicBase::pureTreeOfChamber;
+	searcher.heuristic.rateBoard = &CHeuristicBase::voronoiRateBoard;
 	searcher.heuristic.quickRateBoard = &CHeuristicBase::voronoiRateBoard;
 
 	history.reserve(BOARD_SIZE);

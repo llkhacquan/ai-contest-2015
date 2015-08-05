@@ -110,6 +110,7 @@ void createBoardWithOutIsland(TBlock *board, Pos1D p1 = 0, Pos1D p2 = 120){
 	setBlock(board, p1, BLOCK_PLAYER_1);
 }
 
+int lowwer_extract = 0;
 void testFindPath(TBlock *board, const Pos1D&p = 0)
 {
 	Pos1D pos = p;
@@ -121,7 +122,7 @@ void testFindPath(TBlock *board, const Pos1D&p = 0)
 	imshow("original board", toImage(board));
 	waitKey(1);
 #endif // OPENCV
-	upper = CBiconnectedComponents::getEstimatedLength(board, pos, -1, 0, true);
+	upper = CBiconnectedComponents::getEstimatedLength(board, pos, true);
 	if (upper > 40)
 		return;
 	cout << "Upper Estimated length : " << upper << endl;
@@ -132,40 +133,44 @@ void testFindPath(TBlock *board, const Pos1D&p = 0)
 	lower = CHeuristicBase::getLowerLengthOfTheLongestPath(board, pos);
 	cout << "Lower Estimated length : " << lower << endl;
 	int iCount = 0;
+	if (lower == exact)
+		lowwer_extract++;
 
 	while (c != 27){
-		if (c == ' ' || c == -1){
+		// if (c == ' ' || c == -1)
+		{
 			if (getAvailableMoves(board, pos).size() == 0)
 				break;
 			CMyTimer::getInstance()->reset();
-			TMove i = CHeuristicBase::getFirstMoveOfTheLongestPath(board, pos, 10);
+			TMove i = CHeuristicBase::getFirstMoveOfTheLongestPath(board, pos, 1);
 			iCount++;
 			bOk = move(board, pos, i); assert(bOk);
 			pos = MOVE(pos, i);
 		}
 #ifdef OPENCV
 		imshow("game", toImage(board));
-		c = waitKey(50);
+		c = waitKey(1);
 #endif // OPENCV
 	}
 	cout << "Traveled length : " << iCount << endl << endl;
-	system("pause");
+	// system("pause");
 }
 
 void testConnectedComponents(TBlock *board, Pos1D p = 0)
 {
 #ifdef OPENCV
 	imshow("test", toImage(board));
+	waitKey(1);
 #endif // OPENCV
 	int n;
 	TBlock board2[BOARD_SIZE];
 	cout << endl;
 	CBiconnectedComponentsOutput output;
-	CBiconnectedComponents::biconnectedComponents(board, &output, p, -1, board2);
+	CBiconnectedComponents::biconnectedComponents(board, &output, p, board2);
 	printBoard(board2, true);
 	cout << "n = " << output.nAreas << endl;
 
-	n = CBiconnectedComponents::getEstimatedLength(board, p, -1);
+	n = CBiconnectedComponents::getEstimatedLength(board, p, false);
 	printf("estimated length = %d\n", n);
 #ifdef OPENCV
 	waitKey(100);
@@ -267,7 +272,7 @@ int main(int argc, char* argv[])
 	std::srand(0);
 	TBlock board[BOARD_SIZE];
 	clock_t tStart = clock();
-	for (int i = 0; i < 1000; i++){
+	for (int i = 0; i < 10000; i++){
 		/*setupBoard(board, &p5, Pos2D(1, 9));
 		testConnectedComponents(board, Pos2D(1, 9));
 
@@ -284,7 +289,9 @@ int main(int argc, char* argv[])
 		// testGetArticulationPoints(board, p1, p2);
 	}
 
+	cout << "lowwer_extract " << lowwer_extract << endl;
 	printf("Time taken: %.2fs\n", (double)(clock() - tStart) / CLOCKS_PER_SEC);
+	system("pause");
 	return 0;
 }
 

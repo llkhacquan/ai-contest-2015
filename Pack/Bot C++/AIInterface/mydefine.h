@@ -19,9 +19,9 @@
 #include "..\AI_Template\include\ai\defines.h"
 #include "..\AI_Template\include\ai\AI.h"
 
-#define BOT_ACTIVE	0
+#define BOT_ACTIVE	1
 #define USING_MEMORY 0
-#define SHOW_DEBUG_INFORMATION	1
+#define SHOW_DEBUG_INFORMATION	0
 #define TRY_FOLLOWING	 0
 
 // set DISABLE_TIMEOUT 1 when run You vs P1 Debug
@@ -97,6 +97,7 @@ using namespace cv;
 #define DEBUG(x);	
 #endif
 
+#define MAX_N_AREAS_PER_BLOCK 10
 #define MAX_N_AREAS		62
 static const int SPECIAL_BIT = 62;
 #define SPECIAL_BLOCK (1i64 << SPECIAL_BIT)

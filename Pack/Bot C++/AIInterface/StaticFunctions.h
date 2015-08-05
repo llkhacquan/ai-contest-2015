@@ -7,7 +7,7 @@
 #define STATIC_FUNCTIONS
 
 inline TBlock iPow2(const int &i){
-	return 1i64 < i;
+	return 1i64 << i;
 }
 
 inline void setBit(TBlock &number, int iBit)

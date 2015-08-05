@@ -15,62 +15,33 @@ int CBiconnectedComponentsOutput::estimateLengthOfPath(const CFastPos1DDeque &pa
 	// for the last area)
 	int pathBack = path[path.size() - 1];
 	if (path.size() >= 2) {
-		int delta = -1;
-		int odd = nOddVertices[pathBack];
-		int even = nEvenVertices[pathBack];
-		if (odd == even)
-			delta = odd * 2;
-		else
-		{
-			assert(aXa[pathBack][path[path.size() - 2]][0] >= 0);
-			for (auto i = 0; i < 4; i++){
-				Pos1D connection = aXa[pathBack][path[path.size() - 2]][i];
-				if (connection < 0)
-					continue;
-
-				int delta2 = calculateLengthBetween2NodeIn1Area(connection, -1);
-				if (delta2 > delta)
-					delta = delta2;
-			}
-		}
-		assert(delta >= 0);
-		result += delta;
+		Pos1D connection = aXa[pathBack][path[path.size() - 2]];
+		int delta = calculateLengthBetween2ArticulationPointsIn1Area(connection, -1, pathBack);
+		result += delta - 1;
 	}
 
 	// for the other areas (path[1] -> path[size - 2]
 	if (path.size() >= 3)
 		for (int iArea = 1; iArea < (int)path.size() - 1; iArea++){
-			int a = -1;
-			for (auto i = 0; i < 4; i++){
-				for (auto j = 0; j < 4; j++){
-					int delta = -1;
-					Pos1D start = aXa[path[iArea]][path[iArea - 1]][i];
-					if (start < 0)
-						break;
-					assert(aXa[path[iArea - 1]][path[iArea]][i] >= 0);
-					Pos1D end = aXa[path[iArea]][path[iArea + 1]][j];;
-					if (end < 0)
-						break;
-					assert(aXa[path[iArea + 1]][path[iArea]][j] >= 0);
-					delta = calculateLengthBetween2NodeIn1Area(start, end);
-					if (a < delta)
-						a = delta;
-				}
-			}
-			assert(a > 0);
-			result += a;
+			Pos1D start = aXa[path[iArea]][path[iArea - 1]];
+			assert(start >= 0 && start < BOARD_SIZE);
+			Pos1D end = aXa[path[iArea]][path[iArea + 1]];;
+			assert(end >= 0 && end < BOARD_SIZE);
+			int delta = calculateLengthBetween2ArticulationPointsIn1Area(start, end, path[iArea]);
+			assert(delta > 0);
+			result += delta - 1;
 		}
 	return result;
 }
 
-int CBiconnectedComponentsOutput::calculateLengthBetween2NodeIn1Area(const Pos1D &u, const Pos1D &v, int depth)const{
+int CBiconnectedComponentsOutput::calculateLengthBetween2ArticulationPointsIn1Area(const Pos1D &u, const Pos1D &v, const int areaCode)const{
 	// make sure u and v are in the same area
 	assert(u >= 0 && u < BOARD_SIZE);
 
 	if (v < 0 || v >= BOARD_SIZE){
 		// end at anywhere
 		int delta = -1;
-		int areaCode = iAreaOfVertices[u];
+		assert(vXa[u][areaCode]);
 		int odd = nOddVertices[areaCode];
 		int even = nEvenVertices[areaCode];
 		if (odd == even)
@@ -95,8 +66,7 @@ int CBiconnectedComponentsOutput::calculateLengthBetween2NodeIn1Area(const Pos1D
 	}
 	else {
 		// start at u, end at v
-		assert(iAreaOfVertices[u] == iAreaOfVertices[v]);
-		int areaCode = iAreaOfVertices[u];
+		assert(vXa[u][areaCode] && vXa[v][areaCode]);
 		int even = nEvenVertices[areaCode];
 		int odd = nOddVertices[areaCode];
 
@@ -127,7 +97,7 @@ int CBiconnectedComponentsOutput::calculateLengthBetween2NodeIn1Area(const Pos1D
 }
 
 void CBiconnectedComponentsOutput::visitNode(CFastPos1DDeque &cPath, int &cLength, CFastPos1DDeque &lPath, int &lLength,
-	bool *visitted, const int cCode, const int &startPos, const int &endPos) const
+	bool *visitted, const int cCode, const int &startPos) const
 {
 	visitted[cCode] = true;
 	cPath.push_back(cCode);
@@ -136,37 +106,37 @@ void CBiconnectedComponentsOutput::visitNode(CFastPos1DDeque &cPath, int &cLengt
 	for (int iCode = 0; iCode < nAreas; iCode++){
 		if (visitted[iCode])
 			continue;
-		if (aXa[cCode][iCode][0] >= 0) // != -1
+		if (aXa[cCode][iCode] >= 0) // != -1
 			adjAreas.push_back(iCode);
 	}
 
 	if (adjAreas.size() == 0){
-		if (endPos < 0 || cPath[cPath.size() - 1] == iAreaOfVertices[endPos])
-		{
-			cLength = estimateLengthOfPath(cPath, startPos);
-			if (cLength > lLength){
-				lLength = cLength;
-				lPath = cPath;
-			}
+		cLength = estimateLengthOfPath(cPath, startPos);
+		if (cLength > lLength){
+			lLength = cLength;
+			lPath = cPath;
 		}
 	}
 	else
 		for (int i = 0; i < (int)adjAreas.size(); i++)
-			visitNode(cPath, cLength, lPath, lLength, visitted, adjAreas[i], startPos, endPos);
+			visitNode(cPath, cLength, lPath, lLength, visitted, adjAreas[i], startPos);
 
 	visitted[cCode] = false;
 	assert(cPath[cPath.size() - 1] == cCode);
 	cPath.pop_back();
 }
 
-int CBiconnectedComponentsOutput::findLengthOfLongestPath(const Pos1D &startPos, const Pos1D &endPos) const
+int CBiconnectedComponentsOutput::findLengthOfLongestPath(const Pos1D &startPos) const
 {
 	CFastPos1DDeque lPath;
 	int lLength = 0;
 	CFastPos1DDeque cPath;
 	int cLength = 0;
 	bool visittedAreas[MAX_N_AREAS] = { false };
-	int startArea = iAreaOfVertices[startPos];
+	assert(nAreasOfVertices[startPos]>0);
+	if (nAreasOfVertices[startPos] == 1)
+		return 0;
+	int startArea = nAreas - 1;
 	visitNode(cPath, cLength, lPath, lLength, visittedAreas, startArea, startPos);
 
 	if (SHOW_DEBUG_INFORMATION)
@@ -178,85 +148,30 @@ int CBiconnectedComponentsOutput::findLengthOfLongestPath(const Pos1D &startPos,
 	return lLength;
 }
 
-void CBiconnectedComponentsOutput::manager(const Pos1D &playerPos, const Pos1D &endPos)
+void CBiconnectedComponentsOutput::manager(const Pos1D &playerPos)
 {
 	{
-		// take care the area contains the playerPos and endPos
 		nAreas++;
-		mark(nAreas - 1, playerPos, true);
-		if (endPos >= 0)
-		{
-			nAreas++;
-			mark(nAreas - 1, endPos, true);
-		}
+		mark(nAreas - 1, playerPos);
 	}
-	// re-build areas so the larger areas will have more and more vertices
-	for (Pos1D v = 0; v < BOARD_SIZE; v++){
-		if (nAreasOfVertices[v] == 0)
-			iAreaOfVertices[v] = -1;
-		else if (nAreasOfVertices[v] == 1)
-		{
-			for (int iArea = 0; iArea < nAreas; iArea++){
-				if (vXa[v][iArea])
-				{
-					iAreaOfVertices[v] = iArea;
-					break;
-				}
-			}
-			continue;
-		}
-		else if (nAreasOfVertices[v] >= 3)
-		{
-			// move the v to a new area
-			for (int iArea = 0; iArea < nAreas; iArea++)
-				mark(iArea, v, false);
-			nAreas++;
-			mark(nAreas - 1, v, true);
-			iAreaOfVertices[v] = nAreas - 1;
-			continue;
-		}
-		else {
-			assert(nAreasOfVertices[v] == 2);
-			int a1 = -1, a2 = -2;
-			for (int iArea = 0; iArea < nAreas; iArea++){
-				if (vXa[v][iArea])
-					if (a1 == -1)
-						a1 = iArea;
-					else
-					{
-						a2 = iArea;
-						break;
-					}
-			}
-			assert(a1 >= 0 && a2>a1);
-			if (nVertices[a1] > nVertices[a2]){
-				mark(a2, v, false);
-				iAreaOfVertices[v] = a1;
-			}
-			else {
-				mark(a1, v, false);
-				iAreaOfVertices[v] = a2;
-			}
-		}
-	}
-	checkConsitency(true);
 }
 
 void CBiconnectedComponentsOutput::clear()
 {
 	nAreas = 0;
 
-	memset(aXa, -1, sizeof(aXa[0][0][0])*MAX_N_AREAS*MAX_N_AREAS * 4);
+	memset(aXa, -1, sizeof(aXa[0][0])*MAX_N_AREAS*MAX_N_AREAS);
 	memset(vXa, 0, sizeof(vXa[0][0])*BOARD_SIZE*MAX_N_AREAS);
 	memset(nVertices, 0, sizeof(nVertices[0])*MAX_N_AREAS);
 	memset(nOddVertices, 0, sizeof(nVertices[0])*MAX_N_AREAS);
 	memset(nEvenVertices, 0, sizeof(nVertices[0])*MAX_N_AREAS);
 	memset(nAreasOfVertices, 0, sizeof(nAreasOfVertices[0]) * BOARD_SIZE);
-	memset(iAreaOfVertices, -1, sizeof(iAreaOfVertices[0])*BOARD_SIZE);
+	memset(iAreaOfVertices, -1, sizeof(iAreaOfVertices[0][0])*BOARD_SIZE * MAX_N_AREAS_PER_BLOCK);
 }
 
 void CBiconnectedComponentsOutput::mark(int iArea, int iVertex, bool value /*= true*/)
 {
+	assert(value == true);
 	assert(iArea >= 0 && iArea < nAreas);
 	assert(iVertex >= 0 && iVertex < BOARD_SIZE);
 
@@ -264,12 +179,15 @@ void CBiconnectedComponentsOutput::mark(int iArea, int iVertex, bool value /*= t
 		return;
 
 	vXa[iVertex][iArea] = value;
+
 	if (value){
 		nVertices[iArea]++;
 		if (iVertex % 2 == 0)
 			nEvenVertices[iArea]++;
 		else
 			nOddVertices[iArea]++;
+		assert(nAreasOfVertices[iVertex] >= 0 && nAreasOfVertices[iVertex] < MAX_N_AREAS_PER_BLOCK);
+		iAreaOfVertices[iVertex][nAreasOfVertices[iVertex]] = iArea;
 		nAreasOfVertices[iVertex]++;
 	}
 	else {
@@ -326,111 +244,49 @@ void CBiconnectedComponentsOutput::checkConsitency(bool checkAxA) const
 		return;
 	// check iAreasOfVertices
 	for (int iVertex = 0; iVertex < BOARD_SIZE; iVertex++){
-		if (nAreasOfVertices[iVertex] == 0)
-			assert(iAreaOfVertices[iVertex] == -1);
-		else
-			assert(vXa[iVertex][iAreaOfVertices[iVertex]]);
+		assert(0 <= nAreasOfVertices[iVertex] && nAreasOfVertices[iVertex] <= MAX_N_AREAS_PER_BLOCK);
+		for (int i = 0; i < MAX_N_AREAS_PER_BLOCK; i++)
+		{
+			if (i < nAreasOfVertices[iVertex])
+			{
+				assert(iAreaOfVertices[iVertex][i] >= 0);
+				assert(vXa[iVertex][iAreaOfVertices[iVertex][i]]);
+			}
+			else {
+				assert(iAreaOfVertices[iVertex][i] < 0);
+			}
+		}
 	}
 
 	// check AxA
 	for (int i = 0; i < MAX_N_AREAS; i++){
 		for (int j = 0; j < MAX_N_AREAS; j++){
-			if (aXa[i][j][0] < 0)
+			assert(aXa[i][j] == aXa[j][i]);
+			if (aXa[i][j] < 0)
 			{
-				assert(aXa[j][i][0] < 0);
 				continue;
 			}
-
-			int k;
-			for (k = 1; k < 4; k++){
-				if (aXa[i][j][k] >= 0){
-					assert(aXa[j][i][k] >= 0);
-					assert(aXa[j][i][k] == aXa[i][j][k] - 1 || aXa[j][i][k] == aXa[i][j][k] + 1
-						|| aXa[j][i][k] == aXa[i][j][k] - 11 || aXa[j][i][k] == aXa[i][j][k] + 11);
-
-				}
-				else
-					break;
-			}
-
-			if (k > 1)
-			{
-				bool ij = true, ji = true;
-				for (int l = 1; l < k; l++){
-					ij = ij && aXa[i][j][l] == aXa[i][j][0];
-					ji = ji && aXa[j][i][l] == aXa[j][i][0];
-				}
-				assert(ij != ji);
-			}
+			Pos1D v = aXa[i][j];
+			assert(vXa[v][i] && vXa[v][j]);
 		}
 	}
 }
 
 void CBiconnectedComponentsOutput::buildAreaXArea(const Pos1D &playerPos)
 {
-	bool foundAreas[MAX_N_AREAS] = { false };
-	bool visited[BOARD_SIZE] = { false };
-
-	CFastPos1DDeque qAreas; // this queue store 1 vertex of each unexplored area
-	qAreas.push_back(playerPos);
-	foundAreas[iAreaOfVertices[playerPos]] = true;
-	while (!qAreas.empty()){
-		Pos1D a = qAreas.pop_front();
-
-		// start explorer from vertex a
-		CFastPos1DDeque queueInAArea;
-		queueInAArea.push_back(a);
-		while (!queueInAArea.empty()){
-			Pos1D v = queueInAArea.pop_front();
-
-			visited[v] = true;
-
-			for (TMove direction = 1; direction <= 4; direction++){
-				// check the adjection block that is not in any area
-				Pos1D u_ = MOVE(v, direction);
-				if (u_ < 0 || u_ >= BOARD_SIZE)
-					continue;
-				Pos1D u = u_;
-				if (nAreasOfVertices[u] == 0)
-					continue;
-				if (visited[u])
-					continue;
-
-				if (iAreaOfVertices[u] == iAreaOfVertices[v]){// same area
-					queueInAArea.push_back(u);
-					visited[u] = true;
+	for (int iVertex = 0; iVertex < BOARD_SIZE; iVertex++){
+		assert(nAreasOfVertices[iVertex] >= 0 && nAreasOfVertices[iVertex] <= MAX_N_AREAS_PER_BLOCK);
+		if (nAreasOfVertices[iVertex] > 1){
+			for (int i = 0; i < nAreasOfVertices[iVertex]; i++){
+				for (int j = 0; j < nAreasOfVertices[iVertex]; j++){
+					if (i == j) continue;
+					aXa[iAreaOfVertices[iVertex][i]][iAreaOfVertices[iVertex][j]] = iVertex;
+					aXa[iAreaOfVertices[iVertex][j]][iAreaOfVertices[iVertex][i]] = iVertex;
 				}
-				else { // maybe found a new area?
-					int code = iAreaOfVertices[u];
-					if (!foundAreas[code]){
-						foundAreas[code] = true;
-						qAreas.push_back(u);
-					}
-					int code1 = iAreaOfVertices[u];
-					int code2 = iAreaOfVertices[v];
 
-					int t = 0;
-					insertEdgeOf2Areas(code1, code2, u, v);
-				}
 			}
 		}
 	}
-}
-
-void CBiconnectedComponentsOutput::insertEdgeOf2Areas(const int a1, const int a2, const int u, const int v)
-{
-	int i = 0;
-	for (i = 0; i < 4; i++){
-		if (aXa[a1][a2][i] == -1)
-			break;
-		if (aXa[a1][a2][i] == u && aXa[a2][a1][i] == v){
-			return;
-		}
-	}
-	assert(i < 4);
-	assert(aXa[a2][a1][i] == -1);
-	aXa[a1][a2][i] = u;
-	aXa[a2][a1][i] = v;
 }
 
 CBiconnectedComponentsOutput::CBiconnectedComponentsOutput()

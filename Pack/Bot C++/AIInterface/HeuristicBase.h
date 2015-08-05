@@ -23,7 +23,7 @@ public:
 	static TMove getFirstMoveOfTheLongestPath(const TBlock _board[], const Pos1D &p, const int nDepth = 8);
 	static vector<TMove> getTheLongestPath(const TBlock _board[], const Pos1D &p, const int nDepth);
 
-	static int getUpperLengthOfTheLongestPath(TBlock const _board[], const Pos1D &playerPos, const int depth = 0);
+	static int getUpperLengthOfTheLongestPath(TBlock const _board[], const Pos1D &playerPos);
 	static int getLowerLengthOfTheLongestPath(TBlock const _board[], const Pos1D &playerPos);
 
 	static void sortMoves(vector<TMove> &moves, TBlock* _board, const Pos1D &_p1, const Pos1D &_p2, const TPlayer next, vector<TMove> &history);

@@ -75,7 +75,7 @@ void CHeuristicBase::exploreToPathLongestPath(TBlock board[], Pos1D &pos, vector
 	bool bOk;
 	if (availMoves.size() == 0 || depth == 0){
 		int l;
-		if (depth == 0)
+		if (availMoves.size() > 0)
 			l = CHeuristicBase::getUpperLengthOfTheLongestPath(board, pos);
 		else l = 0;
 		if (cPath.size() + l > oldPath.size() + oldL){
@@ -216,8 +216,8 @@ int CHeuristicBase::simpleRateBoard(TBlock board[], const Pos1D &_p1, const Pos1
 	board1[_p2] = BLOCK_ENEMY_AREA;
 	board2[_p1] = BLOCK_ENEMY_AREA;
 
-	n1 = CBiconnectedComponents::getEstimatedLength(board1, _p1, -1);
-	n2 = CBiconnectedComponents::getEstimatedLength(board2, _p2, -1);
+	n1 = CBiconnectedComponents::getEstimatedLength(board1, _p1, false);
+	n2 = CBiconnectedComponents::getEstimatedLength(board2, _p2, false);
 	if (n1 + n2 == 0){
 		if (next == PLAYER_1) // player 1 is lost
 			return -POINTS / 2 - 1;
@@ -383,11 +383,11 @@ int CHeuristicBase::pureTreeOfChamber(TBlock board[], const Pos1D &_p1, const Po
 
 	static TBlock filledBoard1[BOARD_SIZE];
 	fillChamberWithBattleFields(gatesBoard, board1, area2, filledBoard1);
-	int k1 = CBiconnectedComponents::getEstimatedLength(filledBoard1, _p1, -1);
+	int k1 = CBiconnectedComponents::getEstimatedLength(filledBoard1, _p1, false);
 
 	static TBlock filledBoard2[BOARD_SIZE];
 	fillChamberWithBattleFields(gatesBoard, board2, area1, filledBoard2);
-	int k2 = CBiconnectedComponents::getEstimatedLength(filledBoard2, _p2, -1);
+	int k2 = CBiconnectedComponents::getEstimatedLength(filledBoard2, _p2, false);
 
 	int l1 = -1, l2 = -1;
 
@@ -396,7 +396,7 @@ int CHeuristicBase::pureTreeOfChamber(TBlock board[], const Pos1D &_p1, const Po
 		if (GET_BLOCK(filledBoard1, MOVE(_p1, i)) == BLOCK_ENEMY_AREA)
 		{
 			p1isInChamberWithBattleField = true;
-			l1 = CBiconnectedComponents::getEstimatedLength(board1, _p1, -1);
+			l1 = CBiconnectedComponents::getEstimatedLength(board1, _p1, false);
 			break;
 		}
 	}
@@ -406,7 +406,7 @@ int CHeuristicBase::pureTreeOfChamber(TBlock board[], const Pos1D &_p1, const Po
 		if (GET_BLOCK(filledBoard1, MOVE(_p2, i)) == BLOCK_ENEMY_AREA)
 		{
 			p2isInChamberWithBattleField = true;
-			l1 = CBiconnectedComponents::getEstimatedLength(board2, _p2, -1);
+			l1 = CBiconnectedComponents::getEstimatedLength(board2, _p2, false);
 			break;
 		}
 	}
@@ -575,8 +575,8 @@ int CHeuristicBase::getLowerLengthOfTheLongestPath(TBlock const board[], const P
 	return path.size();
 }
 
-int CHeuristicBase::getUpperLengthOfTheLongestPath(TBlock const board[], const Pos1D &playerPos, const int depth)
+int CHeuristicBase::getUpperLengthOfTheLongestPath(TBlock const board[], const Pos1D &playerPos)
 {
-	return CBiconnectedComponents::getEstimatedLength(board, playerPos, depth);
+	return CBiconnectedComponents::getEstimatedLength(board, playerPos, false);
 }
 
