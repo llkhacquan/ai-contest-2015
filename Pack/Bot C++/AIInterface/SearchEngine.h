@@ -12,19 +12,19 @@ public:
 	};
 
 	SearchFunction flag;
-	pair<TMove, int> optimalMove(TBlock board[], const Pos1D&_p1, const Pos1D&_p2, const TPlayer next, const vector<TMove> &history);
-	pair<TMove, int> getOptimalMoveByAB(TBlock board[], const Pos1D&_p1, const Pos1D&_p2, const TPlayer next, const vector<TMove> &history,
+	pair<TMove, TPoint> optimalMove(TBlock board[], const TPos&_p1, const TPos&_p2, const TPlayer next, const vector<TMove> &history);
+	pair<TMove, TPoint> getOptimalMoveByAB(TBlock board[], const TPos&_p1, const TPos&_p2, const TPlayer next, const vector<TMove> &history,
 		int maxDepth);
 
 	CHeuristicBase heuristic;
 	clock_t startTime;
-	int alphaBeta(TBlock board[], const Pos1D&_p1, const Pos1D&_p2,
-		const TPlayer next, vector<TMove> &history, int depth, int a, int b);
-	int alphaBetaTT(TBlock board[], const Pos1D&_p1, const Pos1D&_p2,
-		const TPlayer next, vector<TMove> &history, int depth, int a, int b);
-	int mtdfIterativeDeepening(TBlock board[], const Pos1D&_p1, const Pos1D&_p2,
+	TPoint alphaBeta(TBlock board[], const TPos&_p1, const TPos&_p2,
+		const TPlayer next, vector<TMove> &history, int depth, TPoint a, TPoint b);
+	TPoint alphaBetaTT(TBlock board[], const TPos&_p1, const TPos&_p2,
+		const TPlayer next, vector<TMove> &history, int depth, TPoint a, TPoint b);
+	TPoint mtdfIterativeDeepening(TBlock board[], const TPos&_p1, const TPos&_p2,
 		const TPlayer next, vector<TMove> &history, int depth);
-	int mtdF(TBlock board[], const Pos1D&_p1, const Pos1D&_p2, 
-		const TPlayer next, vector<TMove> &history, int f, int depth);
+	TPoint mtdF(TBlock board[], const TPos&_p1, const TPos&_p2,
+		const TPlayer next, vector<TMove> &history, TPoint f, int depth);
 };
 

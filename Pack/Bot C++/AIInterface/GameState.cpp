@@ -63,8 +63,10 @@ unsigned int CGameState::hash() const
 void CGameState::clear()
 {
 	signed char t = -1;
-	upperBound = MY_INFINITY;
-	lowerbound = -MY_INFINITY;
+	upper = MY_INFINITY;
+	lower = -MY_INFINITY;
+	vono = simple = MY_INFINITY;
+	length1 = length2 = -1;
 	depth = -1;
 	historyLength = -1;
 }
@@ -76,7 +78,7 @@ bool CGameState::isSet() const
 
 bool CGameState::operator==(const CGameState &state) const
 {
-	return (historyLength == state.historyLength && history == state.history);
+	return historyLength == state.historyLength && history == state.history;
 }
 
 bool CGameState::operator!=(const CGameState &state) const
@@ -89,7 +91,7 @@ CGameState & CGameState::operator=(const CGameState &state)
 	historyLength = state.historyLength;
 	history = state.history;
 	depth = state.depth;
-	lowerbound = state.lowerbound;
-	upperBound = state.upperBound;
+	lower = state.lower;
+	upper = state.upper;
 	return *this;
 }

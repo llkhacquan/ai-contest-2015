@@ -13,7 +13,7 @@ public:
 	static int nBadHash;
 	static int nObjects;
 	~CTranspositionTable();
-	static const int TABLE_SIZE = 16777991; // a prime number
+	static const int TABLE_SIZE = 22000000; // a prime number
 	CGameState *table;
 
 	static CTranspositionTable* getInstance();

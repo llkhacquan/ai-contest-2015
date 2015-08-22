@@ -38,41 +38,39 @@
 #else
 #define MAX_DEPTH	 17
 #endif // DISABLE_TIMEOUT
-#define ISOLATED_DEPTH 10
-#define DISTANCE 3
 #define DANGER_TIME		2700
 #else
 #if USING_MEMORY
 #define MIN_DEPTH	 13
 #else
-#define MIN_DEPTH	 17
+#define MIN_DEPTH	 14
 #endif
 #if DISABLE_TIMEOUT
-#define MAX_DEPTH	 25
+#define MAX_DEPTH	 22
 #else
-#define MAX_DEPTH	 30
+#define MAX_DEPTH	 25
 #endif // DISABLE_TIMEOUT
-#define ISOLATED_DEPTH 15
-#define DISTANCE 9
-#define DANGER_TIME		2600
+#define DANGER_TIME		2700
 #endif
 
-typedef long long TBlock;
-typedef int TPlayer;
-typedef int Pos1D;
-typedef int TMove;
+typedef signed long long TBlock;
+typedef signed char TPlayer;
+typedef signed char TPos;
+typedef signed char TMove;
+typedef signed short TPoint;
 using namespace std;
 
-#define TIMEOUT_POINTS 2000
-#define POINTS 1000
+#define TIMEOUT_POINTS 2000i16
+#define POINTS 1000i16
 #define CC(x,y)	CONVERT_COORD(x,y)
 #define BOARD_SIZE (MAP_SIZE*MAP_SIZE)
-#define MY_INFINITY	(POINTS + 10)
+#define MY_INFINITY	(POINTS + 10i16)
 #define BLOCK_ENEMY_AREA (-2)
 
-extern Pos1D moveTable[BOARD_SIZE][4];
-#define MOVE(x, y) moveTable[x][(y)-1]
-#define GET_BLOCK(x, y) (((y)>=0 && (y) < BOARD_SIZE)?x[y]:BLOCK_OUT_OF_BOARD)
+extern TPos moveTable[BOARD_SIZE][4];
+#define MOVE(pos, m) moveTable[pos][(m)-1]
+#define GET_BLOCK(_board, _pos) (((_pos)>=0)?_board[_pos]:BLOCK_OUT_OF_BOARD)
+#define SET_BLOCK(_board, _pos, value);{ assert((_pos)>=0 && (_pos) < BOARD_SIZE);_board[_pos] = (value);}
 
 /// GRAPHIC
 #ifdef OPENCV
@@ -97,7 +95,7 @@ using namespace cv;
 #define DEBUG(x);	
 #endif
 
-#define MAX_N_AREAS_PER_BLOCK 10
+#define MAX_N_AREAS_PER_BLOCK 4
 #define MAX_N_AREAS		62
 static const int SPECIAL_BIT = 62;
 #define SPECIAL_BLOCK (1i64 << SPECIAL_BIT)

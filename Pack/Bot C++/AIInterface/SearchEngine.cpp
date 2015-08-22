@@ -13,8 +13,8 @@ CSearchEngine::CSearchEngine(){}
 CSearchEngine::~CSearchEngine(){}
 
 
-int CSearchEngine::alphaBeta(TBlock board[], const Pos1D&_p1, const Pos1D&_p2, const TPlayer next, vector<TMove> &history,
-	int depth, int a, int b)
+TPoint CSearchEngine::alphaBeta(TBlock board[], const TPos&_p1, const TPos&_p2, const TPlayer next, vector<TMove> &history,
+	int depth, TPoint a, TPoint b)
 {
 #ifdef _DEBUG
 	TBlock backup[BOARD_SIZE];
@@ -30,22 +30,22 @@ int CSearchEngine::alphaBeta(TBlock board[], const Pos1D&_p1, const Pos1D&_p2, c
 		return TIMEOUT_POINTS;
 
 	bool bOk;
-	int bestValue = -MY_INFINITY;
+	TPoint bestValue = -MY_INFINITY;
 
-	int point;
-	int winner = CHeuristicBase::evaluateBoard(board, _p1, _p2, next, point);
-	assert(point >= 0);
-	if (winner == PLAYER_1){
-		return (POINTS / 2 + point);
-	}
-	else if (winner == PLAYER_2){
-		return (-POINTS / 2 - point);
+	TPoint point = CHeuristicBase::evaluateBoardTT(board, _p1, _p2, next, history);
+	if (point == TIMEOUT_POINTS)
+		return point;
+	if (point != 0)
+	{
+		assert(point > POINTS / 2 || point < -POINTS / 2);
+		return point;
 	}
 
 	if (depth == 0)
 	{
-		pAI->iRateBoard++;
-		return heuristic.rateBoardTT(board, _p1, _p2, next, history);
+		TPoint t = heuristic.rateBoardTT(board, _p1, _p2, next, history);
+		assert(abs(t) <= MY_INFINITY);
+		return t;
 	}
 
 	vector<TMove> moves;
@@ -53,8 +53,8 @@ int CSearchEngine::alphaBeta(TBlock board[], const Pos1D&_p1, const Pos1D&_p2, c
 
 	CHeuristicBase::sortMoves(moves, board, _p1, _p2, next, history);
 
-	int value;
-	int ab;
+	TPoint value;
+	TPoint ab;
 	if (next == PLAYER_1){
 		value = -MY_INFINITY;
 		for (auto m = moves.begin(); m != moves.end(); m++){
@@ -93,11 +93,12 @@ int CSearchEngine::alphaBeta(TBlock board[], const Pos1D&_p1, const Pos1D&_p2, c
 	assert(_history.size() == history.size());
 	assert(equal(_history.begin(), _history.end(), history.begin()));
 #endif // _DEBUG
+	assert(value >= -MY_INFINITY && value <= MY_INFINITY);
 	return value;
 }
 
-int CSearchEngine::alphaBetaTT(TBlock board[], const Pos1D&_p1, const Pos1D&_p2, const TPlayer next, vector<TMove> &history,
-	int depth, int alpha, int beta)
+TPoint CSearchEngine::alphaBetaTT(TBlock board[], const TPos&_p1, const TPos&_p2, const TPlayer next, vector<TMove> &history,
+	int depth, TPoint alpha, TPoint beta)
 {
 #ifdef _DEBUG
 	TBlock backup[BOARD_SIZE];
@@ -116,41 +117,35 @@ int CSearchEngine::alphaBetaTT(TBlock board[], const Pos1D&_p1, const Pos1D&_p2,
 	state.depth = depth;
 	CGameState* ttEntry = tt->get(state);
 	if (ttEntry && ttEntry->depth >= depth){
-		if (ttEntry->lowerbound >= beta)
+		if (ttEntry->lower >= beta)
 		{
-			return ttEntry->lowerbound;
+			return ttEntry->lower;
 		}
-		if (ttEntry->upperBound <= alpha)
+		if (ttEntry->upper <= alpha)
 		{
-			return ttEntry->upperBound;
+			return ttEntry->upper;
 		}
-		alpha = max(alpha, ttEntry->lowerbound);
-		beta = min(beta, ttEntry->upperBound);
+		alpha = max(alpha, ttEntry->lower);
+		beta = min(beta, ttEntry->upper);
 	}
 	bool bOk;
-	int g;
-	int point;
-	int winner = CHeuristicBase::evaluateBoard(board, _p1, _p2, next, point);
-	assert(point >= 0);
-	if (winner == PLAYER_1){
-		g = (POINTS / 2 + point);
-	}
-	else if (winner == PLAYER_2){
-		g = (-POINTS / 2 - point);
+	TPoint g;
+	TPoint point = CHeuristicBase::evaluateBoardTT(board, _p1, _p2, next, history);
+	if (point != 0)	{
+		g = point;
 	}
 	else if (depth == 0)
 	{
-		pAI->iRateBoard++;
-		g = heuristic.rateBoard(board, _p1, _p2, next);
+		g = heuristic.rateBoardTT(board, _p1, _p2, next, history);
 	}
 	else {
 		vector<TMove> moves;
 		moves = next == PLAYER_1 ? getAvailableMoves(board, _p1) : getAvailableMoves(board, _p2);
 		CHeuristicBase::sortMoves(moves, board, _p1, _p2, next, history);
-		int ab;
+		TPoint ab;
 		if (next == PLAYER_1){
 			g = -MY_INFINITY;
-			int a = alpha;
+			TPoint a = alpha;
 			for (auto m = moves.begin(); m != moves.end(); m++){
 				bOk = move(board, _p1, *m, false); assert(bOk);
 				history.push_back(*m);
@@ -165,7 +160,7 @@ int CSearchEngine::alphaBetaTT(TBlock board[], const Pos1D&_p1, const Pos1D&_p2,
 		}
 		else {
 			g = MY_INFINITY;
-			int b = beta;
+			TPoint b = beta;
 			for (auto m = moves.begin(); m != moves.end(); m++){
 				bOk = move(board, _p2, *m, false); assert(bOk);
 				history.push_back(*m);
@@ -183,13 +178,13 @@ int CSearchEngine::alphaBetaTT(TBlock board[], const Pos1D&_p1, const Pos1D&_p2,
 	if (!ttEntry)
 		ttEntry = tt->put(state);
 	if (g <= alpha)
-		ttEntry->upperBound = g;
+		ttEntry->upper = g;
 	if (g > alpha && g < beta){
-		ttEntry->lowerbound = g;
-		ttEntry->upperBound = g;
+		ttEntry->lower = g;
+		ttEntry->upper = g;
 	}
 	if (g >= beta)
-		ttEntry->lowerbound = g;
+		ttEntry->lower = g;
 	ttEntry->depth = depth;
 
 #ifdef _DEBUG
@@ -201,13 +196,13 @@ int CSearchEngine::alphaBetaTT(TBlock board[], const Pos1D&_p1, const Pos1D&_p2,
 	return g;
 }
 
-int CSearchEngine::mtdF(TBlock board[], const Pos1D&_p1, const Pos1D&_p2, const TPlayer next, vector<TMove> &history,
-	int f, int depth)
+TPoint CSearchEngine::mtdF(TBlock board[], const TPos&_p1, const TPos&_p2, const TPlayer next, vector<TMove> &history,
+	TPoint f, int depth)
 {
-	int beta;
-	int g = f;
-	int upperBound = MY_INFINITY;
-	int lowerBound = -MY_INFINITY;
+	TPoint beta;
+	TPoint g = f;
+	TPoint upperBound = MY_INFINITY;
+	TPoint lowerBound = -MY_INFINITY;
 	do {
 		if (g == lowerBound)
 			beta = g + 1;
@@ -224,7 +219,7 @@ int CSearchEngine::mtdF(TBlock board[], const Pos1D&_p1, const Pos1D&_p2, const 
 	return g;
 }
 
-int CSearchEngine::mtdfIterativeDeepening(TBlock board[], const Pos1D&_p1, const Pos1D&_p2, const TPlayer next, vector<TMove> &history,
+TPoint CSearchEngine::mtdfIterativeDeepening(TBlock board[], const TPos&_p1, const TPos&_p2, const TPlayer next, vector<TMove> &history,
 	int maxDepth)
 {
 	static CTranspositionTable *table = CTranspositionTable::getInstance();
@@ -242,7 +237,7 @@ int CSearchEngine::mtdfIterativeDeepening(TBlock board[], const Pos1D&_p1, const
 	return firstGuest;
 }
 
-pair<TMove, int> CSearchEngine::getOptimalMoveByAB(TBlock board[], const Pos1D&_p1, const Pos1D&_p2, const TPlayer next, const vector<TMove> &_history, int depth)
+pair<TMove, TPoint> CSearchEngine::getOptimalMoveByAB(TBlock board[], const TPos&_p1, const TPos&_p2, const TPlayer next, const vector<TMove> &_history, int depth)
 {
 #ifdef _DEBUG
 	TBlock backup[BOARD_SIZE];
@@ -254,16 +249,16 @@ pair<TMove, int> CSearchEngine::getOptimalMoveByAB(TBlock board[], const Pos1D&_
 	moves = next == PLAYER_1 ? getAvailableMoves(board, _p1) : getAvailableMoves(board, _p2);
 
 	if (moves.size() == 0){
-		return pair<TMove, int>(rand() % 4 + 1, 0);
+		return pair<TMove, TPoint>(rand() % 4 + 1, 0);
 	}
 
 	CHeuristicBase::sortMoves(moves, board, _p1, _p2, next, history);
 
-	int value;
-	int ab;
-	int a = -MY_INFINITY;
-	int b = MY_INFINITY;
-	int bestMove = 0;
+	TPoint value;
+	TPoint ab;
+	TPoint a = -MY_INFINITY;
+	TPoint b = MY_INFINITY;
+	TMove bestMove = 0;
 	if (next == PLAYER_1){
 		value = -MY_INFINITY;
 		for (auto m = moves.begin(); m != moves.end(); m++){
@@ -280,7 +275,7 @@ pair<TMove, int> CSearchEngine::getOptimalMoveByAB(TBlock board[], const Pos1D&_
 			bOk = move(board, MOVE(_p1, *m), getOpositeDirection(*m), true); assert(bOk);
 			history.pop_back();
 			if (ab == TIMEOUT_POINTS)
-				return pair<TMove, int>(bestMove, TIMEOUT_POINTS);
+				return pair<TMove, TPoint>(bestMove, TIMEOUT_POINTS);
 			assert(ab >= -MY_INFINITY && ab <= MY_INFINITY);
 			a = max(value, a);
 			if (b <= a)
@@ -303,7 +298,7 @@ pair<TMove, int> CSearchEngine::getOptimalMoveByAB(TBlock board[], const Pos1D&_
 			bOk = move(board, MOVE(_p2, *m), getOpositeDirection(*m), true); assert(bOk);
 			history.pop_back();
 			if (ab == TIMEOUT_POINTS)
-				return pair<TMove, int>(bestMove, TIMEOUT_POINTS);
+				return pair<TMove, TPoint>(bestMove, TIMEOUT_POINTS);
 			assert(ab >= -MY_INFINITY && ab <= MY_INFINITY);
 			b = min(value, b);
 			if (b <= a)
@@ -317,33 +312,52 @@ pair<TMove, int> CSearchEngine::getOptimalMoveByAB(TBlock board[], const Pos1D&_
 #endif // _DEBUG
 
 	assert(bestMove >= 1 && bestMove <= 4);
-	return pair<TMove, int>(bestMove, value);
+	return pair<TMove, TPoint>(bestMove, value);
 }
 
-pair<TMove, int> CSearchEngine::optimalMove(TBlock board[], const Pos1D&_p1, const Pos1D&_p2, const TPlayer next, const vector<TMove> &history)
+pair<TMove, TPoint> CSearchEngine::optimalMove(TBlock board[], const TPos&_p1, const TPos&_p2, const TPlayer next, const vector<TMove> &history)
 {
 	static CMyAI *pAI = CMyAI::getInstance();
-	pair<TMove, int> result;
-	pair<TMove, int> bestMove;
+	pair<TMove, TPoint> result;
+	pair<TMove, TPoint> lastResult(0, 0);
 	int d;
 	if (pAI->inEnemyTurn)
-		d = pAI->lastReachedDepth - 1;
+		d = pAI->lastReachedDepth > 0 ? pAI->lastReachedDepth - 1 : MIN_DEPTH;
 	else
-		d = max(MIN_DEPTH, pAI->lastReachedDepth - 2);
+	{
+		d = pAI->lastReachedDepth > 0 ? pAI->lastReachedDepth - 2 : MIN_DEPTH;
+	}
+	cout << "started with d = " << d << endl;
 	for (; d <= MAX_DEPTH; d++){
 		result = getOptimalMoveByAB(board, _p1, _p2, next, history, d);
 		if (result.second == TIMEOUT_POINTS)
+		{
+			if (pAI->foundAnEnd)
+				if (pAI->isCalculatingInEnemyTurn)
+					pAI->foundAnEnd = false; // if this is an enemy's turn then in the next turn (our turn, do it normal)
+				else 
+					d++;// if this is our turn, in the enemy turn, reach to this depth right!
 			break;
+		}
 		else
 		{
-			bestMove = result;
-			cout << result.second << endl;
+			TPoint p = abs(result.second);
+			if (p > POINTS / 2){
+				pAI->foundAnEnd = true;
+				if (abs(lastResult.second) <= POINTS / 2)
+					d--;
+			}
+			else {
+				pAI->foundAnEnd = false;
+			}
+			lastResult = result;
+			cout << lastResult.second << endl;
 		}
 	}
-	pAI->lastReachedDepth = d;
+	pAI->lastReachedDepth = d - 1;
 	if (!pAI->isCalculatingInEnemyTurn)
-		cout << "Reached depth = " << d << endl;
+		cout << "Reached depth = " << pAI->lastReachedDepth << endl;
 
 	CTranspositionTable::getInstance()->printStatic();
-	return bestMove;
+	return lastResult;
 }

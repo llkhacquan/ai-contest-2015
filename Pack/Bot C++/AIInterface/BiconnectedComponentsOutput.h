@@ -1,39 +1,48 @@
 #pragma once
 
 #include "mydefine.h"
-#include "FastPos1DDeque.h"
+#include "SmallDeque.h"
 
-class CBiconnectedComponentsOutput{
+enum EXACT_LEVEL {
+	ESTIMATE_ALL, // fastest, estimate all
+	EXACT_AREA_BELOW_10, // calculate exact area that have estimate <= 10
+	EXACT_AREA_BELOW_25, // calculate exact area that have estimate <= 20
+	EXACT, // calculate exact everything
+};
+
+class CBCO{
 public:
+	TPos startPos;
+
+	int nAreas;
 	bool vXa[BOARD_SIZE][MAX_N_AREAS];
 	signed char aXa[MAX_N_AREAS][MAX_N_AREAS];
-	int nAreas;
-	signed char nVertices[MAX_N_AREAS];
-	signed char nOddVertices[MAX_N_AREAS];
-	signed char nEvenVertices[MAX_N_AREAS];
-	signed char nAreasOfVertices[BOARD_SIZE];
-	signed char iAreaOfVertices[BOARD_SIZE][MAX_N_AREAS_PER_BLOCK];
+	signed char nVinA[MAX_N_AREAS];
+	signed char nOddVinA[MAX_N_AREAS];
+	signed char nEvenVinA[MAX_N_AREAS];
+	signed char nAofV[BOARD_SIZE];
+	signed char iAofV[BOARD_SIZE][MAX_N_AREAS_PER_BLOCK];
+	signed char exactLength[MAX_N_AREAS][BOARD_SIZE][BOARD_SIZE + 1]; // exactLength from a pos to a pos in an area
 
-	CBiconnectedComponentsOutput();
+	EXACT_LEVEL inputExact = ESTIMATE_ALL;
+	EXACT_LEVEL outputExact = EXACT;
+	int specialResult = -1;
 
-	void mark(int iArea, int iVertex, bool value = true);
+	CBCO();
 
+	void mark(const int iArea, const TPos iVertex);
 	void clear();
-
-	void manager(const Pos1D &playerPos);
-
-	void buildAreaXArea(const Pos1D &playerPos);
-
-	int findLengthOfLongestPath(const Pos1D &startPos)const;
-
-	void checkConsitency(bool checkAxA = false)const;
-
-	// void insertEdgeOf2Areas(const int a1, const int a2, const int u, const int v);
-
-	void visitNode(CFastPos1DDeque &cPath, int &cLength, CFastPos1DDeque &lPath, int &lLength,
-		bool *visitted, const int cCode, const int &startPos) const;
-
-	int estimateLengthOfPath(const CFastPos1DDeque &path, const int &startPos) const;
-	int calculateLengthBetween2ArticulationPointsIn1Area(const Pos1D &u, const Pos1D &v, const int areaCode) const;
+	void buildAreaXArea();
+	void checkConsitency(const bool checkAxA = false) const;
+	int findLengthOfLongestPath(const EXACT_LEVEL exact);
+private:
+	int visitArea(CSmallDeque &cPath, int &cLength, CSmallDeque &lPath, int &lLength,
+		bool *visitted, const int &cCode, const int &startPos);
+	int getLengthInPath(const CSmallDeque &path, const TPos &startPos);
+	int estimateLengthInArea(const TPos &u, const TPos &v, const int &areaCode) const;
+	int exactLengthInAnArea(const TPos &u, const TPos &v, const int areaCode);
+	int exactLengthInAnAreaWithoutRecursion(const TPos &u, const TPos &v, const int &areaCode);
+	int explorer(CSmallDeque &path, bool visitted[], const TPos &v, const int &realMaxLength,
+		int &foundMaxLength, const int &areaCode, const int &dUV) const;
 };
 
