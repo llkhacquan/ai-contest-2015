@@ -88,6 +88,9 @@
     <ClInclude Include="..\AIInterface\GameState.h">
       <Filter>Custom Bot\Headers</Filter>
     </ClInclude>
+    <ClInclude Include="..\AIInterface\FastPos1DDeque.h">
+      <Filter>Custom Bot\Headers</Filter>
+    </ClInclude>
     <ClInclude Include="..\AIInterface\BiconnectedComponentsOutput.h">
       <Filter>Custom Bot\Headers</Filter>
     </ClInclude>
@@ -95,12 +98,6 @@
       <Filter>Custom Bot\Headers</Filter>
     </ClInclude>
     <ClInclude Include="..\AIInterface\ArticulationPoints.h">
-      <Filter>Custom Bot\Headers</Filter>
-    </ClInclude>
-    <ClInclude Include="..\AIInterface\BigDeque.h">
-      <Filter>Custom Bot\Headers</Filter>
-    </ClInclude>
-    <ClInclude Include="..\AIInterface\SmallDeque.h">
       <Filter>Custom Bot\Headers</Filter>
     </ClInclude>
   </ItemGroup>

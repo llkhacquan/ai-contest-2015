@@ -5,24 +5,30 @@
 class CHeuristicBase
 {
 public:
+	static void exploreToPathLongestPath(TBlock _board[], Pos1D &p, vector<TMove> &c, vector<TMove> &, int &length, int depth);
+
 	CHeuristicBase();
 	~CHeuristicBase();
-	TPoint(*rateBoard)(const TBlock _board[], const TPos &_p1, const TPos &_p2, const TPlayer next);
-	TPoint(*quickRateBoard)(const TBlock _board[], const TPos &_p1, const TPos &_p2, const TPlayer next);
+	int(*rateBoard)(TBlock _board[], const Pos1D &_p1, const Pos1D &_p2, const TPlayer next);
+	int(*quickRateBoard)(TBlock _board[], const Pos1D &_p1, const Pos1D &_p2, const TPlayer next);
 
-	TPoint rateBoardTT(const TBlock _board[], const TPos &_p1, const TPos &_p2, const TPlayer next, const vector<TMove> &history) const;
-	TPoint quickRateBoardTT(const TBlock _board[], const TPos &_p1, const TPos &_p2, const TPlayer next, const vector<TMove> &history) const;
+	int rateBoardTT(TBlock _board[], const Pos1D &_p1, const Pos1D &_p2, const TPlayer next, const vector<TMove> &history);
+	int quickRateBoardTT(TBlock _board[], const Pos1D &_p1, const Pos1D &_p2, const TPlayer next, const vector<TMove> &history);
 
-	static TPoint simpleRateBoard(const TBlock _board[], const TPos &_p1, const TPos &_p2, const TPlayer next);
-	static TPoint voronoiRateBoard(const TBlock _board[], const TPos &_p1, const TPos &_p2, const TPlayer next);
+	static int pureTreeOfChamber(TBlock _board[], const Pos1D &_p1, const Pos1D &_p2, const TPlayer next);
+	static int simpleRateBoard(TBlock _board[], const Pos1D &_p1, const Pos1D &_p2, const TPlayer next);
+	static int voronoiRateBoard(TBlock _board[], const Pos1D &_p1, const Pos1D &_p2, const TPlayer next);
 
-	static TMove getFirstMove(const TBlock _board[], const TPos &p, const EXACT_LEVEL exact, const int currentExactLength);
-	static TMove getExactFirstMove(const TBlock _board[], const TPos &p, const int currentExactLength);
+	// this method explore the _board with nDepth
+	static TMove getFirstMoveOfTheLongestPath(const TBlock _board[], const Pos1D &p, const int nDepth = 8);
+	static vector<TMove> getTheLongestPath(const TBlock _board[], const Pos1D &p, const int nDepth);
 
-	static int getLowerLengthOfTheLongestPath(TBlock const _board[], const TPos &playerPos);
+	static int getUpperLengthOfTheLongestPath(TBlock const _board[], const Pos1D &playerPos);
+	static int getLowerLengthOfTheLongestPath(TBlock const _board[], const Pos1D &playerPos);
 
-	static TPoint evaluateBoardTT(const TBlock _board[], const TPos &_p1, const TPos &_p2, const TPlayer next, const vector<TMove> &history);
+	static void sortMoves(vector<TMove> &moves, TBlock* _board, const Pos1D &_p1, const Pos1D &_p2, const TPlayer next, vector<TMove> &history);
+	static void sortMovesWithTT(vector<TMove> &moves, TBlock* _board, const Pos1D &_p1, const Pos1D &_p2, const TPlayer next, vector<TMove> &history);
 
-	static void sortMoves(vector<TMove> &moves, TBlock* _board, const TPos &_p1, const TPos &_p2, const TPlayer next, vector<TMove> &history);
+	static int evaluateBoard(const TBlock _board[], const Pos1D &_p1, const Pos1D &_p2, const TPlayer next, int &point);
 };
 

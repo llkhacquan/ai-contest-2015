@@ -3,6 +3,9 @@
 #include "mydefine.h"
 #include "BiconnectedComponents.h"
 
+#ifndef STATIC_FUNCTIONS
+#define STATIC_FUNCTIONS
+
 inline TBlock iPow2(const int &i){
 	return 1i64 << i;
 }
@@ -73,29 +76,29 @@ inline TMove getOpositeDirection(const TMove direction)
 	}
 }
 
-vector<TMove> getAvailableMoves(const TBlock board[], const TPos &pos, bool *output = NULL);
+__forceinline  bool setBlock(TBlock board[], const Pos1D pos, const TBlock value){
+	if (pos >= 0 && pos < BOARD_SIZE)
+	{
+		board[pos] = value;
+		return true;
+	}
+	else
+		return false;
+}
+
+vector<TMove> getAvailableMoves(const TBlock board[], const Pos1D &pos, bool *output = NULL);
 
 // this method return a longest path from pos by brute force
-vector<TMove> &getALongestPath(TBlock const boardData[], const TPos &pos);
+vector<TMove> &getALongestPath(TBlock const boardData[], const Pos1D &pos);
 
 // this method does modify board but restore the original board in the end
-void findLongestPath(TBlock board[], TPos& pos, vector<TMove> &c, vector<TMove> &l);
+void findLongestPath(TBlock board[], Pos1D& pos, vector<TMove> &c, vector<TMove> &l);
 
-int exploreMapWithoutRecursion(const TBlock _board[], const int overEstimatedResult, const TPos& _pos);
+bool move(TBlock _board[], const Pos1D &currentPos, const TMove direction, const bool backMode = false);
 
-int exploreMapWithoutRecursion(const TBlock _board[], const int overEstimatedResult, const TPos& _pos, const TPos &_endPos);
+int fillDistance(TBlock _board[121], const Pos1D &pos);
 
-int exploreMapWithoutRecursion(bool visited[], const int overEstimatedResult, const TPos &u, const TPos&v);
-
-int exploreMapWithoutRecursion(bool visited[], const int overEstimatedResult, const TPos &u);
-
-bool move(TBlock _board[], const TPos &currentPos, const TMove direction, const bool backMode = false);
-
-int fillDistance(TBlock _board[121], const TPos &pos);
-
-int distanceBetween2Pos(const TPos &p1, const TPos &p2);
-
-bool isIsolated(const TBlock _boardData[], const TPos &pos1, const TPos &pos2);
+bool isIsolated(const TBlock _boardData[], const Pos1D &pos1, const Pos1D &pos2);
 
 void printBoard(const TBlock board[], const bool special);
 
@@ -111,3 +114,7 @@ cv::Mat toImage(TBlock board[], bool special = false);
 
 void setupImage();
 #endif // OPENCV
+void fillChamberWithBattleFields(const TBlock gatesBoard[], const TBlock board[], CFastPos1DDeque &enemies, TBlock oBoard[]);
+int lengthWhenTryToReachBattleFields(const TBlock board[], const TBlock dBoard[], const TBlock filledBoard[], const Pos1D& _p);
+
+#endif // STATIC_FUNCTIONS

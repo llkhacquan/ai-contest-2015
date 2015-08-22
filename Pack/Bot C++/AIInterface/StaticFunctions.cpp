@@ -1,7 +1,7 @@
 #include "StaticFunctions.h"
-#include "SmallDeque.h"
+#include "FastPos1DDeque.h"
 
-vector<TMove> getAvailableMoves(const TBlock board[], const TPos &pos, bool *output)
+vector<TMove> getAvailableMoves(const TBlock board[], const Pos1D &pos, bool *output)
 {
 	assert(pos >= 0 && pos < BOARD_SIZE);
 	vector<TMove> result;
@@ -18,13 +18,13 @@ vector<TMove> getAvailableMoves(const TBlock board[], const TPos &pos, bool *out
 	return result;
 }
 
-vector<TMove> &getALongestPath(TBlock const boardData[], const TPos &pos)
+vector<TMove> &getALongestPath(TBlock const boardData[], const Pos1D &pos)
 {
 	assert(pos >= 0 && pos < BOARD_SIZE);
 	static TBlock board[121];
 	memcpy(board, boardData, BOARD_SIZE*sizeof(TBlock));
 
-	TPos p = pos;
+	Pos1D p = pos;
 
 	static vector<TMove> c(BOARD_SIZE), l(BOARD_SIZE); // store the current path and the longest path
 	c.clear();
@@ -33,7 +33,7 @@ vector<TMove> &getALongestPath(TBlock const boardData[], const TPos &pos)
 	return l;
 }
 
-void findLongestPath(TBlock board[], TPos& pos, vector<TMove> &c, vector<TMove> &l)
+void findLongestPath(TBlock board[], Pos1D& pos, vector<TMove> &c, vector<TMove> &l)
 {
 #ifdef _DEBUG
 	int backup[121];
@@ -63,20 +63,20 @@ void findLongestPath(TBlock board[], TPos& pos, vector<TMove> &c, vector<TMove> 
 #endif // _DEBUG
 }
 
-bool move(TBlock _board[], const TPos &currentPos, const TMove direction, const bool backMode /*= false*/)
+bool move(TBlock _board[], const Pos1D &currentPos, const TMove direction, const bool backMode /*= false*/)
 {
 	TBlock block = GET_BLOCK(_board, currentPos);
 	assert(block == BLOCK_PLAYER_1 || block == BLOCK_PLAYER_2);
-	TPos newPos = MOVE(currentPos, direction);
+	Pos1D newPos = MOVE(currentPos, direction);
 	if (backMode){
 		if (block == BLOCK_PLAYER_1 && GET_BLOCK(_board, newPos) == BLOCK_PLAYER_1_TRAIL){
-			SET_BLOCK(_board, newPos, BLOCK_PLAYER_1);
-			SET_BLOCK(_board, currentPos, BLOCK_EMPTY);
+			setBlock(_board, newPos, BLOCK_PLAYER_1);
+			setBlock(_board, currentPos, BLOCK_EMPTY);
 			return true;
 		}
 		else if (block == BLOCK_PLAYER_2 && GET_BLOCK(_board, newPos) == BLOCK_PLAYER_2_TRAIL){
-			SET_BLOCK(_board, newPos, BLOCK_PLAYER_2);
-			SET_BLOCK(_board, currentPos, BLOCK_EMPTY);
+			setBlock(_board, newPos, BLOCK_PLAYER_2);
+			setBlock(_board, currentPos, BLOCK_EMPTY);
 			return true;
 		}
 		else
@@ -84,8 +84,8 @@ bool move(TBlock _board[], const TPos &currentPos, const TMove direction, const 
 	}
 	else {
 		if (GET_BLOCK(_board, newPos) == BLOCK_EMPTY){
-			SET_BLOCK(_board, newPos, block); // set newPos as current block_player_current
-			SET_BLOCK(_board, currentPos, block == BLOCK_PLAYER_1 ? BLOCK_PLAYER_1_TRAIL : BLOCK_PLAYER_2_TRAIL);
+			setBlock(_board, newPos, block); // set newPos as current block_player_current
+			setBlock(_board, currentPos, block == BLOCK_PLAYER_1 ? BLOCK_PLAYER_1_TRAIL : BLOCK_PLAYER_2_TRAIL);
 			return true;
 		}
 		else
@@ -97,19 +97,19 @@ bool move(TBlock _board[], const TPos &currentPos, const TMove direction, const 
 // distance = shortest path from pos to the block. path.size >= 1
 // average time: 0.02ms for release
 // return the sum of all distances
-int fillDistance(TBlock _board[], const TPos &pos) {
+int fillDistance(TBlock _board[], const Pos1D &pos) {
 	TBlock result = 0;
-	SET_BLOCK(_board, pos, SPECIAL_BLOCK);
-	CSmallDeque q;
+	setBlock(_board, pos, SPECIAL_BLOCK);
+	CFastPos1DDeque q;
 	q.push_back(pos);
 
 	while (q.size() > 0){
-		TPos p(q.pop_front());
+		Pos1D p(q.pop_front());
 		for (int i = 1; i <= 4; i++){
-			const TPos newP = MOVE(p, i);
+			const Pos1D newP = MOVE(p, i);
 			if (GET_BLOCK(_board, newP) == BLOCK_EMPTY){
 				result += GET_BLOCK(_board, p) + 1 - SPECIAL_BLOCK;
-				SET_BLOCK(_board, newP, GET_BLOCK(_board, p) + 1);
+				setBlock(_board, newP, GET_BLOCK(_board, p) + 1);
 				q.push_back(newP);
 			}
 		}
@@ -117,7 +117,7 @@ int fillDistance(TBlock _board[], const TPos &pos) {
 	return (int)result;
 }
 
-bool isIsolated(const TBlock _board[], const TPos &_p1, const TPos &_p2)
+bool isIsolated(const TBlock _board[], const Pos1D &_p1, const Pos1D &_p2)
 {
 	assert(_board[_p1] == BLOCK_PLAYER_1);
 	assert(_board[_p2] == BLOCK_PLAYER_2);
@@ -126,15 +126,15 @@ bool isIsolated(const TBlock _board[], const TPos &_p1, const TPos &_p2)
 
 	bool visisted[BOARD_SIZE] = { false };
 	// search for _pos2 form _pos1
-	CSmallDeque queue;
+	CFastPos1DDeque queue;
 	queue.push_back(_p1);
 	visisted[_p1] = true;
 	while (!queue.empty())
 	{
-		TPos p = queue.pop_front();
+		Pos1D p = queue.pop_front();
 		board[p] = SPECIAL_BLOCK;
 		for (int i = 1; i <= 4; i++){
-			TPos u = MOVE(p, i);
+			Pos1D u = MOVE(p, i);
 			if (GET_BLOCK(board, u) != BLOCK_EMPTY)
 				continue;
 			if (visisted[u])
@@ -278,283 +278,67 @@ void setupImage()
 }
 #endif // OPENCV
 
-int exploreMapWithoutRecursion(const TBlock _board[], const int overEstimatedResult, const TPos& _pos)
+void fillChamberWithBattleFields(const TBlock gatesBoard[], const TBlock board[], CFastPos1DDeque &enemies, TBlock fillBoard[])
 {
-	TMove path[BOARD_SIZE];
-	memset(path, 0, sizeof(TMove)*BOARD_SIZE);
-	bool bOk;
-	CSmallDeque history;
-	int maxLength = 0;
-	TPos pos = _pos;
-	int cDepth = 0;
-	TBlock board[BOARD_SIZE];
-	memcpy(board, _board, sizeof(TBlock)*BOARD_SIZE);
+	memcpy(fillBoard, board, sizeof(TBlock)*BOARD_SIZE);
+	while (enemies.size() > 0){
+		Pos1D v(enemies[enemies.size() - 1]);
+		enemies.pop_back();
 
-	int noOfFailTry = 0;
-	while (cDepth >= 0){
-		assert(cDepth < BOARD_SIZE);
-		path[cDepth]++;
-		if (path[cDepth] == 5){
-			if (history.size() == 0)
-				break;
-			path[cDepth] = 0;
-			bOk = move(board, pos, getOpositeDirection(history.back()), true);
-			pos = MOVE(pos, getOpositeDirection(history.back()));
-			assert(bOk);
-			history.pop_back();
-			cDepth--;
-			noOfFailTry = 0;
-			continue;
-		}
-		assert(path[cDepth] > 0 && path[cDepth] <= 4);
-		bOk = move(board, pos, path[cDepth]);
-		if (!bOk){
-			noOfFailTry++;
-			if (noOfFailTry == 4) // we have 4 fail try, it is an end position
-			{
-				// processing end position
-				if (maxLength < (int) history.size())
-					maxLength = (int) history.size();
-				assert(history.size() == cDepth);
-				if (maxLength == overEstimatedResult)
-					break;
-				// end processing end position
-			}
-		}
-		else {
-			pos = MOVE(pos, path[cDepth]);
-			history.push_back(path[cDepth]);
-			noOfFailTry = 0;// reset this, it is not an end position
-
-			// process the mediate position
-			assert(history.size() == cDepth + 1);
-			// end processing
-			cDepth++;
+		fillBoard[v] = BLOCK_ENEMY_AREA;
+		for (int i = 1; i <= 4; i++){
+			Pos1D u = MOVE(v, i);
+			if (GET_BLOCK(fillBoard, u) == BLOCK_EMPTY && GET_BLOCK(gatesBoard, u) != SPECIAL_BLOCK)
+				enemies.push_back(u);
 		}
 	}
-
-	assert(maxLength <= overEstimatedResult);
-	return maxLength;
 }
 
-int exploreMapWithoutRecursion(const TBlock _board[], const int overEstimatedResult, const TPos& _pos, const TPos &_endPos)
-{
-	TMove path[BOARD_SIZE];
-	memset(path, 0, sizeof(TMove)*BOARD_SIZE);
-	bool bOk;
-	CSmallDeque history;
-	int maxLength = 0;
-	TPos pos = _pos;
-	int cDepth = 0;
-	TBlock board[BOARD_SIZE];
-	memcpy(board, _board, sizeof(TBlock)*BOARD_SIZE);
+int lengthWhenTryToReachBattleFields(const TBlock board[], const TBlock dBoard[], const TBlock filledBoard[], const Pos1D& _p){
+	CFastPos1DDeque q;
+	q.push_back(_p);
+	TBlock ourBoard[BOARD_SIZE];
 
-	int noOfFailTry = 0;
-	while (cDepth >= 0){
-		assert(cDepth < BOARD_SIZE);
-		path[cDepth]++;
-		if (path[cDepth] == 5){
-			if (history.size() == 0)
-				break;
-			path[cDepth] = 0;
-			bOk = move(board, pos, getOpositeDirection(history.back()), true);
-			assert(bOk);
-			pos = MOVE(pos, getOpositeDirection(history.back()));
-			history.pop_back();
-			cDepth--;
-			noOfFailTry = 0;
-			continue;
-		}
-		assert(path[cDepth] > 0 && path[cDepth] <= 4);
-		bOk = move(board, pos, path[cDepth]);
-		if (!bOk){
-			noOfFailTry++;
-			if (noOfFailTry == 4) // we have 4 fail try, it is an end position
-			{
-				// processing end position (an end position is also an mediate position
-				assert(history.size() == cDepth);
-				// end processing end position
-			}
-		}
-		else {
-			pos = MOVE(pos, path[cDepth]);
-			history.push_back(path[cDepth]);
-			noOfFailTry = 0;// reset this, it is not an end position
-
-			// process the mediate position
-			if (pos == _endPos){
-				if (maxLength < (int)history.size())
-					maxLength = history.size();
-				assert(history.size() == cDepth + 1);
-				if (abs(maxLength - overEstimatedResult) % 2 == 1)
-					maxLength++;
-				assert(maxLength <= overEstimatedResult);
-				if (maxLength == overEstimatedResult)
-					break;
-				// return now
-				cDepth++;
-				path[cDepth] = 4;
+	bool visitted[BOARD_SIZE] = { false };
+	Pos1D parrent[BOARD_SIZE];
+	visitted[_p] = true;
+	while (!q.empty()){
+		Pos1D v(q.front());
+		if (GET_BLOCK(filledBoard, v) == BLOCK_ENEMY_AREA)
+			break;
+		q.pop_front();
+		for (int i = 1; i <= 4; i++){
+			Pos1D u = MOVE(v, i);
+			TBlock block = GET_BLOCK(board, u);
+			if (!(block == BLOCK_EMPTY || block == BLOCK_ENEMY_AREA))
 				continue;
-			}
-			// end processing
-			cDepth++;
-		}
-	}
-
-	assert(maxLength <= overEstimatedResult);
-	assert(abs(maxLength - overEstimatedResult) % 2 == 0);
-	return maxLength;
-}
-
-int exploreMapWithoutRecursion(bool visited[], const int overEstimatedResult, const TPos &u, const TPos&v)
-{
-	TMove path[BOARD_SIZE];
-	memset(path, 0, sizeof(TMove)*BOARD_SIZE);
-	bool bOk;
-	CSmallDeque history;
-	int maxLength = 0;
-	TPos pos = u;
-	int cDepth = 0;
-
-	int noOfFailTry = 0;
-	while (cDepth >= 0){
-		assert(cDepth < BOARD_SIZE);
-		path[cDepth]++;
-		if (path[cDepth] == 5){
-			if (history.size() == 0)
-				break;
-			path[cDepth] = 0;
-			TPos newPos = getOpositeDirection(history.back());
-			assert(newPos >= 0 && newPos < BOARD_SIZE);
-			assert(visited[pos]);
-			visited[pos] = false;
-			pos = MOVE(pos, getOpositeDirection(history.back()));
-			history.pop_back();
-			cDepth--;
-			noOfFailTry = 0;
-			continue;
-		}
-		assert(path[cDepth] > 0 && path[cDepth] <= 4);
-		// bOk = move(board, pos, path[cDepth]);
-		TPos newPos = MOVE(pos, path[cDepth]);
-		if (newPos < 0)
-			bOk = false;
-		else
-		{
-			bOk = !visited[newPos];
-			visited[newPos] = true;
-		}
-		if (!bOk){
-			noOfFailTry++;
-			if (noOfFailTry == 4) // we have 4 fail try, it is an end position
-			{
-				// processing end position (an end position is also an mediate position
-				assert(history.size() == cDepth);
-				// end processing end position
-			}
-		}
-		else {
-			pos = MOVE(pos, path[cDepth]);
-			history.push_back(path[cDepth]);
-			noOfFailTry = 0;// reset this, it is not an end position
-
-			// process the mediate position
-			if (pos == v){
-				if (maxLength < (int)history.size())
-					maxLength = history.size();
-				assert(history.size() == cDepth + 1);
-				if (abs(maxLength - overEstimatedResult) % 2 == 1)
-					maxLength++;
-				assert(maxLength <= overEstimatedResult);
-				if (maxLength == overEstimatedResult)
-					break;
-				// return now
-				cDepth++;
-				path[cDepth] = 4;
+			if (visitted[u])
 				continue;
-			}
-			// end processing
-			cDepth++;
+			visitted[u] = true;
+			parrent[u] = v;
+			q.push_back(u);
 		}
 	}
 
-	assert(maxLength <= overEstimatedResult);
-	assert(abs(maxLength - overEstimatedResult) % 2 == 0);
-	return maxLength;
-}
-
-int exploreMapWithoutRecursion(bool visited[], const int overEstimatedResult, const TPos &u)
-{
-	TMove path[BOARD_SIZE];
-	memset(path, 0, sizeof(TMove)*BOARD_SIZE);
-	bool bOk;
-	CSmallDeque history;
-	int maxLength = 0;
-	TPos pos = u;
-	int cDepth = 0;
-
-	int noOfFailTry = 0;
-	while (cDepth >= 0){
-		assert(cDepth < BOARD_SIZE);
-		path[cDepth]++;
-		if (path[cDepth] == 5){
-			if (history.size() == 0)
-				break;
-			path[cDepth] = 0;
-			TPos newPos = getOpositeDirection(history.back());
-			assert(newPos >= 0 && newPos < BOARD_SIZE);
-			assert(visited[pos]);
-			visited[pos] = false;
-			pos = MOVE(pos, getOpositeDirection(history.back()));
-			history.pop_back();
-			cDepth--;
-			noOfFailTry = 0;
+	TBlock minDistance = dBoard[q.front()];
+	int maxLength = -1;
+	while (!q.empty()){
+		Pos1D v(q.pop_front());
+		if (dBoard[v] > SPECIAL_BLOCK + minDistance)
 			continue;
-		}
-		assert(path[cDepth] > 0 && path[cDepth] <= 4);
-		// bOk = move(board, pos, path[cDepth]);
-		TPos newPos = MOVE(pos, path[cDepth]);
-		if (newPos < 0)
-			bOk = false;
-		else
-		{
-			bOk = !visited[newPos];
-			visited[newPos] = true;
-		}
-		if (!bOk){
-			noOfFailTry++;
-			if (noOfFailTry == 4) // we have 4 fail try, it is an end position
-			{
-				// processing end position
-				if (maxLength < (int) history.size())
-					maxLength = (int) history.size();
-				assert(history.size() == cDepth);
-				if (maxLength == overEstimatedResult)
-					break;
-				// end processing end position
-			}
-		}
-		else {
-			pos = MOVE(pos, path[cDepth]);
-			history.push_back(path[cDepth]);
-			noOfFailTry = 0;// reset this, it is not an end position
+		if (filledBoard[v] != BLOCK_ENEMY_AREA)
+			continue;
+		memcpy(ourBoard, board, sizeof(BOARD_SIZE));
+		ourBoard[v] = board[_p];
 
-			// process the mediate position
-			assert(history.size() == cDepth + 1);
-			// end processing
-			cDepth++;
-		}
+		TBlock oldBlock;
+		do {
+			oldBlock = ourBoard[parrent[v]];
+			ourBoard[parrent[v]] = BLOCK_OBSTACLE;
+			v = parrent[v];
+		} while (oldBlock != board[_p]);
+		maxLength = max(maxLength,
+			CBiconnectedComponents::getEstimatedLength(ourBoard, v, -1) + (int)dBoard[v]);
 	}
-
-	assert(maxLength <= overEstimatedResult);
 	return maxLength;
-}
-
-int distanceBetween2Pos(const TPos &p1, const TPos &p2)
-{
-	int x1 = p1 % MAP_SIZE;
-	int y1 = p1 / MAP_SIZE;
-	int x2 = p2 % MAP_SIZE;
-	int y2 = p2 / MAP_SIZE;
-	return abs(x1 - x2) + abs(y1 - y2);
 }
