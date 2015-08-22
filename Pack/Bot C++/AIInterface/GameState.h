@@ -14,8 +14,14 @@ public:
 	~CGameState();
 
 	signed char depth;
-	int lowerbound;
-	int upperBound;
+	TPoint lower;
+	TPoint upper;
+
+	char exact1, exact2;
+	TPoint length1, length2; // length = -1 mean not calculated, length1 = length2 = -2 means not isolated
+
+	TPoint vono;
+	TPoint simple;
 
 	void set(const vector<TMove> &_history);
 

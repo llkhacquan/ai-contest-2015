@@ -1,49 +1,69 @@
 #include "BiconnectedComponentsOutput.h"
 #include "StaticFunctions.h"
-#include "FastPos1DDeque.h"
+#include "SmallDeque.h"
+#include "MyAI.h"
 
+CMyAI *pAI;
 
-int CBiconnectedComponentsOutput::estimateLengthOfPath(const CFastPos1DDeque &path, const int &startPos) const
+// calculate the max length lines in pathOfArea
+int CBCO::getLengthInPath(const CSmallDeque &pathOfArea, const TPos &startPos)
 {
-	assert(path.size() > 0);
-	assert(nVertices[path[0]] == 1);
-
-	int result = 0; // skip the first area (areas[path[0]])
-	CFastPos1DDeque newPath;
-	newPath.push_back(startPos);
-
-	// for the last area)
-	int pathBack = path[path.size() - 1];
-	if (path.size() >= 2) {
-		Pos1D connection = aXa[pathBack][path[path.size() - 2]];
-		int delta = calculateLengthBetween2ArticulationPointsIn1Area(connection, -1, pathBack);
-		result += delta - 1;
+	int size = pathOfArea.size();
+	assert(size > 0);
+	assert(startPos >= 0);
+	CSmallDeque pathOfPos;
+	pathOfPos.push_back(startPos);
+	for (int i = 0; i < size - 1; i++){
+		pathOfPos.push_back(aXa[pathOfArea[i]][pathOfArea[i + 1]]);
 	}
+	assert(size == pathOfPos.size());
+	CSmallDeque lengths; // lengths[i] stores the length from startPos[0] to pathOfPos[i]; => lengths[0] = 0
+	lengths.push_back(0);
 
-	// for the other areas (path[1] -> path[size - 2]
-	if (path.size() >= 3)
-		for (int iArea = 1; iArea < (int)path.size() - 1; iArea++){
-			Pos1D start = aXa[path[iArea]][path[iArea - 1]];
-			assert(start >= 0 && start < BOARD_SIZE);
-			Pos1D end = aXa[path[iArea]][path[iArea + 1]];;
-			assert(end >= 0 && end < BOARD_SIZE);
-			int delta = calculateLengthBetween2ArticulationPointsIn1Area(start, end, path[iArea]);
-			assert(delta > 0);
-			result += delta - 1;
+	for (int i = 0; i < size - 1; i++){
+		int delta = exactLengthInAnArea(pathOfPos[i], pathOfPos[i + 1], pathOfArea[i]);
+		if (delta == TIMEOUT_POINTS)
+			return TIMEOUT_POINTS;
+		lengths.push_back(lengths.back() + delta - 1);
+		assert(lengths.size() == i + 2);
+	}
+	assert(lengths.size() == size);
+
+	int delta = exactLengthInAnArea(pathOfPos.back(), -1, pathOfArea.back());
+	if (delta == TIMEOUT_POINTS)
+		return TIMEOUT_POINTS;
+	int maxLength = lengths.back() + delta - 1;
+
+	// compare the maxLength with lengths[i] + lengthInAnArea(pathOfPos[i], -1, pathOfArea[i])
+	for (int i = size - 2; i >= 0; i--){
+		int dEstimate = estimateLengthInArea(pathOfPos[i], -1, pathOfArea[i]);
+		if (lengths[i] + dEstimate - 1 > maxLength)
+		{
+
+			int dExact = exactLengthInAnArea(pathOfPos[i], -1, pathOfArea[i]);
+			if (dExact == TIMEOUT_POINTS)
+				return TIMEOUT_POINTS;
+			if (lengths[i] + dExact - 1 > maxLength)
+				maxLength = lengths[i] + dExact - 1;
 		}
-	return result;
+	}
+	return maxLength;
 }
 
-int CBiconnectedComponentsOutput::calculateLengthBetween2ArticulationPointsIn1Area(const Pos1D &u, const Pos1D &v, const int areaCode)const{
-	// make sure u and v are in the same area
+// return the length between u and v (v==-1 for anywhere), when u==v, return 1
+int CBCO::estimateLengthInArea(const TPos &u, const TPos &v, const int &areaCode)const
+{
 	assert(u >= 0 && u < BOARD_SIZE);
+	// make sure u and v are in the same area
+	assert(v < 0 || (vXa[u][areaCode] && vXa[v][areaCode]));
+
+	int odd = nOddVinA[areaCode];
+	int even = nEvenVinA[areaCode];
 
 	if (v < 0 || v >= BOARD_SIZE){
 		// end at anywhere
 		int delta = -1;
 		assert(vXa[u][areaCode]);
-		int odd = nOddVertices[areaCode];
-		int even = nEvenVertices[areaCode];
 		if (odd == even)
 			delta = odd * 2;
 		else
@@ -67,8 +87,6 @@ int CBiconnectedComponentsOutput::calculateLengthBetween2ArticulationPointsIn1Ar
 	else {
 		// start at u, end at v
 		assert(vXa[u][areaCode] && vXa[v][areaCode]);
-		int even = nEvenVertices[areaCode];
-		int odd = nOddVertices[areaCode];
 
 		int delta = -1;
 		{
@@ -96,13 +114,15 @@ int CBiconnectedComponentsOutput::calculateLengthBetween2ArticulationPointsIn1Ar
 	}
 }
 
-void CBiconnectedComponentsOutput::visitNode(CFastPos1DDeque &cPath, int &cLength, CFastPos1DDeque &lPath, int &lLength,
-	bool *visitted, const int cCode, const int &startPos) const
+int CBCO::visitArea(CSmallDeque &cPath, int &cLength, CSmallDeque &lPath, int &lLength,
+	bool *visitted, const int &cCode, const int &startPos)
 {
+	assert(cCode >= 0);
+	assert(startPos >= 0);
 	visitted[cCode] = true;
 	cPath.push_back(cCode);
 
-	CFastPos1DDeque adjAreas;
+	CSmallDeque adjAreas;
 	for (int iCode = 0; iCode < nAreas; iCode++){
 		if (visitted[iCode])
 			continue;
@@ -111,7 +131,9 @@ void CBiconnectedComponentsOutput::visitNode(CFastPos1DDeque &cPath, int &cLengt
 	}
 
 	if (adjAreas.size() == 0){
-		cLength = estimateLengthOfPath(cPath, startPos);
+		cLength = getLengthInPath(cPath, startPos);
+		if (cLength == TIMEOUT_POINTS)
+			return TIMEOUT_POINTS;
 		if (cLength > lLength){
 			lLength = cLength;
 			lPath = cPath;
@@ -119,97 +141,88 @@ void CBiconnectedComponentsOutput::visitNode(CFastPos1DDeque &cPath, int &cLengt
 	}
 	else
 		for (int i = 0; i < (int)adjAreas.size(); i++)
-			visitNode(cPath, cLength, lPath, lLength, visitted, adjAreas[i], startPos);
+		{
+			int t = visitArea(cPath, cLength, lPath, lLength, visitted, adjAreas[i], startPos);
+			if (t == TIMEOUT_POINTS)
+				return t;
+		}
 
 	visitted[cCode] = false;
 	assert(cPath[cPath.size() - 1] == cCode);
 	cPath.pop_back();
+	return 0;
 }
 
-int CBiconnectedComponentsOutput::findLengthOfLongestPath(const Pos1D &startPos) const
+int CBCO::findLengthOfLongestPath(const EXACT_LEVEL exact)
 {
-	CFastPos1DDeque lPath;
+	this->outputExact = EXACT;
+	this->inputExact = exact;
+	if (nAreas == 0){
+		assert(specialResult >= 0);
+		return specialResult;
+	}
+	CSmallDeque lPath;
 	int lLength = 0;
-	CFastPos1DDeque cPath;
-	int cLength = 0;
-	bool visittedAreas[MAX_N_AREAS] = { false };
-	assert(nAreasOfVertices[startPos]>0);
-	if (nAreasOfVertices[startPos] == 1)
-		return 0;
-	int startArea = nAreas - 1;
-	visitNode(cPath, cLength, lPath, lLength, visittedAreas, startArea, startPos);
+	bool visittedAreas[MAX_N_AREAS];
+	memset(visittedAreas, false, MAX_N_AREAS);
+	assert(nAofV[startPos] == 0);
 
-	if (SHOW_DEBUG_INFORMATION)
-	{
-		for (int i = 0; i < lPath.size(); i++)
-			cout << lPath[i] << " ";
-		cout << "\n";
+	for (TMove i = 1; i <= 4; i++){
+		CSmallDeque cPath;
+		int cLength = 0;
+
+		TPos newPos = MOVE(startPos, i);
+		if (newPos < 0 || nAofV[newPos] == 0)
+			continue;
+		int t = visitArea(cPath, cLength, lPath, lLength, visittedAreas, iAofV[newPos][0], newPos);
+		if (t == TIMEOUT_POINTS)
+		{
+			assert(exact);
+			return t;
+		}
 	}
-	return lLength;
+	return lLength + 1;
 }
 
-void CBiconnectedComponentsOutput::manager(const Pos1D &playerPos)
-{
-	{
-		nAreas++;
-		mark(nAreas - 1, playerPos);
-	}
-}
-
-void CBiconnectedComponentsOutput::clear()
+void CBCO::clear()
 {
 	nAreas = 0;
-
-	memset(aXa, -1, sizeof(aXa[0][0])*MAX_N_AREAS*MAX_N_AREAS);
 	memset(vXa, 0, sizeof(vXa[0][0])*BOARD_SIZE*MAX_N_AREAS);
-	memset(nVertices, 0, sizeof(nVertices[0])*MAX_N_AREAS);
-	memset(nOddVertices, 0, sizeof(nVertices[0])*MAX_N_AREAS);
-	memset(nEvenVertices, 0, sizeof(nVertices[0])*MAX_N_AREAS);
-	memset(nAreasOfVertices, 0, sizeof(nAreasOfVertices[0]) * BOARD_SIZE);
-	memset(iAreaOfVertices, -1, sizeof(iAreaOfVertices[0][0])*BOARD_SIZE * MAX_N_AREAS_PER_BLOCK);
+	memset(aXa, -1, sizeof(aXa[0][0])*MAX_N_AREAS*MAX_N_AREAS);
+	memset(nVinA, 0, sizeof(nVinA[0])*MAX_N_AREAS);
+	memset(nOddVinA, 0, sizeof(nOddVinA[0])*MAX_N_AREAS);
+	memset(nEvenVinA, 0, sizeof(nEvenVinA[0])*MAX_N_AREAS);
+	memset(nAofV, 0, sizeof(nAofV[0]) * BOARD_SIZE);
+	memset(iAofV, -1, sizeof(iAofV[0][0])*BOARD_SIZE * MAX_N_AREAS_PER_BLOCK);
+	memset(exactLength, -1, sizeof(exactLength[0][0][0])*MAX_N_AREAS*BOARD_SIZE*(BOARD_SIZE + 1));
 }
 
-void CBiconnectedComponentsOutput::mark(int iArea, int iVertex, bool value /*= true*/)
+void CBCO::mark(const int iArea, const TPos iVertex)
 {
-	assert(value == true);
 	assert(iArea >= 0 && iArea < nAreas);
 	assert(iVertex >= 0 && iVertex < BOARD_SIZE);
 
-	if (vXa[iVertex][iArea] == value)
+	if (vXa[iVertex][iArea])
 		return;
 
-	vXa[iVertex][iArea] = value;
-
-	if (value){
-		nVertices[iArea]++;
-		if (iVertex % 2 == 0)
-			nEvenVertices[iArea]++;
-		else
-			nOddVertices[iArea]++;
-		assert(nAreasOfVertices[iVertex] >= 0 && nAreasOfVertices[iVertex] < MAX_N_AREAS_PER_BLOCK);
-		iAreaOfVertices[iVertex][nAreasOfVertices[iVertex]] = iArea;
-		nAreasOfVertices[iVertex]++;
-	}
-	else {
-		//value == false
-		nVertices[iArea]--;
-		if (iVertex % 2 == 0)
-			nEvenVertices[iArea]--;
-		else
-			nOddVertices[iArea]--;
-		nAreasOfVertices[iVertex]--;
-		assert(nEvenVertices[iArea] >= 0);
-		assert(nOddVertices[iArea] >= 0);
-	}
+	vXa[iVertex][iArea] = true;
+	nVinA[iArea]++;
+	if (iVertex % 2 == 0)
+		nEvenVinA[iArea]++;
+	else
+		nOddVinA[iArea]++;
+	assert(nAofV[iVertex] >= 0 && nAofV[iVertex] < MAX_N_AREAS_PER_BLOCK);
+	iAofV[iVertex][nAofV[iVertex]] = iArea;
+	nAofV[iVertex]++;
 }
 
-void CBiconnectedComponentsOutput::checkConsitency(bool checkAxA) const
+void CBCO::checkConsitency(const bool checkAxA) const
 {
 	if (nAreas > MAX_N_AREAS)
 		return;
 	// check nAreas
 	for (int i = nAreas; i < MAX_N_AREAS; i++){
-		assert(nVertices[i] == 0);
+		assert(nVinA[i] == 0);
 	}
 
 	// check nVertices[], odd, even
@@ -224,10 +237,10 @@ void CBiconnectedComponentsOutput::checkConsitency(bool checkAxA) const
 					nOdd++;
 			}
 		}
-		assert(nOdd == nOddVertices[iArea]);
-		assert(nEven == nEvenVertices[iArea]);
-		assert(nOdd + nEven == nVertices[iArea]);
-		assert(nOdd + nEven == nVertices[iArea]);
+		assert(nOdd == nOddVinA[iArea]);
+		assert(nEven == nEvenVinA[iArea]);
+		assert(nOdd + nEven == nVinA[iArea]);
+		assert(nOdd + nEven == nVinA[iArea]);
 	}
 
 	// check nAreasOfVertices
@@ -237,23 +250,23 @@ void CBiconnectedComponentsOutput::checkConsitency(bool checkAxA) const
 			if (vXa[iVertex][iArea])
 				nAreasOfPos_++;
 		}
-		assert(nAreasOfPos_ == nAreasOfVertices[iVertex]);
+		assert(nAreasOfPos_ == nAofV[iVertex]);
 	}
 
 	if (!checkAxA)
 		return;
 	// check iAreasOfVertices
 	for (int iVertex = 0; iVertex < BOARD_SIZE; iVertex++){
-		assert(0 <= nAreasOfVertices[iVertex] && nAreasOfVertices[iVertex] <= MAX_N_AREAS_PER_BLOCK);
+		assert(0 <= nAofV[iVertex] && nAofV[iVertex] <= MAX_N_AREAS_PER_BLOCK);
 		for (int i = 0; i < MAX_N_AREAS_PER_BLOCK; i++)
 		{
-			if (i < nAreasOfVertices[iVertex])
+			if (i < nAofV[iVertex])
 			{
-				assert(iAreaOfVertices[iVertex][i] >= 0);
-				assert(vXa[iVertex][iAreaOfVertices[iVertex][i]]);
+				assert(iAofV[iVertex][i] >= 0);
+				assert(vXa[iVertex][iAofV[iVertex][i]]);
 			}
 			else {
-				assert(iAreaOfVertices[iVertex][i] < 0);
+				assert(iAofV[iVertex][i] < 0);
 			}
 		}
 	}
@@ -266,22 +279,22 @@ void CBiconnectedComponentsOutput::checkConsitency(bool checkAxA) const
 			{
 				continue;
 			}
-			Pos1D v = aXa[i][j];
+			TPos v = aXa[i][j];
 			assert(vXa[v][i] && vXa[v][j]);
 		}
 	}
 }
 
-void CBiconnectedComponentsOutput::buildAreaXArea(const Pos1D &playerPos)
+void CBCO::buildAreaXArea()
 {
-	for (int iVertex = 0; iVertex < BOARD_SIZE; iVertex++){
-		assert(nAreasOfVertices[iVertex] >= 0 && nAreasOfVertices[iVertex] <= MAX_N_AREAS_PER_BLOCK);
-		if (nAreasOfVertices[iVertex] > 1){
-			for (int i = 0; i < nAreasOfVertices[iVertex]; i++){
-				for (int j = 0; j < nAreasOfVertices[iVertex]; j++){
+	for (TPos u = 0; u < BOARD_SIZE; u++){
+		assert(nAofV[u] >= 0 && nAofV[u] <= MAX_N_AREAS_PER_BLOCK);
+		if (nAofV[u] > 1){
+			for (int i = 0; i < nAofV[u]; i++){
+				for (int j = 0; j < nAofV[u]; j++){
 					if (i == j) continue;
-					aXa[iAreaOfVertices[iVertex][i]][iAreaOfVertices[iVertex][j]] = iVertex;
-					aXa[iAreaOfVertices[iVertex][j]][iAreaOfVertices[iVertex][i]] = iVertex;
+					aXa[iAofV[u][i]][iAofV[u][j]] = u;
+					aXa[iAofV[u][j]][iAofV[u][i]] = u;
 				}
 
 			}
@@ -289,7 +302,258 @@ void CBiconnectedComponentsOutput::buildAreaXArea(const Pos1D &playerPos)
 	}
 }
 
-CBiconnectedComponentsOutput::CBiconnectedComponentsOutput()
-{
+CBCO::CBCO(){
 	clear();
+}
+
+int explorerCount;
+int CBCO::exactLengthInAnArea(const TPos &u, const TPos &v, const int areaCode)
+{
+	assert(u >= 0 && u < BOARD_SIZE);
+	// check if we calculated this length
+	if (v < 0){ // v < 0 means v can be any pos
+		if (exactLength[areaCode][u][BOARD_SIZE] >= 0){
+			return exactLength[areaCode][u][BOARD_SIZE];
+		}
+	}
+	else { // v is a real pos
+		if (exactLength[areaCode][u][v] >= 0){
+			assert(exactLength[areaCode][u][v] == exactLength[areaCode][v][u]);
+			return exactLength[areaCode][u][v];
+		}
+	}
+
+	int estimatedMaxLength = estimateLengthInArea(u, v, areaCode);
+	if (u == v){
+		assert(estimatedMaxLength == 1);
+		return 1;
+	}
+
+	if (inputExact == ESTIMATE_ALL)
+	{
+		outputExact = ESTIMATE_ALL;
+		return estimatedMaxLength;
+	}
+
+	if (inputExact == EXACT_AREA_BELOW_10 && estimatedMaxLength > 10)
+	{
+		if (outputExact > EXACT_AREA_BELOW_10)
+			outputExact = EXACT_AREA_BELOW_10;
+		return estimatedMaxLength;
+	}
+
+	if (inputExact == EXACT_AREA_BELOW_25 && estimatedMaxLength > 25)
+	{
+		if (outputExact > EXACT_AREA_BELOW_25)
+			outputExact = EXACT_AREA_BELOW_25;
+		return estimatedMaxLength;
+	}
+
+	bool visitted[BOARD_SIZE];
+	memset(visitted, false, BOARD_SIZE);
+
+	int minDistanceFromUtoV = -1;
+	if (v >= 0)
+	{
+		// calculate minDistanceFromUtoV
+		signed char d[BOARD_SIZE];
+		memset(d, -1, BOARD_SIZE);
+		TPos cPos = u;
+		d[u] = 0;
+		CSmallDeque remainPos;
+		remainPos.push_back(cPos);
+		bool seen = false;
+		while (!remainPos.empty() && !seen){
+			cPos = remainPos.pop_front();
+			for (TMove m = 1; m < 5; m++){
+				TPos newP = MOVE(cPos, m);
+				if (newP < 0 || !vXa[newP][areaCode] || (d[newP] >= 0))
+					continue;
+				d[newP] = d[cPos] + 1;
+				if (newP == v)
+				{
+					minDistanceFromUtoV = d[newP];
+					seen = true;
+					break;
+				}
+				remainPos.push_back(newP);
+			}
+		}
+		assert(minDistanceFromUtoV > 0);
+	}
+
+	CSmallDeque path;
+	path.push_back(u);
+	int foundMaxLength = 1;
+	visitted[u] = true;
+	explorerCount = 0;
+	int b = explorer(path, visitted, v, estimatedMaxLength, foundMaxLength, areaCode, minDistanceFromUtoV);
+	if (b)
+		assert(foundMaxLength == estimatedMaxLength);
+
+	assert(foundMaxLength <= estimatedMaxLength);
+
+	if (v >= 0)
+		assert((estimatedMaxLength - foundMaxLength) % 2 == 0);
+
+	if (v < 0){
+		exactLength[areaCode][u][BOARD_SIZE] = foundMaxLength;
+	}
+	else {
+		exactLength[areaCode][u][v] = foundMaxLength;
+		exactLength[areaCode][v][u] = foundMaxLength;
+	}
+
+	return foundMaxLength;
+}
+
+#define EXPLORER_TIMES 15
+int CBCO::explorer(CSmallDeque &path, bool visitted[], const TPos &v, const int &overEstimatedLength, int &currentMaxLength, const int &areaCode, const int &dUV) const
+{
+	if (inputExact == EXACT && explorerCount >= (EXPLORER_TIMES - 1) && pAI->shouldEndMoveNow())
+		return TIMEOUT_POINTS;
+	explorerCount++;
+	if (explorerCount >= EXPLORER_TIMES)
+		explorerCount = 0;
+
+	assert(v < 0 || dUV > 0);
+	TPos u = path.back();
+	for (TMove m = 1; m <= 4; m++){
+		TPos u2 = MOVE(u, m);
+		if (u2 < 0
+			|| !vXa[u2][areaCode]
+			|| visitted[u2])
+			continue;
+
+		visitted[u2] = true;
+		path.push_back(u2);
+
+		if (u2 == v){ // finish path here
+			if (currentMaxLength < (int)path.size())
+				currentMaxLength = path.size();
+			assert(currentMaxLength <= overEstimatedLength);
+			if (v != -1 && ((overEstimatedLength - currentMaxLength) % 2 == 1))
+				currentMaxLength++;
+			if (currentMaxLength == overEstimatedLength)
+			{
+				currentMaxLength = overEstimatedLength;
+				return true;
+			}
+		}
+		else { // continue explorer
+			bool canMeet = true;
+			if (v >= 0 && ((int)path.size()) > dUV){ // v != u2 now
+				// calculate if we can meet v or not; if v<0, of course canMeet = true
+				canMeet = false;
+				bool visitted2[BOARD_SIZE];
+				memcpy(visitted2, visitted, BOARD_SIZE);
+				TPos cPos = path.back(); assert(cPos == u2);
+				TPos ePos = v;
+				CSmallDeque remainingPos;
+				remainingPos.push_back(cPos); assert(visitted2[cPos]);
+				while (!remainingPos.empty() && !canMeet)
+				{
+					cPos = remainingPos.pop_back();
+					for (TMove m2 = 1; m2 <= 4; m2++){
+						TPos u3 = MOVE(cPos, m2);
+						if (u3 < 0
+							|| !vXa[u3][areaCode]
+							|| visitted2[u3])
+							continue;
+
+						if (u3 == v){
+							// canMeet = truly true, don't need to calculate more, exit this if
+							canMeet = true;
+							break;
+						}
+						visitted2[u3] = true;
+						remainingPos.push_back(u3);
+					}
+				}
+			}
+
+			if (canMeet)
+			{
+				int b = explorer(path, visitted, v, overEstimatedLength, currentMaxLength, areaCode, dUV);
+				if (b == TIMEOUT_POINTS)
+					return TIMEOUT_POINTS;
+				if (b)
+					return true;
+			}
+		}
+		path.pop_back();
+		visitted[u2] = false;
+	}
+	if (v == -1)
+	{
+		if (currentMaxLength < (int)path.size())
+			currentMaxLength = path.size();
+		assert(currentMaxLength <= overEstimatedLength);
+		if (v != -1 && ((overEstimatedLength - currentMaxLength) % 2 == 1))
+			currentMaxLength++;
+		if (currentMaxLength == overEstimatedLength)
+		{
+			currentMaxLength = overEstimatedLength;
+			return true;
+		}
+	}
+	return false;
+}
+
+int CBCO::exactLengthInAnAreaWithoutRecursion(const TPos &u, const TPos &v, const int &areaCode)
+{
+	assert(u >= 0 && u < BOARD_SIZE);
+	//check if we calculated this length
+	if (v < 0){
+		if (exactLength[areaCode][u][BOARD_SIZE] >= 0){
+			return exactLength[areaCode][u][BOARD_SIZE];
+		}
+	}
+	else { // v is a real pos
+		if (exactLength[areaCode][u][v] >= 0){
+			assert(exactLength[areaCode][u][v] == exactLength[areaCode][v][u]);
+			return exactLength[areaCode][u][v];
+		}
+	}
+
+	int estimatedMaxLength = estimateLengthInArea(u, v, areaCode);
+	if (u == v){
+		assert(estimatedMaxLength == 1);
+		return 1;
+	}
+
+	int foundMaxLength = 0;
+
+	// create the map
+	bool visited[BOARD_SIZE];
+	for (TPos i = 0; i < BOARD_SIZE; i++){
+		if (!vXa[i][areaCode])
+		{
+			visited[i] = true;
+		}
+		else
+		{
+			visited[i] = false;
+		}
+	}
+	visited[u] = true;
+	if (v < 0)
+		foundMaxLength = exploreMapWithoutRecursion(visited, estimatedMaxLength - 1, u) + 1;
+	else
+		foundMaxLength = exploreMapWithoutRecursion(visited, estimatedMaxLength - 1, u, v) + 1;
+
+	assert(foundMaxLength <= estimatedMaxLength);
+
+	if (v != -1)
+		assert((estimatedMaxLength - foundMaxLength) % 2 == 0);
+
+	if (v < 0){
+		exactLength[areaCode][u][BOARD_SIZE] = foundMaxLength;
+	}
+	else {
+		exactLength[areaCode][u][v] = foundMaxLength;
+		exactLength[areaCode][v][u] = foundMaxLength;
+	}
+
+	return foundMaxLength;
 }

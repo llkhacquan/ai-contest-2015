@@ -8,7 +8,7 @@
 
 CMyAI* CMyAI::instance;
 
-Pos1D moveTable[BOARD_SIZE][4];
+TPos moveTable[BOARD_SIZE][4];
 
 CMyAI::CMyAI()
 {
@@ -16,13 +16,13 @@ CMyAI::CMyAI()
 	CTranspositionTable::getInstance();
 
 	searcher.flag = CSearchEngine::ALPHA_BETA_ITERATIVE_DEEPENING;
-	searcher.heuristic.rateBoard = &CHeuristicBase::voronoiRateBoard;
+	searcher.heuristic.rateBoard = NULL;
 	searcher.heuristic.quickRateBoard = &CHeuristicBase::voronoiRateBoard;
 
 	history.reserve(BOARD_SIZE);
 	printInformation();
 
-	for (Pos1D p = 0; p < BOARD_SIZE; p++)
+	for (TPos p = 0; p < BOARD_SIZE; p++)
 		for (TMove m = 1; m <= 4; m++){
 			int y = p / MAP_SIZE;
 			int x = p - y * MAP_SIZE;
@@ -31,25 +31,25 @@ CMyAI::CMyAI()
 				if (y + 1 < MAP_SIZE)
 					moveTable[p][m - 1] = p + MAP_SIZE;
 				else
-					moveTable[p][m - 1] = -1;
+					moveTable[p][m - 1] = BLOCK_OUT_OF_BOARD;
 				break;
 			case DIRECTION_UP:
 				if (y - 1 >= 0)
 					moveTable[p][m - 1] = p - MAP_SIZE;
 				else
-					moveTable[p][m - 1] = -1;
+					moveTable[p][m - 1] = BLOCK_OUT_OF_BOARD;
 				break;
 			case DIRECTION_LEFT:
 				if (x - 1 >= 0)
 					moveTable[p][m - 1] = p - 1;
 				else
-					moveTable[p][m - 1] = -1;
+					moveTable[p][m - 1] = BLOCK_OUT_OF_BOARD;
 				break;
 			case DIRECTION_RIGHT:
 				if (x + 1 < MAP_SIZE)
 					moveTable[p][m - 1] = p + 1;
 				else
-					moveTable[p][m - 1] = -1;
+					moveTable[p][m - 1] = BLOCK_OUT_OF_BOARD;
 				break;
 			}
 		}
@@ -63,7 +63,6 @@ CMyAI::~CMyAI()
 TMove CMyAI::newTurn()
 {
 	// update board first
-	iRateBoard = 0;
 
 	if (p_ai->GetBlock(p_ai->GetMyPosition()) == BLOCK_PLAYER_1){
 		we = PLAYER_1;
@@ -116,11 +115,15 @@ TMove CMyAI::newTurn()
 
 	TMove m;
 	if (we == next)
+	{
 		m = ourNewTurn();
+		if (m < 1 || m>4){
+			cout << "calculated move: " << (int)m << endl;
+			system("pause");
+		}
+	}
 	else
 		m = enemyNewTurn();
-
-	// cout << "iRateBoard = " << iRateBoard << endl;
 
 	return m;
 }
@@ -134,7 +137,7 @@ CMyAI* CMyAI::getInstance()
 
 void CMyAI::printInformation()
 {
-	cout << "LOUISLZCUTE'S BOT:";
+	cout << "\n\nLOUISLZCUTE'S BOT:";
 	if (USING_MEMORY)
 		cout << "\tActiveTT";
 	else
@@ -167,6 +170,30 @@ void CMyAI::newGame()
 		cout << "\tOh shit! We do not go first!" << endl;
 		first = next;
 	}
+
+	int count7x7 = 0;
+	for (int x = 2; x <= 8; x++){
+		for (int y = 2; y <= 8; y++){
+			if (originalBoard[CC(x, y)] == BLOCK_OBSTACLE)
+				count7x7++;
+		}
+	}
+
+	int count3x3 = 0;
+	for (int x = 4; x <= 6; x++){
+		for (int y = 4; y <= 6; y++){
+			if (originalBoard[CC(x, y)] == BLOCK_OBSTACLE)
+				count3x3++;
+		}
+	}
+
+	if (count7x7 >= 8 || (count3x3 >= 2 && count7x7 >= 6)){
+		searcher.heuristic.rateBoard = &CHeuristicBase::simpleRateBoard;
+	}
+	else
+	{
+		searcher.heuristic.rateBoard = &CHeuristicBase::voronoiRateBoard;
+	}
 }
 
 TMove CMyAI::ourNewTurn()
@@ -178,31 +205,53 @@ TMove CMyAI::ourNewTurn()
 	if (activeIsolatedMode || isIsolated(this->boardData, this->p1, this->p2)){
 		activeIsolatedMode = true;
 		cout << "Isolated mode!" << endl;
-		Pos1D pos;
-		pos = CC(p_ai->GetEnemyPosition().x, p_ai->GetEnemyPosition().y);
-		int n2 = CHeuristicBase::getLowerLengthOfTheLongestPath(this->boardData, pos);
+		TPos p1, p2;
+		p1 = CC(p_ai->GetMyPosition().x, p_ai->GetMyPosition().y);
+		p2 = CC(p_ai->GetEnemyPosition().x, p_ai->GetEnemyPosition().y);
 
-		pos = CC(p_ai->GetMyPosition().x, p_ai->GetMyPosition().y);
-		int n1 = CHeuristicBase::getLowerLengthOfTheLongestPath(this->boardData, pos);
-		cout << "\tEstimated length of our path		" << n1 << endl;
-		cout << "\tEstimated length of enemy path 	" << n2 << endl;
+		static CBCO o1, o2;
+		CBC::calculateBCs(this->boardData, &o1, p1);
+		CBC::calculateBCs(this->boardData, &o2, p2);
+		int n1, n2;
+		n1 = o1.findLengthOfLongestPath(EXACT_AREA_BELOW_10);
+		n2 = o2.findLengthOfLongestPath(EXACT_AREA_BELOW_10);
+		if (abs(n1 - n2) < 4)
+		{
+			int _n1 = o1.findLengthOfLongestPath(EXACT);
+			if (_n1 != TIMEOUT_POINTS)
+			{
+				n1 = _n1;
+				int _n2 = o2.findLengthOfLongestPath(EXACT);
+				if (_n2 != TIMEOUT_POINTS)
+					n2 = _n2;
+			}
+		}
+
+		cout << "\tEstimated length of our path	   " << n1 << endl;
+		cout << "\tEstimated length of enemy path  " << n2 << endl;
 		if (n1 > n2)
 			cout << "\t => It seems that we will fucking WIN  ";
 		else
 			cout << "\t => It seems that we will fucking LOSE ";
 		if (first == we)
-			cout << "this easy game\n";
+			cout << "this easy game " << n1 - n2 << endl;
 		else
-			cout << "this hard game\n";
-		pos = CC(p_ai->GetMyPosition().x, p_ai->GetMyPosition().y);
-		TMove t = CHeuristicBase::getFirstMoveOfTheLongestPath(boardData, pos, ISOLATED_DEPTH);
-		result = t;
+			cout << "this hard game " << n1 - n2 << endl;
+		p1 = CC(p_ai->GetMyPosition().x, p_ai->GetMyPosition().y);
+		TMove estimateMove = CHeuristicBase::getFirstMove(boardData, p1, EXACT_AREA_BELOW_25, n1);
+		TMove exactMove = CHeuristicBase::getFirstMove(boardData, p1, EXACT, n1);
+		if (exactMove < 1 || exactMove > 4)
+			result = estimateMove;
+		else
+			result = exactMove;
+
+		result = estimateMove;
 	}
 	else
 	{
 		static bool followingMode = TRY_FOLLOWING && we != first;
 		if (followingMode){
-			Pos1D u = MOVE(we == PLAYER_1 ? p1 : p2, getOpositeDirection(history.back())) != BLOCK_EMPTY;
+			TPos u = MOVE(we == PLAYER_1 ? p1 : p2, getOpositeDirection(history.back())) != BLOCK_EMPTY;
 			if (GET_BLOCK(boardData, u))
 				followingMode = false;
 		}
@@ -252,9 +301,9 @@ TMove CMyAI::enemyNewTurn()
 
 	if (activeIsolatedMode || isIsolated(this->boardData, this->p1, this->p2)){
 		activeIsolatedMode = true;
-		Pos1D pos;
+		TPos pos;
 		pos = CC(p_ai->GetEnemyPosition().x, p_ai->GetEnemyPosition().y);
-		result = CHeuristicBase::getFirstMoveOfTheLongestPath(boardData, pos, ISOLATED_DEPTH);
+		result = 0;
 	}
 	else
 	{
@@ -263,17 +312,5 @@ TMove CMyAI::enemyNewTurn()
 		assert(history.size() == before);
 	}
 	return result;
-}
-
-bool CMyAI::shouldEndMoveNow()
-{
-	static CMyTimer* timer = CMyTimer::getInstance();
-
-	if (timer->timeUp())
-		return true;
-	if (isCalculatingInEnemyTurn && !inEnemyTurn)
-		return true;
-
-	return false;
 }
 

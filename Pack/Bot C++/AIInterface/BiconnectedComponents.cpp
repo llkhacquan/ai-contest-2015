@@ -1,58 +1,75 @@
 #include "BiconnectedComponents.h"
 #include "../AIInterface/StaticFunctions.h"
 
-CBiconnectedComponents::CBiconnectedComponents(){}
+CBC::CBC(){ output = NULL; }
 
-CBiconnectedComponents::~CBiconnectedComponents(){}
+CBC::~CBC(){}
 
-// return the number of components
-void CBiconnectedComponents::biconnectedComponents(TBlock const board[], CBiconnectedComponentsOutput *output,
-	const Pos1D &playerPos, TBlock *oBoard)
+void CBC::calculateBCs(TBlock const board[], CBCO *output, const TPos &playerPos, TBlock *oBoard)
 {
 	assert(GET_BLOCK(board, playerPos) == BLOCK_PLAYER_1 || GET_BLOCK(board, playerPos) == BLOCK_PLAYER_2);
 	// setting up
-	CBiconnectedComponents bc;
+	CBC bc;
 	output->clear();
+	output->startPos = playerPos;
 	memcpy(bc.oBoard, board, sizeof(TBlock)*BOARD_SIZE);
 
-	setBlock(bc.oBoard, playerPos, BLOCK_EMPTY);
-
+	bc.oBoard[playerPos] = BLOCK_OBSTACLE;
 	bc.iCount = 0;
 	bc.output = output;
+	bc.myStack.clear();
 
-	{// clear stack
-		bc.myStack.clear();
-	}
-
-	memset(bc.visited, false, BOARD_SIZE*sizeof(bc.visited[0]));
+	memset(bc.visited, false, BOARD_SIZE*sizeof(bool));
 
 	for (int iVertex = 0; iVertex < BOARD_SIZE; iVertex++){
 		bc.parrent[iVertex] = -1;
 	}
 
 	// build the areas by biconnected components algorithm 
-// 	for (int i = 1; i <= 4; i++){
-// 		{
-// 			Pos1D newPos = MOVE(playerPos, i);
-// 			if (GET_BLOCK(bc.oBoard, newPos) == BLOCK_EMPTY && !bc.visited[newPos])
-// 				bc.dfsVisit(newPos);
-// 		}
-// 	}
-	bc.dfsVisit(playerPos);
-	output->manager(playerPos);
+	for (int i = 1; i <= 4; i++){
+		TPos newPos = MOVE(playerPos, i);
+		if (GET_BLOCK(bc.oBoard, newPos) == BLOCK_EMPTY)
+		{
+			assert(!bc.visited[newPos]);
+			bc.dfsVisit(newPos);
+		}
+	}
 
 	if (oBoard != NULL){
 		memcpy(oBoard, board, sizeof(TBlock)*BOARD_SIZE);
-		for (int iVertex = 0; iVertex < BOARD_SIZE; iVertex++){
-			for (int j = 0; j < output->nAreasOfVertices[iVertex]; j++)
-				oBoard[iVertex] |= SPECIAL_BLOCK | iPow2(output->iAreaOfVertices[iVertex][j]);
+		for (TPos iVertex = 0; iVertex < BOARD_SIZE; iVertex++){
+			for (int j = 0; j < output->nAofV[iVertex]; j++)
+				oBoard[iVertex] |= SPECIAL_BLOCK | iPow2(output->iAofV[iVertex][j]);
 		}
 	}
-	output->buildAreaXArea(playerPos);
+	output->buildAreaXArea();
+
+	if (output->nAreas == 0){
+		TMove i;
+		for (i = 1; i <= 4; i++)
+		{
+			TPos newPos = MOVE(playerPos, i);
+			if (GET_BLOCK(board, newPos) == BLOCK_EMPTY)
+			{
+				output->specialResult = 1;
+				break;
+			}
+		}
+		if (i == 5)
+			output->specialResult = 0;
+	}
+
+#ifdef _DEBUG
 	output->checkConsitency(true);
+#endif // _DEBUG
 }
 
-__forceinline void CBiconnectedComponents::dfsVisit(const Pos1D &u){
+void CBC::calculateBCs(TBlock const board[], CBCO *output, const TPos &playerPos)
+{
+	calculateBCs(board, output, playerPos, NULL);
+}
+
+void CBC::dfsVisit(const TPos &u){
 	assert(u >= 0 && u < BOARD_SIZE);
 	visited[u] = true;
 	iCount++;
@@ -64,7 +81,7 @@ __forceinline void CBiconnectedComponents::dfsVisit(const Pos1D &u){
 	for (int i = 0; i < 4; i++){
 		if (!bAdj[i])
 			continue;
-		Pos1D v = MOVE(u, i + 1);
+		TPos v = MOVE(u, i + 1);
 		if (!visited[v]){
 			myStack.push_back(u); myStack.push_back(v);
 			parrent[v] = u;
@@ -80,11 +97,11 @@ __forceinline void CBiconnectedComponents::dfsVisit(const Pos1D &u){
 	}
 }
 
-__forceinline void CBiconnectedComponents::createNewArea(const Pos1D &_u, const Pos1D &_v){
+void CBC::createNewArea(const TPos &_u, const TPos &_v){
 	assert(_u >= 0 && _u < BOARD_SIZE);
 	assert(_v >= 0 && _v < BOARD_SIZE);
 	output->nAreas++;
-	Pos1D u, v;
+	TPos u, v;
 	do {
 		assert(myStack.size() % 2 == 0);
 		u = myStack.pop_back();
@@ -96,29 +113,46 @@ __forceinline void CBiconnectedComponents::createNewArea(const Pos1D &_u, const 
 	} while ((u != _u || v != _v) && (v != _u || u != _v));
 }
 
-__forceinline void CBiconnectedComponents::adjection(bool out[], Pos1D const &u){
+void CBC::adjection(bool out[], TPos const &u) const {
 	assert(u >= 0 && u < BOARD_SIZE);
-	Pos1D pos(u);
-	for (int i = 1; i <= 4; i++){
-		TBlock block;
-		block = GET_BLOCK(oBoard, MOVE(pos, i));
+	TPos pos = u;
+	for (TMove m = 1; m <= 4; m++){
+		TBlock block = GET_BLOCK(oBoard, MOVE(pos, m));
 		if (block == BLOCK_EMPTY || block >= SPECIAL_BLOCK)
-			out[i - 1] = true;
+			out[m - 1] = true;
 		else
-			out[i - 1] = false;
+			out[m - 1] = false;
 	}
 }
 
-int CBiconnectedComponents::getEstimatedLength(TBlock const board[], const Pos1D &playerPos, bool printInfo)
+int CBC::calculateLength(TBlock const board[], const TPos &playerPos, const bool printInfo, const EXACT_LEVEL exact)
 {
 	TBlock oldBlock = board[playerPos];
 	assert(oldBlock == BLOCK_PLAYER_1 || oldBlock == BLOCK_PLAYER_2);
-	CBiconnectedComponentsOutput out;
+	CBCO out;
 
 	TBlock b[BOARD_SIZE];
-	biconnectedComponents(board, &out, playerPos, b);
-	int result = out.findLengthOfLongestPath(playerPos);
+	calculateBCs(board, &out, playerPos, b);
 
+	if (printInfo && SHOW_DEBUG_INFORMATION) {
+		for (int y = 0; y < MAP_SIZE; y++) {
+			for (int x = 0; x < MAP_SIZE; x++){
+				TBlock block = b[CC(x, y)];
+				if (block >= SPECIAL_BLOCK)
+				{
+					cout << setw(2) << (int)out.iAofV[CC(x, y)][0] << ".";
+					cout << setw(2) << (int)out.iAofV[CC(x, y)][1] << "|";
+				}
+				else if (block >= 0)
+					cout << setfill(' ') << setw(5) << "-----" << "|";
+				else
+					cout << setfill(' ') << setw(5) << block << "|";
+			}
+			cout << endl;
+		}
+		cout << endl;
+	}
+	int result = out.findLengthOfLongestPath(exact);
 	return result;
 }
 

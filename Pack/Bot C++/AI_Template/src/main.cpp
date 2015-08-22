@@ -9,7 +9,7 @@
 #include "../AIInterface/MyTimer.h"
 #include "../AIInterface/ArticulationPoints.h"
 
-CMyAI* pAI;
+extern CMyAI* pAI;
 
 thread *t;
 
@@ -55,16 +55,18 @@ void AI_Update()
 	}
 }
 
-void setupBoard(TBlock *board, const vector<Pos1D> *positions, Pos1D &p1, Pos1D &p2){
+void testFindPath(TBlock *board, const TPos&p);
+
+void setupBoard(TBlock *board, const vector<TPos> *positions, TPos &p1, TPos &p2){
 	if (positions == NULL){
 		// createNewBoard(board, rand() % 20 + 5);
-		createNewBoard(board, rand() % 20 + 25);
+		createNewBoard(board, rand() % 20 + 15);
 		board[0] = board[BOARD_SIZE - 1] = BLOCK_OBSTACLE;
 		while (true) {
 			int i = rand() % 121;
 			if (board[i] == BLOCK_EMPTY){
 				board[i] = BLOCK_PLAYER_1;
-				p1 = Pos1D(i);
+				p1 = TPos(i);
 				break;
 			}
 		}
@@ -72,7 +74,7 @@ void setupBoard(TBlock *board, const vector<Pos1D> *positions, Pos1D &p1, Pos1D 
 			int i = rand() % 121;
 			if (board[i] == BLOCK_EMPTY){
 				board[i] = BLOCK_PLAYER_2;
-				p2 = Pos1D(i);
+				p2 = TPos(i);
 				break;
 			}
 		}
@@ -80,110 +82,42 @@ void setupBoard(TBlock *board, const vector<Pos1D> *positions, Pos1D &p1, Pos1D 
 	else {
 		memset(board, 0, BOARD_SIZE*sizeof(TBlock));
 		for (int j = 0; j < (int)positions->size(); j++){
-			setBlock(board, positions->at(j), BLOCK_OBSTACLE);
+			SET_BLOCK(board, positions->at(j), BLOCK_OBSTACLE);
 		}
-		setBlock(board, p1, BLOCK_PLAYER_1);
-		setBlock(board, p2, BLOCK_PLAYER_2);
+		SET_BLOCK(board, p1, BLOCK_PLAYER_1);
+		SET_BLOCK(board, p2, BLOCK_PLAYER_2);
 	}
 }
 
-void createBoardWithOutIsland(TBlock *board, Pos1D p1 = 0, Pos1D p2 = 120){
+void createBoardWithOutIsland(TBlock *board, TPos p1 = 0i16, TPos p2 = 120i16){
 	memset(board, 0, BOARD_SIZE*sizeof(TBlock));
 	int nObject = rand() % 30 + 30;
-	vector<int> obstacles = { 60 };
+	vector<TPos> obstacles = { 60 };
 	for (int i = 0; i < 121; i++){
-		setBlock(board, Pos1D(i), BLOCK_OBSTACLE);
+		SET_BLOCK(board, TPos(i), BLOCK_OBSTACLE);
 	}
 
-	setBlock(board, Pos1D(60), BLOCK_EMPTY);
+	SET_BLOCK(board, TPos(60), BLOCK_EMPTY);
 	for (int i = 1; i < nObject;){
-		Pos1D t = Pos1D(obstacles[rand() % obstacles.size()]);
-		Pos1D newT = MOVE(t, rand() % 4 + 1);
+		TPos t = TPos(obstacles[rand() % obstacles.size()]);
+		TPos newT = MOVE(t, rand() % 4 + 1);
 
 		if (GET_BLOCK(board, newT) == BLOCK_OBSTACLE){
-			setBlock(board, newT, BLOCK_EMPTY);
+			SET_BLOCK(board, newT, BLOCK_EMPTY);
 			obstacles.push_back(newT);
 			i++;
 		}
 	}
 	p1 = obstacles[rand() % obstacles.size()];
-	setBlock(board, p1, BLOCK_PLAYER_1);
+	SET_BLOCK(board, p1, BLOCK_PLAYER_1);
 }
 
-int lowwer_extract = 0;
-void testFindPath(TBlock *board, const Pos1D&p = 0)
-{
-	Pos1D pos = p;
-	int c = 0;
-	int upper = 0, lower = 0, exact = 0;
-	bool bOk;
-
-#ifdef OPENCV
-	imshow("original board", toImage(board));
-	waitKey(1);
-#endif // OPENCV
-	upper = CBiconnectedComponents::getEstimatedLength(board, pos, true);
-	if (upper > 40)
-		return;
-	cout << "Upper Estimated length : " << upper << endl;
-
-	exact = CHeuristicBase::getTheLongestPath(board, pos, BOARD_SIZE).size();
-	cout << "Exact length		: " << exact << endl;
-
-	lower = CHeuristicBase::getLowerLengthOfTheLongestPath(board, pos);
-	cout << "Lower Estimated length : " << lower << endl;
-	int iCount = 0;
-	if (lower == exact)
-		lowwer_extract++;
-
-	while (c != 27){
-		// if (c == ' ' || c == -1)
-		{
-			if (getAvailableMoves(board, pos).size() == 0)
-				break;
-			CMyTimer::getInstance()->reset();
-			TMove i = CHeuristicBase::getFirstMoveOfTheLongestPath(board, pos, 1);
-			iCount++;
-			bOk = move(board, pos, i); assert(bOk);
-			pos = MOVE(pos, i);
-		}
-#ifdef OPENCV
-		imshow("game", toImage(board));
-		c = waitKey(1);
-#endif // OPENCV
-	}
-	cout << "Traveled length : " << iCount << endl << endl;
-	// system("pause");
-}
-
-void testConnectedComponents(TBlock *board, Pos1D p = 0)
-{
-#ifdef OPENCV
-	imshow("test", toImage(board));
-	waitKey(1);
-#endif // OPENCV
-	int n;
-	TBlock board2[BOARD_SIZE];
-	cout << endl;
-	CBiconnectedComponentsOutput output;
-	CBiconnectedComponents::biconnectedComponents(board, &output, p, board2);
-	printBoard(board2, true);
-	cout << "n = " << output.nAreas << endl;
-
-	n = CBiconnectedComponents::getEstimatedLength(board, p, false);
-	printf("estimated length = %d\n", n);
-#ifdef OPENCV
-	waitKey(100);
-#endif // OPENCV
-	system("pause");
-}
-
-void testEstimateLongestLength(TBlock* board, Pos1D p = 0){
+void testEstimateLongestLength(TBlock* board, TPos p = 0){
 	createBoardWithOutIsland(board, p);
 	testFindPath(board, p);
 }
 
-void testRateBoard(TBlock*board, const Pos1D p1 = 0, const Pos1D p2 = 120){
+void testRateBoard(TBlock*board, const TPos p1 = 0, const TPos p2 = 120){
 	if (isIsolated(board, p1, p2))
 		return;
 #ifdef OPENCV
@@ -194,13 +128,12 @@ void testRateBoard(TBlock*board, const Pos1D p1 = 0, const Pos1D p2 = 120){
 		break;
 	}
 #endif // OPENCV
-	CHeuristicBase::pureTreeOfChamber(board, p1, p2, PLAYER_1);
 	CHeuristicBase::simpleRateBoard(board, p1, p2, PLAYER_1);
 }
 
 int bad, good;
 
-void testSearchEngine(TBlock*board, const Pos1D p1 = 0, const Pos1D p2 = 120){
+void testSearchEngine(TBlock*board, const TPos p1 = 0, const TPos p2 = 120){
 	if (isIsolated(board, p1, p2))
 		return;
 
@@ -244,7 +177,7 @@ void testSearchEngine(TBlock*board, const Pos1D p1 = 0, const Pos1D p2 = 120){
 	}
 }
 
-void testGetArticulationPoints(TBlock *board, const Pos1D p1 = 0, const Pos1D p2 = 120){
+void testGetArticulationPoints(TBlock *board, const TPos p1 = 0, const TPos p2 = 120){
 #ifdef OPENCV
 	imshow("test", toImage(board));
 #endif // OPENCV
@@ -258,6 +191,92 @@ void testGetArticulationPoints(TBlock *board, const Pos1D p1 = 0, const Pos1D p2
 	system("pause");
 }
 
+int traveled_exact = 0;
+int lowwer_extract = 0;
+int upper_extract = 0;
+int nTimes = 0;
+void testFindPath(TBlock *board, const TPos&p = 0)
+{
+	static CMyTimer* timer = CMyTimer::getInstance();
+	TPos pos = p;
+	int c = 0;
+	int upper = 0, lower = 0, exact = 0, calculatedExact = 0;
+	bool bOk;
+
+#ifdef OPENCV
+	imshow("original board", toImage(board));
+	waitKey(1);
+#endif // OPENCV
+	upper = CBC::calculateLength(board, pos, true, EXACT_AREA_BELOW_10);
+	assert(upper != TIMEOUT_POINTS);
+	if (upper > 45)
+		return;
+
+// 	{
+// 		int t1, t2;
+// 		static CBCO o;
+// 		CBC::calculateBCs(board, &o, pos);
+// 		t1 = CBC::calculateLength(board, pos, false, ESTIMATE_ALL);
+// 		t2 = o.findLengthOfLongestPath(ESTIMATE_ALL);
+// 		assert(t1 == t2);
+// 
+// 		t1 = CBC::calculateLength(board, pos, false, EXAXT_AREA_BELOW_10);
+// 		t2 = o.findLengthOfLongestPath(EXAXT_AREA_BELOW_10);
+// 		assert(t1 == t2);
+// 
+// 		t1 = CBC::calculateLength(board, pos, false, EXAXT_AREA_BELOW_25);
+// 		t2 = o.findLengthOfLongestPath(EXAXT_AREA_BELOW_25);
+// 		assert(t1 == t2);
+// 
+// 		t1 = CBC::calculateLength(board, pos, false, EXACT);
+// 		t2 = o.findLengthOfLongestPath(EXACT);
+// 		assert(t1 == t2);
+// 
+// 		return;
+// 	}
+
+	nTimes++;
+	cout << "Upper Estimated length : " << upper << endl;
+
+	timer->reset();
+	calculatedExact = CBC::calculateLength(board, pos, false, EXACT);
+	assert(calculatedExact != TIMEOUT_POINTS);
+	int timeInMs = timer->getTimeInMs();
+	cout << "Exact Calculated length : " << calculatedExact << " calculated in " << timeInMs << " ms\n";
+
+	exact = exploreMapWithoutRecursion(board, BOARD_SIZE, pos);
+	cout << "Exact length		: " << exact << endl;
+
+	lower = CHeuristicBase::getLowerLengthOfTheLongestPath(board, pos);
+	cout << "Lower Estimated length : " << lower << endl;
+	int travelled = 0;
+	while (true){
+		if (getAvailableMoves(board, pos).size() == 0)
+			break;
+		timer->reset();
+		TMove i = CHeuristicBase::getFirstMove(board, pos, EXACT, -1);
+		int temp = CBC::calculateLength(board, pos, false, EXACT);
+		assert(temp != TIMEOUT_POINTS);
+		assert(travelled + temp == exact);
+		travelled++;
+		bOk = move(board, pos, i); assert(bOk);
+		pos = MOVE(pos, i);
+#ifdef OPENCV
+		imshow("game", toImage(board));
+		waitKey(1);
+#endif // OPENCV
+	}
+	cout << "Traveled length : " << travelled << endl << endl;
+	if (lower == exact)
+		lowwer_extract++;
+	if (travelled == exact)
+		traveled_exact++;
+	if (upper > exact)
+		upper_extract++;
+	if (calculatedExact != exact || calculatedExact != travelled || upper < exact)
+		system("pause");
+}
+
 #if BOT_ACTIVE
 int main_(int argc, char* argv[])
 #else
@@ -269,16 +288,17 @@ int main(int argc, char* argv[])
 #ifdef OPENCV
 	setupImage();
 #endif // OPENCV
-	std::srand(0);
+	int seed = (int)time(NULL);
+	std::srand(seed);
 	TBlock board[BOARD_SIZE];
 	clock_t tStart = clock();
-	for (int i = 0; i < 10000; i++){
-		/*setupBoard(board, &p5, Pos2D(1, 9));
-		testConnectedComponents(board, Pos2D(1, 9));
 
-		setupBoard(board, &p5, Pos2D(0, 10));
-		testConnectedComponents(board, Pos2D(0, 10));*/
-		Pos1D p1(64), p2(120);
+	vector<TPos> points = { CC(5, 0), CC(5, 1), CC(5, 2), CC(6, 3), CC(6, 4),
+		CC(7, 5), CC(6, 6), CC(7, 6), CC(7, 7), CC(8, 7), CC(9, 0), CC(9, 2),
+		CC(9, 8), CC(9, 9), CC(10, 10), };
+
+	for (int i = 0; i < 10000; i++){
+		TPos p1(CC(6, 0)), p2(120);
 		setupBoard(board, NULL, p1, p2);
 		// testConnectedComponents(board, p1);
 		// cout << CHeuristicBase::getEstimatedLengthOfTheLongestPath(board, p1);

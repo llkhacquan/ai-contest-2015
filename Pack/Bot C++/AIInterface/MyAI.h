@@ -3,6 +3,7 @@
 #include "SearchEngine.h"
 #include "HeuristicBase.h"
 #include "mydefine.h"
+#include "MyTimer.h"
 
 using namespace std;
 
@@ -20,7 +21,7 @@ public:
 	bool useGoodEvaluation = false;
 	int lastReachedDepth = 0;
 	int iTurn = -1;
-	int iRateBoard = 0;
+	bool foundAnEnd = false;
 
 	static CMyAI* getInstance();
 
@@ -30,7 +31,7 @@ public:
 
 
 	TBlock boardData[BOARD_SIZE];
-	Pos1D p1, p2, oP1, oP2;
+	TPos p1, p2, oP1, oP2;
 	AI *p_ai;
 	CSearchEngine searcher;
 
@@ -44,8 +45,19 @@ public:
 
 	TMove enemyNewTurn();
 
-	bool shouldEndMoveNow();
-
+	inline bool shouldEndMoveNow()
+	{
+		static CMyTimer* timer = CMyTimer::getInstance();
+#if BOT_ACTIVE
+#else
+		return false;
+#endif // BOT_ACTIVE
+		if (timer->timeUp())
+			return true;
+		if (isCalculatingInEnemyTurn && !inEnemyTurn)
+			return true;
+		return false;
+	}
 	~CMyAI();
 };
 
